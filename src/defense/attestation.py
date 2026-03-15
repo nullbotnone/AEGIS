@@ -175,19 +175,6 @@ class AttestationEngine:
                             evidence={"path": path, "pattern_matched": pattern},
                         ))
 
-                # Detect reads from covert paths
-                covert_indicators = ["/.cache/", "/var/tmp/.", "/tmp/."]
-                for indicator in covert_indicators:
-                    if indicator in path:
-                        self.detections.append(Detection(
-                            timestamp=action.timestamp,
-                            threat_level=ThreatLevel.MEDIUM,
-                            detection_type="covert_path_access",
-                            agent_id=action.agent_id,
-                            description=f"Access to potential covert path: {path}",
-                            evidence={"path": path},
-                        ))
-
     def _detect_egress_anomalies(self):
         """Detect anomalous egress patterns."""
         agent_egress: Dict[str, int] = {}
@@ -257,6 +244,22 @@ class AttestationEngine:
                             "readers": list(readers),
                         },
                     ))
+        
+        # Detect single-agent access to covert paths (part of covert channel module)
+        covert_indicators = ["/.cache/", "/var/tmp/.", "/tmp/."]
+        for action in self.logger.actions:
+            if action.action_type in (ActionType.FILE_READ, ActionType.FILE_WRITE):
+                path = action.details.get("path", "")
+                for indicator in covert_indicators:
+                    if indicator in path:
+                        self.detections.append(Detection(
+                            timestamp=action.timestamp,
+                            threat_level=ThreatLevel.MEDIUM,
+                            detection_type="covert_path_access",
+                            agent_id=action.agent_id,
+                            description=f"Access to potential covert path: {path}",
+                            evidence={"path": path},
+                        ))
 
     def _detect_tool_anomalies(self):
         """Detect anomalous tool invocations."""

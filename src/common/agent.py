@@ -185,17 +185,18 @@ class Agent:
         if not self.constraints.check_tool(tool_name):
             violation = f"Unauthorized tool: {tool_name}"
 
-        self.logger.log(
-            ActionType.TOOL_INVOCATION,
-            agent_id=self.user_id,
-            details={"tool": tool_name, "args": str(args)[:100]},
-            violation=violation,
-        )
-
         if tool_name not in self.tools:
             raise ValueError(f"Tool not found: {tool_name}")
 
         result = self.tools[tool_name](*args, **kwargs)
+
+        # Log the invocation with result for injection detection
+        self.logger.log(
+            ActionType.TOOL_INVOCATION,
+            agent_id=self.user_id,
+            details={"tool": tool_name, "args": str(args)[:100], "result": str(result)[:500]},
+            violation=violation,
+        )
 
         # Check if tool output contains injection
         if isinstance(result, dict):
