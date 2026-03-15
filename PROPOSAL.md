@@ -87,19 +87,9 @@ The HPC environment introduces unique characteristics for agent operation:
 
 ### 2.3 Security in HPC
 
-HPC security has traditionally relied on a perimeter model: authenticate users at the cluster boundary, authorize access through resource managers and filesystem permissions, and trust that authenticated users behave benignly. The primary security mechanisms are:
+HPC security has traditionally relied on a perimeter model: authenticate users at the cluster boundary, authorize access through resource managers and filesystem permissions, and trust that authenticated users behave benignly. The primary mechanisms are authentication (Kerberos-based [29] for cluster access, SSH keys for interactive sessions, and increasingly federated identity through CILogon and eduGAIN [30]), authorization (role-based access control through schedulers like Slurm and POSIX filesystem permissions), network security (boundary firewalls, with internal traffic largely unencrypted due to InfiniBand performance requirements), and auditing (job accounting logs and filesystem access records where enabled).
 
-- **Authentication**: Kerberos-based authentication [29] for cluster access, SSH key-based authentication for interactive sessions, and increasingly, federated identity through systems like CILogon and eduGAIN [30].
-- **Authorization**: Role-based access control (RBAC) through the job scheduler (Slurm accounts, QOS levels) and POSIX filesystem permissions.
-- **Network security**: Firewalls at the cluster boundary, with internal network traffic largely unencrypted due to performance requirements of the high-speed interconnect (InfiniBand, Slingshot).
-- **Auditing**: Job accounting logs, filesystem access logs (where enabled), and network flow records.
-
-This model has several well-documented gaps [8]:
-
-- **Lateral movement**: Once authenticated, a user can access any resource their permissions allow, with no per-resource verification.
-- **Credential theft**: Compromised SSH keys or Kerberos tickets grant full access until detected and revoked.
-- **Overprovisioned access**: Users are typically granted broad filesystem access across all their projects, violating least-privilege.
-- **No behavioral monitoring**: The security model verifies identity but not intent — an authorized user performing unauthorized actions is not detected.
+This model has several well-documented gaps [8]. Once authenticated, a user can access any resource their permissions allow with no per-resource verification, enabling lateral movement. Compromised SSH keys or Kerberos tickets grant full access until detected and revoked. Users receive broad filesystem access across all their projects, violating least-privilege. Critically, the security model verifies identity but not intent — an authorized user performing unauthorized actions is not detected.
 
 These gaps are tolerable when all actors are human users whose actions are constrained by intent and awareness. They become critical when the actor is an AI agent that follows instructions blindly, including adversarial instructions delivered through injection attacks. The agent has valid credentials (passes authentication), has legitimate permissions (passes authorization), and its actions are consistent with its role (passes behavioral analytics) — but it is executing an attacker's commands. No existing HPC security mechanism addresses this threat.
 
@@ -107,11 +97,7 @@ These gaps are tolerable when all actors are human users whose actions are const
 
 Prompt injection — the subversion of an AI agent's instruction-following behavior through adversarial inputs — has emerged as a fundamental security challenge for LLM-based systems [10]. Unlike traditional exploits that target code vulnerabilities, prompt injection targets the semantic interpretation of inputs by the language model. The agent cannot distinguish between legitimate instructions and adversarial instructions hidden in data, because both are processed through the same mechanism.
 
-Prior work on prompt injection defense focuses on web-based scenarios: an agent browsing the internet encounters a malicious webpage that injects hidden instructions [11]. Defenses include input sanitization (removing known injection patterns), instruction hierarchy (marking system prompts as higher-priority than user inputs), and output filtering (detecting anomalous outputs). However, these defenses have fundamental limitations:
-
-- **Sanitization is incomplete**: The space of possible injection payloads is unbounded; any sanitization filter can be evaded through creative encoding.
-- **Instruction hierarchy is fragile**: Adversarial inputs can override hierarchical instructions through careful crafting [12]. Zou et al. [12] demonstrated universal adversarial suffix attacks that reliably bypass aligned LLM guardrails.
-- **Output filtering is probabilistic**: ML-based output classifiers have inherent false positive and negative rates, and can be evaded through adversarial examples.
+Prior work on prompt injection defense focuses on web-based scenarios where an agent browsing the internet encounters a malicious webpage that injects hidden instructions [11]. Existing defenses include input sanitization (removing known injection patterns), instruction hierarchy (marking system prompts as higher-priority), and output filtering (detecting anomalous outputs). However, sanitization is incomplete — the space of possible injection payloads is unbounded and any filter can be evaded through creative encoding. Instruction hierarchy is fragile — Zou et al. [12] demonstrated universal adversarial suffix attacks that reliably bypass aligned LLM guardrails. Output filtering is probabilistic — ML-based classifiers have inherent false positive and negative rates and can be evaded through adversarial examples.
 
 The agent security literature has not addressed the HPC context, where injection attacks exploit shared infrastructure (filesystems, compute nodes, tool ecosystems) rather than web content. This gap motivates our work.
 
@@ -294,34 +280,13 @@ Constraints are derived from the agent's authorized task specification, not from
 
 The AEGIS attestation protocol operates continuously throughout the agent's lifecycle, providing runtime verification of constraint compliance.
 
-**Components:**
+**Components.** The protocol follows the IETF RATS architecture [17] with three roles. The *attester* is the agent runtime, which produces signed evidence of the agent's actions. The *verifier* is the AEGIS policy engine, which evaluates evidence against the agent's constraint profile. The *relying party* is the HPC resource manager (Slurm), which enforces the verifier's decisions.
 
-- **Attester**: The agent runtime, which produces signed evidence of the agent's actions (following the IETF RATS architecture [17])
-- **Verifier**: The AEGIS policy engine, which evaluates evidence against constraints
-- **Relying Party**: The HPC resource manager (Slurm), which enforces the verifier's decisions
+**Protocol flow.** The protocol begins when an agent is deployed with its behavioral constraint profile, signed by the deploying user and bound to the agent's session identity. During execution, the attester produces attestation evidence bundles at configurable intervals — every N system calls, every M seconds, or on each resource access. Each bundle contains the agent's identity and session binding, a log of all resource accesses (files read or written, network connections, tools invoked), data volume counters for filesystem I/O and network egress, and a cryptographic hash of the agent's process state.
 
-**Protocol flow:**
+The verifier evaluates each evidence bundle against the agent's constraint profile. Compliant agents continue operating; violations trigger containment (§4.5). To prevent delayed reporting or evidence fabrication, the verifier issues random challenges at Poisson-distributed intervals, requiring the agent to produce immediate evidence of its current state.
 
-1. **Agent deployment.** Agent receives its behavioral constraint profile. The constraint profile is signed by the deploying user and bound to the agent's session identity.
-
-2. **Continuous attestation.** At configurable intervals (e.g., every N API calls, every M seconds, or on each resource access), the attester produces an **attestation evidence bundle** containing:
-   - Agent identity and session binding
-   - Resource access log (files read/written, network connections made, tools invoked)
-   - Data volume counters (filesystem I/O, network egress)
-   - Cryptographic hash of agent state
-
-3. **Verification.** The verifier evaluates the evidence against the constraint profile:
-   - *Compliant*: agent continues operating
-   - *Violation detected*: agent is contained (see §4.5)
-
-4. **Challenge-response.** At random intervals, the verifier issues a **challenge** requiring the agent to prove it is operating within constraints *right now*, not just in its last report. This prevents delayed reporting and evidence fabrication.
-
-**Formal properties:**
-
-- **Completeness**: A compliant agent always produces valid attestation evidence.
-- **Soundness**: A violating agent cannot produce valid evidence (without compromising the attestation hardware root of trust).
-- **Timeliness**: Violations are detected within one attestation interval, bounded by a configurable maximum.
-- **Non-repudiation**: Attestation evidence is cryptographically signed; violations cannot be denied.
+**Formal properties.** The protocol provides four guarantees: *completeness* (a compliant agent always produces valid evidence), *soundness* (a violating agent cannot produce valid evidence without compromising the hardware root of trust), *timeliness* (violations are detected within one attestation interval, bounded by a configurable maximum), and *non-repudiation* (cryptographically signed evidence prevents denial of violations).
 
 ### 4.4 Constraint Derivation
 
@@ -350,14 +315,9 @@ Containment is **immediate and automatic** — it does not depend on human revie
 
 ### 4.6 Relationship to Trusted Execution
 
-Behavioral attestation complements hardware-based Trusted Execution Environments (TEEs). TEEs attest to the *integrity of the execution environment* (the agent's code is unmodified). Behavioral attestation attests to the *conformance of agent behavior* (the agent's actions respect its constraints).
+Behavioral attestation complements hardware-based Trusted Execution Environments (TEEs). TEEs attest to the *integrity of the execution environment* — verifying that the agent's code is unmodified. Behavioral attestation attests to the *conformance of agent behavior* — verifying that the agent's actions respect its constraints, regardless of whether the underlying code is unmodified. These are independent concerns: a TEE guarantees code integrity, but a hijacked agent running unmodified code still violates constraints; behavioral attestation detects violations, but a compromised runtime could fabricate evidence without hardware-rooted signing. Combined, TEE guarantees evidence authenticity while behavioral attestation guarantees behavioral conformance.
 
-These are independent and complementary:
-- TEE alone: guarantees code integrity, but a hijacked agent running unmodified code still violates constraints
-- Behavioral attestation alone: detects violations, but a compromised runtime could fabricate evidence
-- Combined: TEE guarantees evidence authenticity, behavioral attestation guarantees behavioral conformance
-
-AEGIS is designed to operate with or without TEE support. In the base case, attestation evidence is signed by the agent runtime (software attestation). When TEEs are available (AMD SEV, Intel SGX, ARM CCA), the evidence is hardware-signed, providing stronger guarantees against runtime compromise.
+AEGIS operates with or without TEE support. In the base case, attestation evidence is signed by the agent runtime (software attestation). When TEEs are available (AMD SEV, Intel SGX, ARM CCA), the evidence is hardware-signed, providing stronger guarantees against runtime compromise.
 
 ### 4.7 Comparison with Prior Approaches
 
@@ -577,22 +537,11 @@ To understand the contribution of individual AEGIS components, we design four at
 
 **Validation:** All 24 expected detection/miss combinations match actual results (100% validation pass rate).
 
-**Finding.** Each AEGIS component is independently necessary for full detection:
-- Removing **any single component** reduces detection from 100% to 75%
-- Removing **all specialized components** (path checking only) reduces detection to **0%**
-- The layered architecture provides defense-in-depth: no single component is a single point of failure
-
-This ablation demonstrates that the specialized detection mechanisms (volume limits, sensitive file detection, covert channel detection, injection signatures) each catch attacks that would otherwise be missed — they are not redundant with basic constraint checking.
+**Finding.** Each AEGIS component is independently necessary for full detection. Removing any single component reduces detection from 100% to 75%; removing all specialized components (path checking only) reduces detection to 0%. The layered architecture provides defense-in-depth: no single component is a single point of failure. This ablation demonstrates that the specialized detection mechanisms (volume limits, sensitive file detection, covert channel detection, injection signatures) each catch attacks that would otherwise be missed — they are not redundant with basic constraint checking.
 
 ### 5.8 Detection Latency
 
-The detection latency of AEGIS is determined by the attestation interval $I$: violations are detected at the next evidence evaluation cycle after they occur. In the worst case, a violation occurs immediately after an evaluation, requiring a full interval before detection. In the average case, detection occurs within $I/2$.
-
-This is a property of the protocol design, not an empirical measurement. Given an attestation interval $I$:
-
-- **Worst-case detection latency**: $I$ (violation occurs right after an evaluation)
-- **Average detection latency**: $I/2$ (violation occurs uniformly at random within the interval)
-- **Maximum exfiltration before detection**: bounded by $I \times R$ where $R$ is the agent's maximum data egress rate
+The detection latency of AEGIS is determined by the attestation interval $I$: violations are detected at the next evidence evaluation cycle after they occur. In the worst case, a violation occurs immediately after an evaluation, requiring a full interval before detection (latency = $I$). On average, detection occurs within $I/2$ seconds, assuming violations occur uniformly at random within the interval. The maximum data exfiltrated before detection is bounded by $I \times R$, where $R$ is the agent's maximum data egress rate.
 
 The choice of interval represents a security–performance trade-off: shorter intervals provide faster detection at higher computational cost. Our empirical measurements in §5.6 show that a 1.0s interval introduces approximately 1–3% overhead while providing average detection latency of 500ms. For environments requiring faster response, a 0.5s interval is feasible at slightly higher overhead.
 
@@ -664,45 +613,19 @@ AEGIS is the first work to provide continuous, constraint-based, runtime behavio
 
 ### 7.2 Integration with HPC Resource Managers
 
-AEGIS is designed for integration with production HPC resource managers. Our prototype uses Slurm's REST API for containment enforcement, but the architecture is applicable to PBS, LSF, and other schedulers. Key integration points include:
-
-- **Job submission**: constraint profiles submitted alongside job specifications
-- **Node allocation**: attestation engines deployed on compute nodes via prolog scripts
-- **Accounting**: attestation events integrated with job accounting logs
-- **Preemption**: containment actions (suspend, terminate) mapped to scheduler preemption
-
-Deeper integration — for example, making constraint compliance a scheduling factor (prioritizing agents with tighter constraints) or using attestation evidence for fair-share accounting — is a promising direction for future work.
+AEGIS is designed for integration with production HPC resource managers. Our prototype uses Slurm's REST API for containment enforcement, but the architecture is applicable to PBS, LSF, and other schedulers. Key integration points include submitting constraint profiles alongside job specifications, deploying attestation engines on compute nodes via prolog scripts, integrating attestation events with job accounting logs, and mapping containment actions (suspend, terminate) to scheduler preemption. Deeper integration — making constraint compliance a scheduling factor or using attestation evidence for fair-share accounting — is a promising direction for future work.
 
 ### 7.3 Federated Zero-Trust Across Sites
 
-Modern scientific workflows span multiple HPC facilities: data collected at a beamline, processed at an institutional cluster, and analyzed at a leadership computing facility. AEGIS currently operates within a single site. Extending behavioral attestation across sites requires:
-
-- **Constraint portability**: constraint profiles that are valid across different filesystems, schedulers, and security domains
-- **Cross-site attestation**: verifiers that can evaluate evidence from agents running on foreign infrastructure
-- **Trust federation**: establishing trust in attestation evidence generated by another site's hardware and software stack
-
-The federated identity infrastructure already deployed in HPC (CILogon, eduGAIN, REFEDS) provides a foundation for cross-site agent identity. Extending this to behavioral attestation — federated constraint verification — is a natural but challenging next step.
+Modern scientific workflows span multiple HPC facilities: data collected at a beamline, processed at an institutional cluster, and analyzed at a leadership computing facility. AEGIS currently operates within a single site. Extending behavioral attestation across sites requires addressing constraint portability (profiles valid across different filesystems, schedulers, and security domains), cross-site attestation (verifiers that can evaluate evidence from agents running on foreign infrastructure), and trust federation (establishing confidence in attestation evidence generated by another site's hardware and software stack). The federated identity infrastructure already deployed in HPC (CILogon, eduGAIN, REFEDS) provides a foundation; extending this to federated constraint verification is a natural but challenging next step.
 
 ### 7.4 Formal Verification of Constraint Policies
 
-Constraint profiles are security-critical: an incorrect constraint (too permissive) allows unauthorized access; an incorrect constraint (too restrictive) blocks legitimate work. Formal verification of constraint policies could provide guarantees that:
-
-- Constraints are *complete*: no unauthorized action is permitted
-- Constraints are *consistent*: no two constraints contradict each other
-- Constraints are *minimal*: no constraint can be removed without introducing a vulnerability
-
-Model checking and theorem proving (e.g., using TLA+ or Coq) could verify these properties for specific constraint profiles. While this is beyond the scope of the current paper, we believe formal methods are essential for deploying behavioral attestation in high-assurance HPC environments.
+Constraint profiles are security-critical: an incorrect constraint (too permissive) allows unauthorized access; an incorrect constraint (too restrictive) blocks legitimate work. Formal verification could provide guarantees that constraints are *complete* (no unauthorized action is permitted), *consistent* (no two constraints contradict each other), and *minimal* (no constraint can be removed without introducing vulnerability). Model checking and theorem proving (e.g., using TLA+ or Coq) could verify these properties for specific constraint profiles. While beyond the scope of this paper, formal methods are essential for deploying behavioral attestation in high-assurance HPC environments.
 
 ### 7.5 Broader Applications
 
-While we focus on HPC AI agents, behavioral attestation is applicable to any system where autonomous actors operate in shared, multi-tenant environments:
-
-- **Cloud-native agents**: AI agents deployed in Kubernetes clusters accessing shared cloud storage and APIs
-- **Edge computing**: autonomous agents on edge devices processing shared sensor data
-- **Robotic systems**: agents controlling physical robots with safety constraints
-- **Financial systems**: trading agents operating under regulatory compliance constraints
-
-The core primitives — constraint specification, continuous attestation, automated containment — are domain-agnostic. HPC provides a compelling first application due to its unique attack surfaces and the high value of its scientific data.
+While we focus on HPC AI agents, behavioral attestation applies to any system where autonomous actors operate in shared, multi-tenant environments: cloud-native agents in Kubernetes clusters accessing shared storage and APIs, autonomous agents on edge devices processing shared sensor data, agents controlling physical robots with safety constraints, and trading agents operating under regulatory compliance constraints. The core primitives — constraint specification, continuous attestation, automated containment — are domain-agnostic. HPC provides a compelling first application due to its unique attack surfaces and the high value of its scientific data.
 
 ## 8. Conclusion
 
