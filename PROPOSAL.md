@@ -73,6 +73,9 @@ Prompt injection — subverting an agent's instruction-following through adversa
 
 ## 3. Threat Model
 
+![The Hijacked Agent Threat Model](figures/threat_model.png)
+**Figure 1:** The hijacked authorized agent threat. An agent with valid credentials (Kerberos, SSH, RBAC) is subverted through injection attacks. The hijacked agent exfiltrates data through encrypted LLM API channels invisible to traditional DLP and monitoring systems.
+
 ### 3.1 The Hijacked Agent Threat
 
 We identify the most dangerous threat to HPC environments deploying AI agents: **the hijacked authorized agent**. Unlike rogue or malicious agents, which are blocked by existing authentication and authorization mechanisms, a hijacked agent operates under the full credentials and privileges of a legitimate user. It is not an intruder; it is a trusted insider that has been turned.
@@ -131,6 +134,9 @@ We explicitly **do not** assume the adversary can compromise the scheduler or re
 
 This threat model motivates the need for **attestation**: continuous verification that the agent's *behavior* conforms to its *authorized intent*, not just that its *identity* is valid.
 
+![HPC-Specific Injection Attack Surfaces](figures/injection_surfaces.png)
+**Figure 2:** Four HPC-specific injection attack surfaces. (a) Filesystem-mediated: poisoned data in shared Lustre/GPFS. (b) Co-location: shared /tmp on multi-tenant compute nodes. (c) Supply chain: compromised agent tools. (d) Coordinated: multi-agent covert exfiltration network.
+
 ### 3.5 Unique Properties of HPC Agent Injection Attacks
 
 Agent injection attacks in HPC exploit shared infrastructure in ways not studied in prior work on prompt injection (which focuses on web-based and chatbot scenarios). These properties arise from the unique characteristics of HPC infrastructure: shared filesystems, multi-tenant compute nodes, and emerging agent skill ecosystems.
@@ -147,7 +153,7 @@ Agent injection attacks in HPC exploit shared infrastructure in ways not studied
 
 ### 4.1 Overview
 
-AEGIS consists of four core components that operate across the HPC cluster:
+AEGIS consists of four core components that operate across the HPC cluster (Figure 3, left):
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -187,6 +193,9 @@ AEGIS consists of four core components that operate across the HPC cluster:
 
 **Containment Enforcer.** Translates verdicts into enforcement actions via the Slurm REST API: cgroup throttling (minor), ACL revocation (moderate), job suspension (severe), termination + credential revocation (critical).
 
+![AEGIS System Architecture](figures/aegis_architecture.png)
+**Figure 7:** AEGIS system architecture. Four core components: Attestation Engine (per-node, eBPF-based), Policy Verifier (centralized), Containment Enforcer (Slurm REST API), and Constraint Manager. Data flows through signed evidence bundles over gRPC. Tamper-evident audit ledger records all decisions.
+
 These components implement **behavioral attestation** — a fundamentally new concept that differs from prior approaches along three axes:
 
 | Dimension | Prior Approaches | Behavioral Attestation |
@@ -200,6 +209,9 @@ These components implement **behavioral attestation** — a fundamentally new co
 This shifts the security question from *"Is this agent compromised?"* (unknowable) to *"Is this agent behaving within its authorized constraints?"* (verifiable).
 
 ### 4.2 Constraint Specification
+
+![Behavioral Constraint Dimensions](figures/constraint_dimensions.png)
+**Figure 3:** Five constraint dimensions for agent behavioral attestation: data access (paths, volumes), network (endpoints, egress), tool invocation (allowed/denied), execution (runtime, memory), and data flow (project boundaries, exfil budget). Each dimension maps to specific detection mechanisms.
 
 Each agent receives a **behavioral constraint profile** at deployment, declarations of legitimate behavior derived from the agent's authorized task, not signatures of malicious behavior. Constraints span five dimensions: data access (allowed/denied paths, read-only paths, volume limits), network (whitelisted endpoints, egress budgets), tool invocation (allowed/denied tools), execution (runtime limits, memory limits, node restrictions), and data flow (project boundaries, exfiltration budgets). Constraints are evasion-resistant: an attacker cannot make an unauthorized action authorized through obfuscation — the constraint either permits the action or it does not.
 
@@ -303,9 +315,16 @@ We demonstrate all four HPC-specific injection attacks on our test cluster (§5.
 
 **Exp 4: Coordinated Multi-Agent Exfiltration.** Two hijacked agents form a covert channel via `/.cache/` on shared filesystem. Agent 1 reads finance data and writes to covert cache; Agent 3 picks it up and exfiltrates via LLM API. *Result: 521 bytes exfiltrated across 4 agents, detected in 0.09 ms (7 detections including 1 CRITICAL covert channel signal via cross-agent correlation).*
 
+![Attack Results Summary](figures/attack_results.png)
+**Figure 4:** Experimental attack results. (Left) Bytes exfiltrated per attack. (Right) Detections triggered per attack. All four attacks succeed while AEGIS detects all four.
+
 **Summary.** All four attacks succeed (100% attack rate). All four are detected by AEGIS (100% detection rate). Total: 1,158 bytes exfiltrated, 16 detections. The covert channel in Exp 4 is only detectable through cross-agent correlation, which is impossible with per-agent monitoring alone.
 
 ### 5.2 Baseline Comparison
+
+![Baseline Defense Comparison](figures/baseline_comparison.png)
+**Figure 5:** Detection rate comparison across defense mechanisms. Network DLP and per-agent analytics detect 0% of attacks (encrypted channels, no cross-agent correlation). Filesystem auditing and sandboxing detect 50% (limited visibility). AEGIS achieves 100% detection through behavioral attestation.
+
 
 We compare AEGIS against four alternative defense mechanisms. Each baseline analyzes the same attack action logs produced by our attack implementations, applying its own detection logic based on its operational capabilities. Detection times are measured using `time.perf_counter()` over 10 trials per configuration.
 
@@ -353,6 +372,9 @@ We compare AEGIS against four alternative defense mechanisms. Each baseline anal
 
 **Practical overhead.** Based on component characterization and comparable systems (Keylime reports <3% overhead for TPM-based attestation at 5s intervals), we estimate AEGIS's total overhead at **1–3% for a 1.0s attestation interval** on representative HPC workloads. This is within the acceptable range for production HPC deployment, where security overhead of 2–5% is typically tolerated for significant security benefits.
 
+![Estimated Performance Overhead](figures/performance_overhead.png)
+**Figure 8:** Estimated performance overhead (left axis, bars) and detection latency (right axis, line) vs. attestation interval. At 1.0s interval: ~1.5% overhead with ~500ms average detection latency.
+
 **Note:** Full end-to-end performance evaluation on an HPC cluster is planned as future work. The estimates above are based on component microbenchmarks and should be validated on production hardware.
 
 ### 5.4 Ablation Study
@@ -369,6 +391,9 @@ To understand the contribution of individual AEGIS components, we design four at
 | Sensitive File | Reads `~/.ssh/id_rsa` (allowed path, sensitive content) | Sensitive file access detection |
 | Covert Channel | Agent 1 writes to `/tmp/.hidden`, Agent 3 reads it | Cross-agent covert channel detection |
 | Tool Injection | Compromised tool returns output with injection regex | Injection signature detection |
+
+![Ablation Study Results](figures/ablation_heatmap.png)
+**Figure 6:** Ablation study results. Each row removes one AEGIS component; each column tests one attack type. Green = detected, red = missed. Full AEGIS detects all attacks (100%). Removing any component drops detection to 75%. Minimal configuration achieves 0%.
 
 **Results:**
 
@@ -410,6 +435,9 @@ Prompt injection defenses focus on web-based scenarios: input sanitization, inst
 ### 6.5 Differentiation
 
 The key distinction between AEGIS and prior work is the security primitive: **behavioral attestation** rather than detection, access control, or integrity verification. Table 1 summarizes this differentiation.
+
+![Detection Capabilities Comparison](figures/detection_radar.png)
+**Figure 9:** Detection capabilities across attack types. AEGIS covers all four HPC-specific attack vectors while traditional defenses have significant blind spots.
 
 **Table 1: Comparison of AEGIS with prior work.** AEGIS is the only work providing continuous, constraint-based, runtime behavioral attestation for AI agents in HPC environments. The ✓/✗ markers indicate whether each work addresses the dimension.
 
