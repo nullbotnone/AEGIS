@@ -109,7 +109,16 @@ This exfiltration vector is **invisible to traditional Data Loss Prevention (DLP
 
 ### 3.3 Adversarial Capabilities
 
-We assume an adversary who can craft prompt injection attacks, observe encrypted traffic metadata (but not content), operate only through hijacked agents (no direct HPC account), and persist across multiple sessions. We explicitly do not assume the adversary can compromise the scheduler, access LLM infrastructure, or subvert hardware roots of trust.
+We assume an adversary with the following capabilities:
+
+| Capability | Assumption |
+|---|---|
+| Prompt injection | Can craft inputs that subvert agent instruction-following |
+| Network access | Can observe encrypted traffic metadata (timing, volume) but not content |
+| HPC access | No direct HPC account; must operate through hijacked agents |
+| Time horizon | Can persist across multiple agent sessions and job submissions |
+
+We explicitly **do not** assume the adversary can compromise the scheduler or resource manager, access the LLM provider's infrastructure, or subvert hardware roots of trust (TPM, secure enclaves).
 
 ### 3.4 Why Existing Defenses Fail
 
@@ -126,7 +135,7 @@ This threat model motivates the need for **attestation**: continuous verificatio
 
 ### 3.5 Unique Properties of HPC Agent Injection Attacks
 
-Agent injection in HPC exploits shared infrastructure in ways not studied in prior web-focused injection work.
+Agent injection attacks in HPC exploit shared infrastructure in ways not studied in prior work on prompt injection (which focuses on web-based and chatbot scenarios). These properties arise from the unique characteristics of HPC infrastructure: shared filesystems, multi-tenant compute nodes, and emerging agent skill ecosystems.
 
 **Filesystem-mediated injection.** HPC shared filesystems (Lustre, GPFS) create injection surfaces with no web analogue. An attacker with shared project access places adversarial content (poisoned metadata, hidden instructions in log output) that the target agent reads as trusted scientific data. The trust assumption in shared storage — where scientific data is presumed benign — cannot be revoked without destroying workflow utility.
 
@@ -211,7 +220,13 @@ The verifier evaluates each evidence bundle against the agent's constraint profi
 
 ### 4.4 Constraint Derivation
 
-Constraints come from three sources: explicit specification by the deploying user (highest assurance, requires expertise), task inference from the agent's specification (lower burden, requires inference engine), or policy templates for common HPC agent patterns (practical middle ground). AEGIS supports all three modes and their combinations.
+Constraints come from three sources:
+
+**Explicit specification.** The deploying user specifies constraints directly, analogous to Kubernetes resource limits or Slurm job specifications. This is the highest-assurance source but requires user expertise in both the agent's task and the constraint language.
+
+**Task inference.** Constraints are inferred from the agent's task specification using an LLM-based constraint generation module (e.g., "analyze genomics data for Project X" → allowed_paths: /projects/genomics/X/*, allowed_tools: bioinformatics suite). This reduces user burden but requires validation of inferred constraints.
+
+**Policy templates.** Pre-defined constraint profiles for common HPC agent patterns (data analysis agent, simulation steering agent, ML training agent). Users select and customize a template, balancing assurance with usability. AEGIS supports combining modes (e.g., template + task inference + user overrides).
 
 ### 4.5 Containment Mechanisms
 
@@ -376,7 +391,7 @@ Prompt injection defenses focus on web-based scenarios: input sanitization, inst
 
 The key distinction between AEGIS and prior work is the security primitive: **behavioral attestation** rather than detection, access control, or integrity verification. Table 1 summarizes this differentiation.
 
-**Table 1: Comparison of AEGIS with prior work across five dimensions.**
+**Table 1: Comparison of AEGIS with prior work.** AEGIS is the only work providing continuous, constraint-based, runtime behavioral attestation for AI agents in HPC environments. The ✓/✗ markers indicate whether each work addresses the dimension.
 
 | Work | Primitive | Guarantee | Timing | HPC | Agent-Aware |
 |---|---|---|---|---|---|
@@ -394,7 +409,9 @@ AEGIS is the first work to provide continuous, constraint-based, runtime behavio
 
 ### 7.1 Limitations
 
-Behavioral attestation has several limitations. It can only enforce specified constraints — incomplete profiles leave blind spots. A sophisticated attacker who understands the constraints can craft injections that stay within boundaries, bounded only by constraint tightness. Violations are detected within one attestation interval (default 5s), creating a window for unauthorized actions. Our implementation focuses on single-node attestation; cross-node correlation for distributed attacks is future work. Finally, software attestation without TEEs cannot resist a compromised kernel, though eBPF-based monitoring raises the bar compared to userspace-only approaches.
+Behavioral attestation has several limitations. It can only enforce specified constraints — incomplete profiles leave blind spots, creating a human-factors challenge of making constraint specification both complete and practical. A sophisticated attacker who understands the constraints can craft injections that stay within authorized boundaries, bounded only by constraint tightness. Tighter constraints reduce blast radius but may impede legitimate workflows, creating a security-utility trade-off that must be tuned per deployment.
+
+Violations are detected within one attestation interval (default 5s), creating a window for unauthorized actions before containment. Shorter intervals reduce this window at the cost of higher overhead. Our implementation focuses on single-node attestation; cross-node correlation for distributed attacks — particularly the coordinated multi-agent exfiltration scenario — is an area for future work. Finally, software attestation without TEEs cannot resist a compromised kernel, though eBPF-based monitoring raises the bar compared to userspace-only approaches.
 
 ### 7.2 Integration with HPC Resource Managers
 
@@ -440,3 +457,12 @@ While attention gave agents the power to reason, attestation gives the system th
 | Revision & Submit | Aug 8 – deadline | Incorporate feedback, final polish, submit |
 
 _(Adjust dates once SC26 exact deadlines are announced)_
+
+
+## Appendix A: Detailed Experiment Setups
+
+Detailed attack descriptions, payloads, and step-by-step execution traces for all four experiments (§5.1) are provided in the supplementary materials. Source code and datasets are available at the project repository.
+
+## Appendix B: Ablation Study Details
+
+Full ablation study results including per-configuration detection matrices, validation check outputs, and component impact analysis are provided in the supplementary materials. All 24 validation checks pass across 6 configurations (Full AEGIS, No Volume Limits, No Sensitive Detection, No Covert Channel, No Injection Signatures, Minimal).
