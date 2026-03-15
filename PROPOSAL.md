@@ -357,9 +357,33 @@ We compare AEGIS against four alternative defense mechanisms. Each baseline anal
 
 ### 5.4 Ablation Study
 
-We test each AEGIS component in isolation by removing it and measuring detection impact (full details in Appendix B). Four attacks are designed to be detectable by only one component: volume exfil (volume limits), SSH key access (sensitive file detection), covert channel (cross-agent correlation), tool injection (injection signatures).
+To understand the contribution of individual AEGIS components, we design four attacks — each targeting a single detection mechanism — and measure whether removing that component causes the attack to be missed.
 
-Results: Full AEGIS achieves 100% detection (4/4). Removing any single component drops detection to 75% (3/4). Minimal configuration (path checking only) achieves 0% (0/4). All 24 validation checks pass. Each component is independently necessary.
+**Ablation-friendly constraints.** For this study, we use permissive path constraints (`allowed_read_paths=["/*"]`, `denied_paths=[]`) so that basic path checking does not catch any attack. This isolates the specialized detection mechanisms.
+
+**Attack–detector mapping:**
+
+| Attack | What It Does | Only Detectable By |
+|--------|-------------|-------------------|
+| Volume Exfil | Reads allowed files, exfiltrates 292 bytes (budget: 200) | Egress budget checking |
+| Sensitive File | Reads `~/.ssh/id_rsa` (allowed path, sensitive content) | Sensitive file access detection |
+| Covert Channel | Agent 1 writes to `/tmp/.hidden`, Agent 3 reads it | Cross-agent covert channel detection |
+| Tool Injection | Compromised tool returns output with injection regex | Injection signature detection |
+
+**Results:**
+
+| Configuration | Volume | Sensitive | Covert | Injection | **Detection Rate** |
+|---------------|--------|-----------|--------|-----------|-------------------|
+| Full AEGIS | ✓ | ✓ | ✓ | ✓ | **100%** |
+| No Volume Limits | ✗ MISS | ✓ | ✓ | ✓ | **75%** |
+| No Sensitive Detection | ✓ | ✗ MISS | ✓ | ✓ | **75%** |
+| No Covert Channel | ✓ | ✓ | ✗ MISS | ✓ | **75%** |
+| No Injection Signatures | ✓ | ✓ | ✓ | ✗ MISS | **75%** |
+| Minimal (path only) | ✗ MISS | ✗ MISS | ✗ MISS | ✗ MISS | **0%** |
+
+**Validation:** All 24 expected detection/miss combinations match actual results (100% validation pass rate).
+
+**Finding.** Each AEGIS component is independently necessary for full detection. Removing any single component reduces detection from 100% to 75%. Removing all specialized components (path checking only) reduces detection to 0%. The layered architecture provides defense-in-depth: no single component is a single point of failure. This ablation demonstrates that the specialized detection mechanisms (volume limits, sensitive file detection, covert channel detection, injection signatures) each catch attacks that would otherwise be missed — they are not redundant with basic constraint checking.
 
 ### 5.5 Detection Latency
 
