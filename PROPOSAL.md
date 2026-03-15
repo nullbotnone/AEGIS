@@ -333,7 +333,7 @@ We compare AEGIS against four alternative defense mechanisms. Each baseline anal
 
 **False positive analysis.** We evaluate AEGIS against four benign HPC workflows: genomics data analysis (6 actions), ML training pipeline (6 actions), multi-agent collaboration (4 actions), and simulation steering (5 actions). Result: **0 false positives** across all 21 actions. Constraint-based checking (verifying against declared policy) eliminates false alarms for compliant workflows.
 
-### 5.6 Performance Overhead
+### 5.3 Performance Overhead
 
 **Experimental setup.** We characterize AEGIS overhead through two complementary approaches: (1) microbenchmarks of individual component costs (eBPF syscall interception, evidence signing, constraint evaluation), and (2) end-to-end measurements on representative workloads with varying attestation intervals and agent counts.
 
@@ -355,13 +355,13 @@ We compare AEGIS against four alternative defense mechanisms. Each baseline anal
 
 **Note:** Full end-to-end performance evaluation on an HPC cluster is planned as future work. The estimates above are based on component microbenchmarks and should be validated on production hardware.
 
-### 5.7 Ablation Study
+### 5.4 Ablation Study
 
 We test each AEGIS component in isolation by removing it and measuring detection impact (full details in Appendix B). Four attacks are designed to be detectable by only one component: volume exfil (volume limits), SSH key access (sensitive file detection), covert channel (cross-agent correlation), tool injection (injection signatures).
 
 Results: Full AEGIS achieves 100% detection (4/4). Removing any single component drops detection to 75% (3/4). Minimal configuration (path checking only) achieves 0% (0/4). All 24 validation checks pass. Each component is independently necessary.
 
-### 5.8 Detection Latency
+### 5.5 Detection Latency
 
 Detection latency is bounded by attestation interval $I$: worst case = $I$, average = $I/2$, maximum exfiltration before detection = $I times R$ (agent's max egress rate). At 1.0s interval: ~500ms average latency, ~60KB max exfiltration, ~1-3% overhead. Unlike probabilistic detection that may miss attacks entirely, AEGIS guarantees detection within one interval.
 
