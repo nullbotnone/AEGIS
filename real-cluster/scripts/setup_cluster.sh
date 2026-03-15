@@ -30,7 +30,9 @@ fi
 
 # Generate test datasets
 echo "[4/5] Generating test datasets..."
-python3 ../src/data/generate_datasets.py 2>/dev/null || echo "  [!] Dataset generation skipped"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+python3 "${PROJECT_DIR}/../src/data/generate_datasets.py" 2>/dev/null || echo "  [!] Dataset generation skipped"
 
 # Setup experiment 1 (filesystem injection)
 echo "[5/5] Setting up experiments..."

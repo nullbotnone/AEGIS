@@ -15,6 +15,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 RESULTS_DIR="/projects/shared/aegis/overhead-results"
 mkdir -p "${RESULTS_DIR}"
 
@@ -32,7 +34,7 @@ run_hpcg_benchmark() {
     
     if [ "$monitor_enabled" = "true" ]; then
         # Start AEGIS monitor
-        sudo python3 ../monitor/ebpf_monitor.py \
+        sudo python3 "${PROJECT_DIR}/monitor/ebpf_monitor.py" \
             --agent-id "hpcg-${label}" \
             --output "${RESULTS_DIR}/hpcg-monitor-${label}.jsonl" &
         MONITOR_PID=$!
@@ -61,7 +63,7 @@ run_ior_benchmark() {
     echo "[IOR] Running with monitor=${monitor_enabled}..."
     
     if [ "$monitor_enabled" = "true" ]; then
-        sudo python3 ../monitor/ebpf_monitor.py \
+        sudo python3 "${PROJECT_DIR}/monitor/ebpf_monitor.py" \
             --agent-id "ior-${label}" \
             --output "${RESULTS_DIR}/ior-monitor-${label}.jsonl" &
         MONITOR_PID=$!
@@ -90,81 +92,22 @@ run_agent_workflow() {
     echo "[Agent] Running workflow with monitor=${monitor_enabled}..."
     
     if [ "$monitor_enabled" = "true" ]; then
-        sudo python3 ../monitor/ebpf_monitor.py \
+        sudo python3 "${PROJECT_DIR}/monitor/ebpf_monitor.py" \
             --agent-id "agent-${label}" \
             --output "${RESULTS_DIR}/agent-monitor-${label}.jsonl" &
         MONITOR_PID=$!
     fi
     
-    # Run a realistic agent workflow:
-    # 1. Read several HDF5 files
-    # 2. Process with Python
-    # 3. Make LLM API call
-    # 4. Write results
+    # Run agent workflow using a Python helper script
+    AGENT_START=$(date +%s.%N)
     
-    START=$(date +%s.%N)
+    python3 "${PROJECT_DIR}/scripts/run_agent_workflow.py" \
+        --results-dir "${RESULTS_DIR}" \
+        --label "${label}" \
+        --api-key "${OPENAI_API_KEY:-}" 2>&1 | tee "${RESULTS_DIR}/agent-workflow-${label}.log"
     
-    python3 -c "
-import time, os, json
-import numpy as np
-
-# Simulate reading HDF5 files
-print('Reading data files...')
-data = []
-for i in range(5):
-    fname = f'/projects/shared/aegis/data/sample_{i}.hdf5'
-    if os.path.exists(fname):
-        # Real file read
-        with open(fname, 'rb') as f:
-            content = f.read()
-        data.append(len(content))
-    else:
-        # Synthetic data
-        data.append(np.random.randn(1000, 64))
-    time.sleep(0.1)  # Simulate I/O wait
-
-# Simulate processing
-print('Processing...')
-result = np.mean([np.mean(d) if isinstance(d, np.ndarray) else d for d in data])
-time.sleep(0.5)  # Simulate compute
-
-# Make real LLM API call
-print('Calling LLM...')
-import urllib.request
-api_key = os.environ.get('OPENAI_API_KEY', '')
-if api_key:
-    req = urllib.request.Request(
-        'https://api.openai.com/v1/chat/completions',
-        data=json.dumps({
-            'model': 'gpt-4o-mini',
-            'messages': [{'role': 'user', 'content': f'Summarize: mean={result:.2f}'}],
-            'max_tokens': 100
-        }).encode(),
-        headers={
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {api_key}'
-        }
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            response = json.loads(resp.read())
-        print(f'LLM response received: {len(json.dumps(response))} bytes')
-    except Exception as e:
-        print(f'LLM call failed: {e}')
-else:
-    print('No API key, simulating LLM call...')
-    time.sleep(1.0)
-
-# Write results
-print('Writing results...')
-with open('${RESULTS_DIR}/agent-results-${label}.json', 'w') as f:
-    json.dump({'mean': float(result), 'samples': len(data)}, f)
-
-print('Done.')
-" 2>&1 | tee "${RESULTS_DIR}/agent-workflow-${label}.log"
-    
-    END=$(date +%s.%N)
-    ELAPSED=$(echo "$END - $START" | bc)
+    AGENT_END=$(date +%s.%N)
+    ELAPSED=$(echo "$AGENT_END - $AGENT_START" | bc 2>/dev/null || echo "N/A")
     echo "Total time: ${ELAPSED}s" | tee -a "${RESULTS_DIR}/agent-workflow-${label}.log"
     
     if [ -n "${MONITOR_PID:-}" ]; then
@@ -188,7 +131,7 @@ run_agent_workflow true "aegis"
 
 echo ""
 echo "=== Analyzing Results ==="
-python3 ../scripts/analyze_overhead.py \
+python3 "${PROJECT_DIR}/scripts/analyze_overhead.py" \
     --results-dir "${RESULTS_DIR}" \
     --output "${RESULTS_DIR}/overhead-report.json"
 
