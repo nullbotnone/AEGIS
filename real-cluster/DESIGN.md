@@ -4,8 +4,25 @@
 
 This branch contains the experiment framework for running AEGIS on an actual Slurm HPC cluster with real AI agents. These experiments replace the simulated proof-of-concept on `master` with production-quality validation.
 
-## Prerequisites
+## Hardware
 
+| Node | Hardware | CPU / GPU | RAM | OS | Role |
+|------|----------|-----------|-----|----|------|
+| 4× compute | Radxa X2L | Intel N100 (4 cores, 3.4 GHz) | 8 GB DDR4 | Ubuntu 24.04 | Agent execution, eBPF monitoring |
+| 1× controller | NVIDIA Jetson Orin Nano | 6-core ARM, 128-core Ampere GPU | 8 GB LPDDR5 | JetPack 6.0 | Policy verifier, coordination |
+
+Network: TP-Link TL-SG108 switch with port mirroring (1 GbE)
+
+## Software Prerequisites
+
+- Ubuntu 24.04 with Linux kernel 6.8+ (eBPF support)
+- Slurm 23.11+
+- Shared NFS filesystem (simulates Lustre at smaller scale)
+- Python 3.12+ on all nodes
+- LLM API access (OpenAI, Anthropic, or local LLM)
+- BCC library for eBPF monitoring
+- Root/sudo on compute nodes (for eBPF)
+- At least 2 user accounts (for multi-user experiments)
 - Slurm-based HPC cluster (≥4 nodes, ideally 10+)
 - Shared parallel filesystem (Lustre, GPFS, or BeeGFS)
 - Python 3.10+ on all nodes
