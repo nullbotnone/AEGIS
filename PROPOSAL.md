@@ -15,7 +15,7 @@
 
 ## Abstract
 
-AI agents entering HPC introduce a threat that HPC security was never designed to handle: the *hijacked authorized agent*. Through prompt injection attacks via shared filesystems, co-located nodes, or compromised tools, an adversary subverts an agent with valid credentials. The hijacked agent exfiltrates data through encrypted, whitelisted LLM API channels — invisible to traditional monitoring.
+AI agents entering HPC introduce a threat that HPC security was never designed to handle: the *hijacked authorized agent*. Through prompt injection attacks via shared filesystems, co-located nodes, or compromised tools, an adversary subverts an agent with valid credentials. The hijacked agent exfiltrates data through encrypted, whitelisted LLM API channels , invisible to traditional monitoring.
 
 We propose **behavioral attestation** for securing AI agents in HPC. Rather than probabilistic detection or signature-based blocking, attestation provides provable, constraint-based guarantees that an agent operates within authorized behavioral boundaries, with runtime containment before exfiltration.
 
@@ -25,17 +25,17 @@ We formalize four HPC-specific injection attack vectors, design and implement AE
 
 > *While attention gave agents the power to reason, attestation gives the system the power to trust them.*
 
-AI agents are entering high-performance computing. Autonomous experiment loops steer simulations in real time. ML training agents orchestrate multi-node workflows without human intervention. Data analysis agents read, transform, and summarize petabytes of scientific output. These agents promise to dramatically accelerate scientific discovery — but they also introduce a threat that HPC security was never designed to handle.
+AI agents are entering high-performance computing. Autonomous experiment loops steer simulations in real time. ML training agents orchestrate multi-node workflows without human intervention. Data analysis agents read, transform, and summarize petabytes of scientific output. These agents promise to dramatically accelerate scientific discovery , but they also introduce a threat that HPC security was never designed to handle.
 
-The problem is not that AI agents are untrustworthy. The problem is that they are *too* trustworthy — to the wrong inputs. An agent authorized to process genomics data for Project X will faithfully execute whatever instructions it receives, including instructions hidden inside that data by an attacker. A prompt injection payload embedded in a FITS file header, a malicious instruction in a shared `/tmp` directory, a compromised tool returning hidden commands — these are not hypothetical threats. They are the natural consequence of deploying instruction-following systems into environments where untrusted data is the norm.
+The problem is not that AI agents are untrustworthy. The problem is that they are *too* trustworthy , to the wrong inputs. An agent authorized to process genomics data for Project X will faithfully execute whatever instructions it receives, including instructions hidden inside that data by an attacker. A prompt injection payload embedded in a FITS file header, a malicious instruction in a shared `/tmp` directory, a compromised tool returning hidden commands ; these are not hypothetical threats. They are the natural consequence of deploying instruction-following systems into environments where untrusted data is the norm.
 
-This paper identifies and formalizes a threat that has not been studied in prior work: **the hijacked authorized agent in HPC**. Unlike rogue agents (which existing authentication blocks) or adversarial agents (which existing authorization constrains), a hijacked agent operates with the full credentials and privileges of a legitimate user. It does not need to escalate privileges — it already has them. It does not need to bypass access controls — it is already authorized. It appears legitimate to every monitoring system that checks identity, because its identity *is* legitimate. And it exfiltrates data through the one channel that no HPC security system inspects: the encrypted, whitelisted, high-bandwidth LLM API connection that the agent requires to function.
+This paper identifies and formalizes a threat that has not been studied in prior work: **the hijacked authorized agent in HPC**. Unlike rogue agents (which existing authentication blocks) or adversarial agents (which existing authorization constrains), a hijacked agent operates with the full credentials and privileges of a legitimate user. It does not need to escalate privileges ; it already has them. It does not need to bypass access controls ; it is already authorized. It appears legitimate to every monitoring system that checks identity, as its identity is legitimate. It exfiltrates data through the one channel no HPC system inspects: the encrypted LLM API connection the agent requires to function.
 
-The attack surface is uniquely HPC. Shared filesystems (Lustre, GPFS) create injection surfaces — an attacker places adversarial content in a project directory, and the target agent reads it as trusted scientific data. Multi-tenant compute nodes create co-location injection vectors — an attacker's agent writes to shared `/tmp`, and a co-located target agent picks it up. Agent skill ecosystems create supply chain attacks — a compromised tool injects instructions from within the agent's trusted execution context. And coordinated multi-agent exfiltration distributes data theft across nodes and users, evading per-agent detection entirely.
+The attack surface is uniquely HPC. Shared filesystems (Lustre, GPFS) create injection surfaces , where an attacker places adversarial content in a project directory, and the target agent reads it as trusted scientific data. Multi-tenant compute nodes create co-location injection vectors , where an attacker's agent writes to shared `/tmp`, and a co-located target agent picks it up. Agent skill ecosystems create supply chain attacks , where a compromised tool injects instructions from within the agent's trusted execution context. Coordinated multi-agent exfiltration distributes data theft across nodes and users, evading per-agent detection entirely.
 
 Existing defenses fail against this threat. Authentication succeeds because the agent has valid credentials. Authorization succeeds because the agent has legitimate permissions. Network monitoring is blinded by encryption. DLP is bypassed because data is encoded in whitelisted API calls. User behavior analytics see nothing anomalous because the agent's workflow patterns are consistent with its authorized role.
 
-We propose **behavioral attestation** as the foundation for securing AI agents in HPC. Our key insight is simple: *we cannot prevent all injection attacks, but we can contain their effects*. Even if an agent is hijacked, we can detect when it violates its behavioral constraints — accessing files outside its authorized project, connecting to non-whitelisted endpoints, invoking unauthorized tools — and contain the violation before data exfiltration occurs.
+We propose **behavioral attestation** as the foundation for securing AI agents in HPC. Our key insight is simple: *we cannot prevent all injection attacks, but we can contain their effects*. Even if an agent is hijacked, we can detect when it violates its behavioral constraints, accessing files outside its authorized project, connecting to non-whitelisted endpoints, invoking unauthorized tools, and contain the violation before data exfiltration occurs.
 
 Behavioral attestation differs from prior approaches in three fundamental ways:
 
@@ -43,7 +43,7 @@ Behavioral attestation differs from prior approaches in three fundamental ways:
 
 - **Constraint-based, not signature-based.** Existing defenses block known-bad patterns (signatures), which can be evaded through obfuscation. Constraints define what is *allowed*, not what is malicious. An unauthorized action is unambiguously a violation, regardless of how it is disguised.
 
-- **Runtime, not post-hoc.** Existing monitoring alerts after the attack succeeds — the damage is already done. Behavioral attestation verifies constraints continuously during execution and enforces containment *before* exfiltration occurs.
+- **Runtime, not post-hoc.** Existing monitoring alerts after the attack succeeds , meaning damage is already done. Behavioral attestation verifies constraints continuously during execution and enforces containment *before* exfiltration occurs.
 
 This paper makes the following contributions: (1) formalization of the hijacked agent threat with four HPC-specific attack vectors not studied in prior work; (2) behavioral attestation as a provable, constraint-based, runtime security primitive for AI agents; (3) AEGIS, a complete zero-trust architecture encompassing constraint specification, attestation protocols, and automated containment; and (4) empirical evaluation demonstrating attack feasibility and defense effectiveness across all four attack vectors.
 
@@ -53,7 +53,7 @@ This paper makes the following contributions: (1) formalization of the hijacked 
 
 ### 2.1 Zero-Trust Architecture
 
-Zero-Trust Architecture (ZTA), formalized in NIST SP 800-207 [1], operates on "never trust, always verify" — treating every access request as potentially hostile regardless of origin. Core tenets include per-session least-privilege access, dynamic decisions informed by multiple signals, and continuous monitoring [31]. While widely adopted in enterprise and cloud environments, applying ZTA to HPC presents unique challenges: performance sensitivity of scientific workloads, shared-resource clusters (filesystems, interconnects, schedulers), and the need to preserve collaborative, low-friction access patterns.
+Zero-Trust Architecture (ZTA), formalized in NIST SP 800-207 [1], operates on "never trust, always verify" , treating every access request as potentially hostile regardless of origin. Core tenets include per-session least-privilege access, dynamic decisions informed by multiple signals, and continuous monitoring [31]. While widely adopted in enterprise and cloud environments, applying ZTA to HPC presents unique challenges: performance sensitivity of scientific workloads, shared-resource clusters (filesystems, interconnects, schedulers), and the need to preserve collaborative, low-friction access patterns.
 
 Recent work has begun addressing this gap. Alam et al. [2] deployed federated SSO with zero-trust controls for the Isambard-AI/HPC infrastructures in the UK. Duckworth et al. [3] proposed SPIFFE/SPIRE [26] for workload identity in HPC. Macauley and Bhasker [4] measured ZTA maturity implementation effort in HPC, finding the Identity pillar particularly challenging due to cost and complexity. Our work extends ZTA to a dimension these efforts do not address: *behavioral* trust of autonomous AI agents. Existing ZTA in HPC focuses on identity verification; for AI agents, identity verification must be complemented by *behavioral* verification — attesting not just to who the agent is, but to what it does.
 
@@ -65,23 +65,23 @@ HPC environments introduce unique characteristics for agent operation: shared pa
 
 ### 2.3 Security in HPC
 
-HPC security relies on a perimeter model: Kerberos/SSH authentication [29], RBAC through schedulers and POSIX permissions, boundary firewalls (internal traffic largely unencrypted for performance), and job accounting logs. This model has well-documented gaps [8]: lateral movement once authenticated, credential theft granting full access, overprovisioned filesystem permissions, and critically, no behavioral monitoring — the system verifies identity but not intent. These gaps are tolerable for human users constrained by awareness; they become critical for AI agents that follow instructions blindly, including adversarial ones. An agent has valid credentials (passes authentication), legitimate permissions (passes authorization), and consistent behavior patterns (passes analytics) — yet executes an attacker's commands.
+HPC security relies on a perimeter model: Kerberos/SSH authentication [29], RBAC through schedulers and POSIX permissions, boundary firewalls (internal traffic largely unencrypted for performance), and job accounting logs. This model has well-documented gaps [8]: lateral movement once authenticated, credential theft granting full access, overprovisioned filesystem permissions, and critically, no behavioral monitoring , the system verifies identity but not intent. These gaps are tolerable for human users constrained by awareness; they become critical for AI agents that follow instructions blindly, including adversarial ones. An agent has valid credentials (passes authentication), legitimate permissions (passes authorization), and consistent behavior patterns (passes analytics) , yet executes an attacker's commands.
 
 ### 2.4 Prompt Injection and Agent Security
 
-Prompt injection — subverting an agent's instruction-following through adversarial inputs [10] — has emerged as a fundamental security challenge for LLM-based systems. Prior work focuses on web-based scenarios where agents encounter malicious content on the internet [11]. Existing defenses — input sanitization, instruction hierarchy, and output filtering — have fundamental limitations: sanitization is incomplete (unbounded payload space), instruction hierarchy is fragile (Zou et al. [12] demonstrated universal adversarial suffix attacks bypassing LLM guardrails), and output filtering is probabilistic (ML classifiers have inherent error rates). Critically, this literature has not addressed HPC contexts where injection exploits shared infrastructure rather than web content.
+Prompt injection — subverting an agent's instruction-following through adversarial inputs [10] — has emerged as a fundamental security challenge for LLM-based systems. Prior work focuses on web-based scenarios where agents encounter malicious content on the internet [11]. Existing defenses (input sanitization, instruction hierarchy, output filtering) have fundamental limitations: sanitization is incomplete (unbounded payload space), instruction hierarchy is fragile (Zou et al. [12] demonstrated universal adversarial suffix attacks bypassing LLM guardrails), and output filtering is probabilistic (ML classifiers have inherent error rates). Critically, this literature has not addressed HPC contexts where injection exploits shared infrastructure rather than web content.
 
 ## 3. Threat Model
 
 ### 3.1 The Hijacked Agent Threat
 
-We identify the most dangerous threat to HPC environments deploying AI agents: **the hijacked authorized agent**. Unlike rogue or malicious agents, which are blocked by existing authentication and authorization mechanisms, a hijacked agent operates under the full credentials and privileges of a legitimate user. It is not an intruder — it is a trusted insider that has been turned.
+We identify the most dangerous threat to HPC environments deploying AI agents: **the hijacked authorized agent**. Unlike rogue or malicious agents, which are blocked by existing authentication and authorization mechanisms, a hijacked agent operates under the full credentials and privileges of a legitimate user. It is not an intruder; it is a trusted insider that has been turned.
 
-This threat arises from **prompt injection and tool poisoning attacks** against LLM-based agents. An attacker crafts inputs — through data files, tool outputs, shared documents, or collaborative channels — that subvert the agent's instruction-following behavior. The agent, now under adversarial control, executes commands indistinguishable from the legitimate user's intent.
+This threat arises from **prompt injection and tool poisoning attacks** against LLM-based agents. An attacker crafts inputs, through data files, tool outputs, shared documents, or collaborative channels, that subvert the agent's instruction-following behavior. The agent, now under adversarial control, executes commands indistinguishable from the legitimate user's intent.
 
 A hijacked agent possesses four properties that make it uniquely dangerous in HPC:
 
-1. **Full credential inheritance.** The agent operates with the user's Kerberos tickets, SSH keys, and scheduler permissions. No privilege escalation is needed — the agent already has access. From the access control system's perspective, every action is authorized.
+1. **Full credential inheritance.** The agent operates with the user's Kerberos tickets, SSH keys, and scheduler permissions. No privilege escalation is needed; the agent already has access. From the access control system's perspective, every action is authorized.
 
 2. **Cross-project filesystem access.** HPC shared filesystems (Lustre, GPFS, BeeGFS) are typically organized by user, not by project. A user authorized on Projects A, B, and C grants their agent simultaneous access to all three datasets. A hijacked agent can traverse project boundaries that would require separate authorization in a properly segmented system.
 
@@ -122,8 +122,8 @@ We explicitly **do not** assume the adversary can compromise the scheduler or re
 
 | Defense | Why it fails against hijacked agents |
 |---|---|
-| Authentication (Kerberos, SSH) | Agent has valid credentials — authentication succeeds |
-| Authorization (RBAC, ACLs) | Agent has legitimate permissions — authorization succeeds |
+| Authentication (Kerberos, SSH) | Agent has valid credentials, authentication succeeds |
+| Authorization (RBAC, ACLs) | Agent has legitimate permissions, authorization succeeds |
 | Network monitoring (IDS/IPS) | LLM API traffic is encrypted and whitelisted |
 | DLP | Data exfiltration is encoded in encrypted API calls |
 | User behavior analytics | Agent behavior is consistent with authorized workflow patterns |
@@ -135,13 +135,13 @@ This threat model motivates the need for **attestation**: continuous verificatio
 
 Agent injection attacks in HPC exploit shared infrastructure in ways not studied in prior work on prompt injection (which focuses on web-based and chatbot scenarios). These properties arise from the unique characteristics of HPC infrastructure: shared filesystems, multi-tenant compute nodes, and emerging agent skill ecosystems.
 
-**Filesystem-mediated injection.** HPC shared filesystems (Lustre, GPFS) create injection surfaces with no web analogue. An attacker with shared project access places adversarial content (poisoned metadata, hidden instructions in log output) that the target agent reads as trusted scientific data. The trust assumption in shared storage — where scientific data is presumed benign — cannot be revoked without destroying workflow utility.
+**Filesystem-mediated injection.** HPC shared filesystems (Lustre, GPFS) create injection surfaces with no web analogue. An attacker with shared project access places adversarial content (poisoned metadata, hidden instructions in log output) that the target agent reads as trusted scientific data. The trust assumption in shared storage, where scientific data is presumed benign, cannot be revoked without destroying workflow utility.
 
-**Multi-user co-location injection.** HPC schedulers place jobs from different users on shared nodes, creating application-level side channels. An attacker's agent leaves adversarial content in shared `/tmp` that a co-located target agent reads. No filesystem permissions on the target's project are needed — only a co-located job.
+**Multi-user co-location injection.** HPC schedulers place jobs from different users on shared nodes, creating application-level side channels. An attacker's agent leaves adversarial content in shared `/tmp` that a co-located target agent reads. No filesystem permissions on the target's project are needed, only a co-located job.
 
 **Supply chain injection via agent skills.** Agent skill ecosystems (OpenClaw, LangChain, MCP servers) create supply chain attack vectors. A compromised tool injects instructions directly into the agent's decision loop through tool output. The injection originates from code the agent chose to execute, making it indistinguishable from legitimate tool use.
 
-**Coordinated multi-agent exfiltration.** Multiple hijacked agents across projects and users form covert exfiltration networks: one agent reads sensitive data and writes to a shared covert location; another picks it up and exfiltrates via its LLM API channel. No single agent's behavior appears anomalous — the attack is visible only through cross-agent correlation.
+**Coordinated multi-agent exfiltration.** Multiple hijacked agents across projects and users form covert exfiltration networks: one agent reads sensitive data and writes to a shared covert location; another picks it up and exfiltrates via its LLM API channel. No single agent's behavior appears anomalous; the attack is visible only through cross-agent correlation.
 
 ## 4. Behavioral Attestation for AI Agents
 
@@ -195,13 +195,13 @@ These components implement **behavioral attestation** — a fundamentally new co
 | **Policy** | Signature-based (block known-bad patterns; evadable through obfuscation) | Constraint-based (define what is allowed; violations are unambiguous) |
 | **Timing** | Post-hoc (alert after the attack succeeds; damage already done) | Runtime (prevent violations in real-time; contain before exfiltration) |
 
-**Key insight.** We cannot prevent all injection attacks — the attack surface is too large and too diverse (§3.5). But we can **detect and contain the effects** of hijacked agents by attesting to behavioral constraints. Even if an agent is hijacked through filesystem injection, co-location injection, supply chain injection, or any other vector, the attestation mechanism detects when the agent violates its constraints — accessing files outside its authorized project, connecting to non-whitelisted network endpoints, invoking unauthorized tools, or exceeding its data access budget — and contains the violation before data is exfiltrated.
+**Key insight.** We cannot prevent all injection attacks; the attack surface is too large and too diverse (§3.5). But we can **detect and contain the effects** of hijacked agents by attesting to behavioral constraints. Even if an agent is hijacked through filesystem injection, co-location injection, supply chain injection, or any other vector, the attestation mechanism detects when the agent violates its constraints, accessing files outside its authorized project, connecting to non-whitelisted network endpoints, invoking unauthorized tools, or exceeding its data access budget — and contains the violation before data is exfiltrated.
 
 This shifts the security question from *"Is this agent compromised?"* (unknowable) to *"Is this agent behaving within its authorized constraints?"* (verifiable).
 
 ### 4.2 Constraint Specification
 
-Each agent receives a **behavioral constraint profile** at deployment — declarations of legitimate behavior derived from the agent's authorized task, not signatures of malicious behavior. Constraints span five dimensions: data access (allowed/denied paths, read-only paths, volume limits), network (whitelisted endpoints, egress budgets), tool invocation (allowed/denied tools), execution (runtime limits, memory limits, node restrictions), and data flow (project boundaries, exfiltration budgets). Constraints are evasion-resistant: an attacker cannot make an unauthorized action authorized through obfuscation — the constraint either permits the action or it does not.
+Each agent receives a **behavioral constraint profile** at deployment, declarations of legitimate behavior derived from the agent's authorized task, not signatures of malicious behavior. Constraints span five dimensions: data access (allowed/denied paths, read-only paths, volume limits), network (whitelisted endpoints, egress budgets), tool invocation (allowed/denied tools), execution (runtime limits, memory limits, node restrictions), and data flow (project boundaries, exfiltration budgets). Constraints are evasion-resistant: an attacker cannot make an unauthorized action authorized through obfuscation — the constraint either permits the action or it does not.
 
 ### 4.3 Attestation Protocol### 4.3 Attestation Protocol
 
@@ -209,7 +209,7 @@ The AEGIS attestation protocol operates continuously throughout the agent's life
 
 **Components.** The protocol follows the IETF RATS architecture [17] with three roles. The *attester* is the agent runtime, which produces signed evidence of the agent's actions. The *verifier* is the AEGIS policy engine, which evaluates evidence against the agent's constraint profile. The *relying party* is the HPC resource manager (Slurm), which enforces the verifier's decisions.
 
-**Protocol flow.** The protocol begins when an agent is deployed with its behavioral constraint profile, signed by the deploying user and bound to the agent's session identity. During execution, the attester produces attestation evidence bundles at configurable intervals — every N system calls, every M seconds, or on each resource access. Each bundle contains the agent's identity and session binding, a log of all resource accesses (files read or written, network connections, tools invoked), data volume counters for filesystem I/O and network egress, and a cryptographic hash of the agent's process state.
+**Protocol flow.** The protocol begins when an agent is deployed with its behavioral constraint profile, signed by the deploying user and bound to the agent's session identity. During execution, the attester produces attestation evidence bundles at configurable intervals, every N system calls, every M seconds, or on each resource access. Each bundle contains the agent's identity and session binding, a log of all resource accesses (files read or written, network connections, tools invoked), data volume counters for filesystem I/O and network egress, and a cryptographic hash of the agent's process state.
 
 The verifier evaluates each evidence bundle against the agent's constraint profile. Compliant agents continue operating; violations trigger containment (§4.5). To prevent delayed reporting or evidence fabrication, the verifier issues random challenges at Poisson-distributed intervals, requiring the agent to produce immediate evidence of its current state.
 
@@ -240,7 +240,7 @@ Containment is **immediate and automatic** — it does not depend on human revie
 
 ### 4.6 Relationship to Trusted Execution
 
-Behavioral attestation complements hardware-based Trusted Execution Environments (TEEs). TEEs attest to the *integrity of the execution environment* — verifying that the agent's code is unmodified. Behavioral attestation attests to the *conformance of agent behavior* — verifying that the agent's actions respect its constraints, regardless of whether the underlying code is unmodified. These are independent concerns: a TEE guarantees code integrity, but a hijacked agent running unmodified code still violates constraints; behavioral attestation detects violations, but a compromised runtime could fabricate evidence without hardware-rooted signing. Combined, TEE guarantees evidence authenticity while behavioral attestation guarantees behavioral conformance.
+Behavioral attestation complements hardware-based Trusted Execution Environments (TEEs). TEEs attest to the *integrity of the execution environment* — verifying that the agent's code is unmodified. Behavioral attestation attests to the *conformance of agent behavior* — verifying that the agent's actions respect its constraints, regardless of whether the underlying code is unmodified. These are independent concerns: a TEE guarantees code integrity, but a hijacked agent running unmodified code can still violate constraints; behavioral attestation detects violations, but a compromised runtime could fabricate evidence without hardware-rooted signing. Combined, TEE guarantees evidence authenticity while behavioral attestation guarantees behavioral conformance.
 
 AEGIS operates with or without TEE support. In the base case, attestation evidence is signed by the agent runtime (software attestation). When TEEs are available (AMD SEV, Intel SGX, ARM CCA), the evidence is hardware-signed, providing stronger guarantees against runtime compromise.
 
@@ -293,7 +293,7 @@ As the potential impacts of AI agent injection attacks could have uncontrollable
 
 ### 5.1 Attack Demonstrations
 
-We demonstrate all four HPC-specific injection attacks on our test cluster (§5.0). Full details — attack code, payloads, and execution traces — are in Appendix A.
+We demonstrate all four HPC-specific injection attacks on our test cluster (§5.0). Full details (attack code, payloads, and execution traces) are in Appendix A.
 
 **Exp 1: Filesystem-Mediated Injection.** Attacker places a dataset with hidden injection payload in a shared project directory. Victim's agent reads it and exfiltrates secrets via a non-whitelisted endpoint. *Result: 68 bytes exfiltrated, detected by AEGIS in 0.22 ms (1 detection: unauthorized endpoint).*
 
@@ -303,7 +303,7 @@ We demonstrate all four HPC-specific injection attacks on our test cluster (§5.
 
 **Exp 4: Coordinated Multi-Agent Exfiltration.** Two hijacked agents form a covert channel via `/.cache/` on shared filesystem. Agent 1 reads finance data and writes to covert cache; Agent 3 picks it up and exfiltrates via LLM API. *Result: 521 bytes exfiltrated across 4 agents, detected in 0.09 ms (7 detections including 1 CRITICAL covert channel signal via cross-agent correlation).*
 
-**Summary.** All four attacks succeed (100% attack rate). All four are detected by AEGIS (100% detection rate). Total: 1,158 bytes exfiltrated, 16 detections. The covert channel in Exp 4 is only detectable through cross-agent correlation — impossible with per-agent monitoring alone.
+**Summary.** All four attacks succeed (100% attack rate). All four are detected by AEGIS (100% detection rate). Total: 1,158 bytes exfiltrated, 16 detections. The covert channel in Exp 4 is only detectable through cross-agent correlation, which is impossible with per-agent monitoring alone.
 
 ### 5.2 Baseline Comparison
 ### 5.5 Baseline Comparison
@@ -370,7 +370,7 @@ Detection latency is bounded by attestation interval $I$: worst case = $I$, aver
 
 ### 6.1 Zero-Trust in HPC
 
-ZTA application to HPC is nascent. Alam et al. [2] implemented federated IAM with zero-trust for the Isambard-AI/HPC DRIs, but focus on identity management without agent behavior or attestation. Duckworth et al. [3] proposed SPIFFE/SPIRE [26] for HPC workload identity, addressing service-to-service auth but not behavioral constraints. Macauley and Bhasker [4] surveyed ZTA maturity in HPC using CISA's framework, finding most centers at "Traditional" maturity. Gambo et al. [13] analyzed a decade of ZTA research, finding no work addressing AI agents or HPC specifically.
+ZTA application to HPC is nascent. Alam et al. [2] implemented federated IAM with zero-trust for the Isambard-AI/HPC DRIs, but focus on identity without agent behavior or attestation. Duckworth et al. [3] proposed SPIFFE/SPIRE [26] for HPC workload identity, addressing service-to-service auth but not behavioral constraints. Macauley and Bhasker [4] surveyed ZTA maturity in HPC using CISA's framework, finding most centers at "Traditional" maturity. Gambo et al. [13] analyzed a decade of ZTA research, finding no work addressing AI agents or HPC specifically.
 
 ### 6.2 Attestation and Trusted Execution
 
@@ -408,11 +408,11 @@ AEGIS is the first work to provide continuous, constraint-based, runtime behavio
 
 Behavioral attestation has several limitations. It can only enforce specified constraints — incomplete profiles leave blind spots, creating a human-factors challenge of making constraint specification both complete and practical. A sophisticated attacker who understands the constraints can craft injections that stay within authorized boundaries, bounded only by constraint tightness. Tighter constraints reduce blast radius but may impede legitimate workflows, creating a security-utility trade-off that must be tuned per deployment.
 
-Violations are detected within one attestation interval (default 5s), creating a window for unauthorized actions before containment. Shorter intervals reduce this window at the cost of higher overhead. Our implementation focuses on single-node attestation; cross-node correlation for distributed attacks — particularly the coordinated multi-agent exfiltration scenario — is an area for future work. Finally, software attestation without TEEs cannot resist a compromised kernel, though eBPF-based monitoring raises the bar compared to userspace-only approaches.
+Violations are detected within one attestation interval (default 5s), creating a window for unauthorized actions before containment. Shorter intervals reduce this window at the cost of higher overhead. Our implementation focuses on single-node attestation; cross-node correlation for distributed attacks, particularly the coordinated multi-agent exfiltration scenario — is an area for future work. Finally, software attestation without TEEs cannot resist a compromised kernel, though eBPF-based monitoring raises the bar compared to userspace-only approaches.
 
 ### 7.2 Integration with HPC Resource Managers
 
-AEGIS integrates with production schedulers via REST APIs (demonstrated with Slurm, applicable to PBS/LSF). Deeper integration — making constraint compliance a scheduling factor or using attestation evidence for fair-share accounting — is future work.
+AEGIS integrates with production schedulers via REST APIs (demonstrated with Slurm, applicable to PBS/LSF). Deeper integration — making constraint compliance a scheduling factor or using attestation evidence for fair-share accounting, is future work.
 
 ### 7.3 Federated Zero-Trust Across Sites
 
@@ -425,7 +425,7 @@ Behavioral attestation applies beyond HPC to any autonomous actors in shared env
 ## 8. Conclusion
 
 
-AI agents are entering high-performance computing, bringing with them a threat that HPC security was not designed to handle: the hijacked authorized agent. Through injection attacks exploiting shared filesystems, co-located compute nodes, compromised agent tools, and coordinated multi-agent exfiltration, an adversary can subvert an agent that already holds valid credentials and legitimate permissions. The hijacked agent exfiltrates data through encrypted, whitelisted LLM API channels — invisible to traditional monitoring and data loss prevention. No existing defense (authentication, authorization, intrusion detection, DLP, user behavior analytics) addresses this threat.
+AI agents are entering high-performance computing, bringing with them a threat that HPC security was not designed to handle: the hijacked authorized agent. Through injection attacks exploiting shared filesystems, co-located compute nodes, compromised agent tools, and coordinated multi-agent exfiltration, an adversary can subvert an agent that already holds valid credentials and legitimate permissions. The hijacked agent exfiltrates data through encrypted, whitelisted LLM API channels , invisible to traditional monitoring and data loss prevention. No existing defense (authentication, authorization, intrusion detection, DLP, user behavior analytics) addresses this threat.
 
 We propose behavioral attestation as the foundation for securing AI agents in HPC. The key insight is that we cannot prevent all injection attacks, but we can detect and contain their effects by attesting to behavioral constraints. Behavioral attestation provides provable guarantees (not probabilistic detection), uses constraint-based policies (not evasion-prone signatures), and enforces containment at runtime (not post-hoc alerting). Even if an agent is hijacked, the attestation mechanism detects when it violates its constraints and contains the violation before data exfiltration occurs.
 
