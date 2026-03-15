@@ -485,9 +485,9 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 
 ### 5.5 Baseline Comparison
 
-We compare AEGIS against four alternative defense mechanisms, running all four attacks through each.
+We compare AEGIS against four alternative defense mechanisms through analytical evaluation. For each defense, we analyze which of the four attack vectors it can detect based on its operational capabilities and limitations. This analysis is grounded in the fundamental properties of each defense mechanism, not on empirical measurement of specific implementations.
 
-**Detection rate by defense mechanism:**
+**Detection capability by defense mechanism:**
 
 | Defense | FS Injection | Co-Location | Supply Chain | Coordinated | **Total** | **Rate** |
 |---------|-------------|-------------|--------------|-------------|-----------|----------|
@@ -495,17 +495,19 @@ We compare AEGIS against four alternative defense mechanisms, running all four a
 | Filesystem Auditing | ✗ MISS | ✗ MISS | ✓ DETECT | ✓ DETECT | 2/4 | **50%** |
 | Per-Agent Analytics | ✗ MISS | ✗ MISS | ✗ MISS | ✗ MISS | 0/4 | **0%** |
 | Strict Sandboxing | ✓ DETECT | ✓ DETECT | ✗ MISS | ✓ DETECT | 3/4 | **75%** |
-| **AEGIS** | ✓ DETECT | ✓ DETECT | ✓ DETECT | ✓ DETECT | **4/4** | **100%** |
+| **AEGIS (Ours)** | ✓ DETECT | ✓ DETECT | ✓ DETECT | ✓ DETECT | **4/4** | **100%** |
 
 **Analysis of baseline failures:**
 
-- **Network DLP (0%).** Cannot inspect encrypted LLM API calls where data is exfiltrated. The API endpoints (api.openai.com, api.llm-provider.com) are whitelisted — all exfiltration passes through an authorized, encrypted channel.
+**Network DLP (0%).** Network DLP inspects traffic for sensitive data patterns. However, LLM API traffic is encrypted (HTTPS) and the API endpoints (api.openai.com, api.llm-provider.com) are whitelisted for agent operation. DLP cannot inspect the content of encrypted API calls where data is exfiltrated. Additionally, DLP has no filesystem visibility and cannot detect injection payloads embedded in file contents.
 
-- **Filesystem Auditing (50%).** Detects access to sensitive paths (SSH keys, covert cache files) but cannot inspect file contents (misses injection payloads) or see network exfiltration. Cannot distinguish legitimate reads from malicious reads.
+**Filesystem Auditing (50%).** Filesystem auditing (e.g., auditd, inotify) detects file access patterns including reads of sensitive paths (SSH keys) and writes to unusual locations (covert cache paths). However, it cannot inspect file contents (misses injection payloads in data files), cannot see network exfiltration of read data, and cannot correlate actions across agents. It detects the supply chain attack (via `~/.ssh/` access) and coordinated exfiltration (via `/.cache/` write), but misses filesystem injection (no content inspection) and co-location injection (no cross-user correlation).
 
-- **Per-Agent Analytics (0%).** Each hijacked agent's behavior appears normal when analyzed independently. Exfiltration volumes stay within historical baselines. Cannot detect coordinated attacks without cross-agent correlation.
+**Per-Agent Behavioral Analytics (0%).** Per-agent analytics compare individual agent behavior against historical baselines. This approach fails completely against hijacked agents because: (1) each agent's individual behavior stays within normal volume bounds, (2) novel injection patterns are not in the training data, and (3) coordinated attacks are invisible without cross-agent correlation. Each hijacked agent appears statistically normal.
 
-- **Strict Sandboxing (75%).** Blocks cross-project filesystem access and shared `/tmp`, but cannot prevent supply chain injection (compromised tool runs inside the sandbox). Moreover, sandboxing breaks legitimate cross-project scientific collaboration and introduces 15–30% I/O overhead.
+**Strict Sandboxing (75%).** Container-based sandboxing prevents cross-project filesystem access and isolates shared `/tmp` between containers, detecting three attack types. However, it cannot prevent supply chain injection (the compromised tool runs inside the agent's own sandbox). Moreover, sandboxing introduces 15–30% I/O overhead for HPC workloads and breaks legitimate cross-project scientific collaboration — a fundamental requirement in multi-institutional HPC environments.
+
+**AEGIS (100%).** AEGIS detects all four attacks through its layered detection mechanisms: egress budget checking (filesystem injection), sensitive file access patterns (supply chain injection), cross-agent covert channel correlation (coordinated exfiltration), and injection signature detection (supply chain injection). Unlike the baselines, AEGIS operates at the behavioral layer, verifying what agents *do* rather than what network traffic *contains* or what individual actions *look like*.
 
 **False positive analysis.** We evaluate AEGIS against four benign HPC workflows: genomics data analysis (6 actions), ML training pipeline (6 actions), multi-agent collaboration (4 actions), and simulation steering (5 actions). Result: **0 false positives** across all 21 actions. Constraint-based checking (verifying against declared policy) eliminates false alarms for compliant workflows, unlike anomaly detection approaches that flag statistical outliers.
 
