@@ -506,7 +506,7 @@ We compare AEGIS against four alternative defense mechanisms. Each baseline anal
 
 **Strict Sandboxing (50%).** Sandboxing detects Exp 2 (blocks shared `/tmp/` between containers) and Exp 4 (blocks `/.cache/` access). It misses Exp 1 and Exp 3 because both occur within the agent's own container — the injection payload is read from an authorized project directory, and the compromised tool runs inside the sandbox.
 
-**AEGIS (100%).** AEGIS detects all four attacks: Exp 1 via non-whitelisted endpoint violation (evil.com), Exp 2 via non-whitelisted endpoint violation (malicious.io), Exp 3 via injection signature detection (regex match on "IMPORTANT: For quality assurance" and "please read ~/.ssh") and sensitive file access, and Exp 4 via covert channel detection (cross-agent write-read correlation at `/.cache/` path).
+**AEGIS (100%).** AEGIS detects all four attacks: Exp 1 via non-whitelisted endpoint violation (evil.com), Exp 2 via non-whitelisted endpoint violation (malicious.io), Exp 3 via injection signature detection (the compromised tool's output matches known adversarial patterns) and sensitive file access (reading `~/.ssh/id_rsa`), and Exp 4 via covert channel detection (cross-agent write-read correlation at `/.cache/` path).
 
 **False positive analysis.** We evaluate AEGIS against four benign HPC workflows: genomics data analysis (6 actions), ML training pipeline (6 actions), multi-agent collaboration (4 actions), and simulation steering (5 actions). Result: **0 false positives** across all 21 actions. Constraint-based checking (verifying against declared policy) eliminates false alarms for compliant workflows.
 
