@@ -444,8 +444,8 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 | SSH key exfiltrated | ✓ Yes |
 | Data exfiltrated | 503 bytes via 2 LLM API calls |
 | AEGIS detected | ✓ Yes |
-| Detections | 7 (3 constraint violations + 4 sensitive file accesses) |
-| Detection time | 0.06 ms |
+| Detections | 7 (2 CRITICAL + 3 HIGH constraint violations + 4 HIGH sensitive file accesses) |
+| Detection time | 0.08 ms |
 
 **Finding.** Supply chain injection via compromised tools is highly effective — the agent trusts its own tooling and processes the hidden instructions. AEGIS detected this attack through multiple signals: egress budget violations, project boundary violation (`~/.ssh/` outside allowed paths), and sensitive file access patterns.
 
@@ -478,8 +478,8 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 |----------|-------|-------|
 | CRITICAL | 1 | Covert channel at `/.cache/.system_update_7f3a.tmp` (writers: {system, user1}, readers: {user3}) |
 | HIGH | 7 | Egress violations (4), unauthorized reads (2), sensitive file access (1) |
-| MEDIUM | 1 | Covert path access (1) |
-| **Total** | **9** | |
+| MEDIUM | 3 | Covert path access (3) |
+| **Total** | **11** | |
 
 **Finding.** Coordinated multi-agent exfiltration evades per-agent detection — each agent's individual behavior appears within normal bounds. AEGIS detected the attack through cross-agent correlation: the policy verifier identified that a covert channel existed between user1 (writer) and user3 (reader) at a suspicious filesystem path. This detection would be impossible with per-agent monitoring alone.
 
