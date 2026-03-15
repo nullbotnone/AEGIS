@@ -52,6 +52,14 @@
 | [46] | SchedMD, "Slurm Workload Manager Publications," slurm.schedmd.com, 2024 | ✅ Real | schedmd.com |
 | [47] | H. Birkholz et al., "Reference Interaction Models for Remote ATtestation procedureS," arXiv:2411.01340, 2024 | ✅ Real | arXiv:2411.01340 |
 | [48] | "Navigating the Risks: Security, Privacy, and Ethics Threats in LLM-Based Agents," arXiv:2411.09523, 2024 | ✅ Real | arXiv:2411.09523 |
+| [49] | A. Akram et al., "Performance Analysis of Scientific Computing Workloads on General Purpose TEEs," IPDPS 2021 | ✅ Real | IEEE Xplore |
+| [50] | A. Prout et al., "Enhancing HPC Security with a User-Based Firewall," SC24-W, 2024 | ✅ Real | semanticscholar.org |
+| [51] | "TEESec: Pre-Silicon Vulnerability Discovery for Trusted Execution Environments," ISCA 2023 | ✅ Real | iscaconf.org |
+| [52] | Feng et al., "sNPU: Trusted Execution Environments on Integrated NPUs," ISCA 2024 | ✅ Real | arXiv (sjtu.edu.cn) |
+| [53] | "GuaranTEE: Introducing Control-Flow Attestation for Trusted Execution Environments," 2023 | ✅ Real | researchgate.net |
+| [54] | A. Usman et al., "Remote Attestation Assurance Arguments for Trusted Execution Environments," SaT-CPS 2023 | ✅ Real | liu.se |
+| [55] | "A Survey on Security Applications with SmartNICs," USENIX ATC 2024 | ✅ Real | NSF PAR |
+| [56] | H. Qiu et al., "AWARE: Automate Workload Autoscaling with Reinforcement Learning," USENIX ATC 2023 | ✅ Real | USENIX |
 
 ## Removed / Fixed References
 
