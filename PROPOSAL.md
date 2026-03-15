@@ -45,9 +45,7 @@ Behavioral attestation differs from prior approaches in three fundamental ways:
 
 - **Runtime, not post-hoc.** Existing monitoring alerts after the attack succeeds — the damage is already done. Behavioral attestation verifies constraints continuously during execution and enforces containment *before* exfiltration occurs.
 
-This paper makes the following contributions:
-
-We make four contributions: (1) formalization of the hijacked agent threat with four HPC-specific attack vectors not studied in prior work; (2) behavioral attestation as a provable, constraint-based, runtime security primitive for AI agents; (3) AEGIS, a complete zero-trust architecture encompassing constraint specification, attestation protocols, and automated containment; and (4) empirical evaluation demonstrating attack feasibility and defense effectiveness across all four attack vectors.
+This paper makes the following contributions: (1) formalization of the hijacked agent threat with four HPC-specific attack vectors not studied in prior work; (2) behavioral attestation as a provable, constraint-based, runtime security primitive for AI agents; (3) AEGIS, a complete zero-trust architecture encompassing constraint specification, attestation protocols, and automated containment; and (4) empirical evaluation demonstrating attack feasibility and defense effectiveness across all four attack vectors.
 
 §2 provides background. §3 formalizes the threat model. §4 presents AEGIS. §5 describes experimental evaluation. §6 surveys related work. §7 discusses future directions. §8 concludes.
 
@@ -71,7 +69,7 @@ HPC security relies on a perimeter model: Kerberos/SSH authentication [29], RBAC
 
 ### 2.4 Prompt Injection and Agent Security
 
-Prompt injection — subverting an agent's instruction-following through adversarial inputs [10] — has emerged as a fundamental security challenge for LLM-based systems. Prior work focuses on web-based scenarios [11], with defenses including input sanitization, instruction hierarchy, and output filtering. However, sanitization is incomplete (unbounded payload space), instruction hierarchy is fragile (Zou et al. [12] demonstrated universal adversarial suffix attacks bypassing LLM guardrails), and output filtering is probabilistic (ML classifiers have inherent error rates). The agent security literature has not addressed HPC contexts where injection exploits shared infrastructure rather than web content.
+Prompt injection — subverting an agent's instruction-following through adversarial inputs [10] — has emerged as a fundamental security challenge for LLM-based systems. Prior work focuses on web-based scenarios where agents encounter malicious content on the internet [11]. Existing defenses — input sanitization, instruction hierarchy, and output filtering — have fundamental limitations: sanitization is incomplete (unbounded payload space), instruction hierarchy is fragile (Zou et al. [12] demonstrated universal adversarial suffix attacks bypassing LLM guardrails), and output filtering is probabilistic (ML classifiers have inherent error rates). Critically, this literature has not addressed HPC contexts where injection exploits shared infrastructure rather than web content.
 
 ## 3. Threat Model
 
@@ -145,7 +143,6 @@ Agent injection attacks in HPC exploit shared infrastructure in ways not studied
 
 **Coordinated multi-agent exfiltration.** Multiple hijacked agents across projects and users form covert exfiltration networks: one agent reads sensitive data and writes to a shared covert location; another picks it up and exfiltrates via its LLM API channel. No single agent's behavior appears anomalous — the attack is visible only through cross-agent correlation.
 
-## 4. Behavioral Attestation
 ## 4. Behavioral Attestation for AI Agents
 
 ### 4.1 Overview
@@ -369,7 +366,7 @@ Results: Full AEGIS achieves 100% detection (4/4). Removing any single component
 
 Detection latency is bounded by attestation interval $I$: worst case = $I$, average = $I/2$, maximum exfiltration before detection = $I times R$ (agent's max egress rate). At 1.0s interval: ~500ms average latency, ~60KB max exfiltration, ~1-3% overhead. Unlike probabilistic detection that may miss attacks entirely, AEGIS guarantees detection within one interval.
 
-## 6. Related Work## 6. Related Work
+## 6. Related Work
 
 ### 6.1 Zero-Trust in HPC
 
@@ -426,7 +423,7 @@ Extending behavioral attestation across HPC sites requires constraint portabilit
 Behavioral attestation applies beyond HPC to any autonomous actors in shared environments: Kubernetes-deployed agents, edge computing, robotic systems, and financial trading agents. The core primitives — constraint specification, continuous attestation, automated containment — are domain-agnostic.
 
 ## 8. Conclusion
-## 8. Conclusion
+
 
 AI agents are entering high-performance computing, bringing with them a threat that HPC security was not designed to handle: the hijacked authorized agent. Through injection attacks exploiting shared filesystems, co-located compute nodes, compromised agent tools, and coordinated multi-agent exfiltration, an adversary can subvert an agent that already holds valid credentials and legitimate permissions. The hijacked agent exfiltrates data through encrypted, whitelisted LLM API channels — invisible to traditional monitoring and data loss prevention. No existing defense (authentication, authorization, intrusion detection, DLP, user behavior analytics) addresses this threat.
 
