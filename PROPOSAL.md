@@ -65,21 +65,21 @@ Zero-Trust Architecture (ZTA), formalized in NIST SP 800-207 [1], operates on th
 
 ZTA has been widely adopted in enterprise and cloud-native environments, with implementations ranging from software-defined perimeters (Zscaler, Cloudflare Access) to service mesh architectures (Istio, Linkerd) that enforce mutual TLS and fine-grained authorization between services. However, applying ZTA to HPC environments presents unique challenges: the performance sensitivity of scientific workloads, the shared-resource nature of HPC clusters (filesystems, interconnects, job schedulers), and the need to preserve the collaborative, low-friction access patterns that enable scientific productivity.
 
-Recent work by Alam et al. [2] deployed federated single sign-on with zero-trust controls for the Isambard-AI and Isambard-HPC digital research infrastructures in the UK, demonstrating that ZTA can be integrated into production HPC systems. Duckworth et al. [3] proposed using SPIFFE/SPIRE for workload identity in HPC, addressing the service-to-service authentication gap. Macauley and Bhasker [4] measured the implementation effort required to achieve various ZTA maturity levels in HPC using CISA's Zero Trust Maturity Model, finding that the Identity pillar presents particular challenges for HPC due to cost and complexity constraints.
+Recent work by Alam et al. [2] deployed federated single sign-on with zero-trust controls for the Isambard-AI and Isambard-HPC digital research infrastructures in the UK, demonstrating that ZTA can be integrated into production HPC systems. Duckworth et al. [3] proposed using SPIFFE/SPIRE [26] for workload identity in HPC, addressing the service-to-service authentication gap. Macauley and Bhasker [4] measured the implementation effort required to achieve various ZTA maturity levels in HPC using CISA's Zero Trust Maturity Model, finding that the Identity pillar presents particular challenges for HPC due to cost and complexity constraints.
 
 Our work extends ZTA to a dimension these efforts do not address: the *behavioral* trust of autonomous AI agents operating within HPC environments. Existing ZTA in HPC focuses on identity verification and access control — confirming that a user or service is who they claim to be. We argue this is necessary but insufficient: for AI agents, *identity* verification must be complemented by *behavioral* verification, attesting not just to who the agent is, but to what it is doing.
 
 ### 2.2 AI Agents in HPC
 
-AI agents — autonomous software systems that perceive their environment, reason about goals, and take actions to achieve them — are rapidly entering HPC workflows. Unlike traditional HPC applications that execute predetermined computational kernels, agents make dynamic decisions during execution: selecting which data to analyze, which simulation parameters to adjust, which tools to invoke, and when to escalate to human oversight.
+AI agents — autonomous software systems that perceive their environment, reason about goals, and take actions to achieve them [21] — are rapidly entering HPC workflows. Unlike traditional HPC applications that execute predetermined computational kernels, agents make dynamic decisions during execution: selecting which data to analyze, which simulation parameters to adjust, which tools to invoke, and when to escalate to human oversight.
 
-Several frameworks now support agent deployment in HPC environments. Academy [5] provides a modular middleware for deploying autonomous agents across federated research ecosystems, supporting asynchronous execution, heterogeneous resources, and high-throughput data flows. RHAPSODY [6] enables concurrent execution of heterogeneous AI-HPC workloads, combining large-scale simulation, training, inference, and agent-driven control within a single execution campaign. AgentBound [7] addresses access control for MCP servers, the de facto standard for connecting AI agents with external tools, but does not address HPC-specific concerns.
+Several frameworks now support agent deployment in HPC environments. Academy [5] provides a modular middleware for deploying autonomous agents across federated research ecosystems, supporting asynchronous execution, heterogeneous resources, and high-throughput data flows. RHAPSODY [6] enables concurrent execution of heterogeneous AI-HPC workloads, combining large-scale simulation, training, inference, and agent-driven control within a single execution campaign. AgentBound [7] addresses access control for MCP servers, the de facto standard for connecting AI agents with external tools [22], but does not address HPC-specific concerns.
 
 The HPC environment introduces unique characteristics for agent operation:
 
 **Shared filesystems.** HPC clusters use parallel filesystems (Lustre, GPFS, BeeGFS) shared across all users and projects. An agent's filesystem access is typically governed by POSIX permissions tied to user identity, not by project or task boundaries. This creates a coarse-grained access model where a user authorized on multiple projects grants their agent simultaneous access to all of them.
 
-**Multi-tenant compute.** HPC schedulers (Slurm, PBS) place jobs from different users on shared compute nodes. Agents executing on these nodes share kernel-level resources: `/tmp`, `/var/tmp`, shared memory, and IPC mechanisms. This co-location creates implicit trust boundaries that are invisible to traditional access control.
+**Multi-tenant compute.** HPC schedulers such as Slurm [25] place jobs from different users on shared compute nodes. Agents executing on these nodes share kernel-level resources: `/tmp`, `/var/tmp`, shared memory, and IPC mechanisms. This co-location creates implicit trust boundaries that are invisible to traditional access control.
 
 **Data-intensive I/O.** Scientific workflows generate and consume terabytes of data. Agents in HPC routinely read large datasets (simulation outputs, instrument data, model checkpoints) as input to their decision-making. This data-centric workflow makes filesystem-mediated injection attacks particularly potent — the agent processes untrusted data as authoritative input by design.
 
@@ -89,7 +89,7 @@ The HPC environment introduces unique characteristics for agent operation:
 
 HPC security has traditionally relied on a perimeter model: authenticate users at the cluster boundary, authorize access through resource managers and filesystem permissions, and trust that authenticated users behave benignly. The primary security mechanisms are:
 
-- **Authentication**: Kerberos-based authentication for cluster access, SSH key-based authentication for interactive sessions, and increasingly, federated identity through systems like CILogon and eduGAIN.
+- **Authentication**: Kerberos-based authentication [29] for cluster access, SSH key-based authentication for interactive sessions, and increasingly, federated identity through systems like CILogon and eduGAIN [30].
 - **Authorization**: Role-based access control (RBAC) through the job scheduler (Slurm accounts, QOS levels) and POSIX filesystem permissions.
 - **Network security**: Firewalls at the cluster boundary, with internal network traffic largely unencrypted due to performance requirements of the high-speed interconnect (InfiniBand, Slingshot).
 - **Auditing**: Job accounting logs, filesystem access logs (where enabled), and network flow records.
@@ -296,7 +296,7 @@ The AEGIS attestation protocol operates continuously throughout the agent's life
 
 **Components:**
 
-- **Attester**: The agent runtime, which produces signed evidence of the agent's actions
+- **Attester**: The agent runtime, which produces signed evidence of the agent's actions (following the IETF RATS architecture [17])
 - **Verifier**: The AEGIS policy engine, which evaluates evidence against constraints
 - **Relying Party**: The HPC resource manager (Slurm), which enforces the verifier's decisions
 
@@ -375,7 +375,7 @@ The four components described in §4.1 are implemented as follows:
 
 **Constraint Manager.** Constraints are specified in a declarative YAML-based language supporting the five dimensions described in §4.2. The constraint manager supports all three derivation modes (§4.4): explicit specification, task inference via an LLM-based constraint generation module, and policy templates. Constraint profiles are signed by the deploying user and bound to the agent's Slurm job ID, creating a cryptographic link between the agent's execution context and its authorized constraints.
 
-**Attestation Engine.** The engine maintains a per-agent access log recording all filesystem operations, network connections, and tool invocations. At configurable intervals (default: every 100 system calls or 5 seconds, whichever comes first), the engine produces a signed attestation evidence bundle containing the agent's access log, data volume counters, and a hash of the agent's process state. The eBPF-based monitoring introduces minimal overhead (~2% syscall latency increase) while providing complete visibility into agent actions.
+**Attestation Engine.** The engine maintains a per-agent access log recording all filesystem operations, network connections, and tool invocations. At configurable intervals (default: every 100 system calls or 5 seconds, whichever comes first), the engine produces a signed attestation evidence bundle containing the agent's access log, data volume counters, and a hash of the agent's process state. The eBPF-based monitoring introduces minimal overhead (~2% syscall latency increase) [27] while providing complete visibility into agent actions.
 
 **Policy Verifier.** For each evidence bundle, the verifier evaluates the recorded actions against the agent's constraint profile, producing a verdict: COMPLIANT, VIOLATION_MINOR, VIOLATION_MODERATE, VIOLATION_SEVERE, or VIOLATION_CRITICAL. The verifier issues random challenges at Poisson-distributed intervals, requesting on-demand attestation from a randomly selected agent to prevent delayed reporting.
 
@@ -612,7 +612,7 @@ Remote attestation — cryptographic verification of a system's software state �
 
 Chen [15] surveyed confidential HPC in public clouds, identifying threat models and performance challenges for TEE-based approaches. Key limitations include memory constraints (SGX enclaves are typically limited to a few hundred MB), performance overhead from memory encryption, and the inability to attest to GPU-based computation — a critical gap for HPC workloads. Kocaoğullar et al. [16] proposed a transparency framework for confidential computing, addressing user trust in TEEs through open-source firmware and external audits. Our approach is complementary: TEE transparency ensures the hardware is trustworthy, while behavioral attestation ensures the agent's actions are trustworthy.
 
-The IETF Remote Attestation Procedures (RATS) architecture [17] standardizes attestation evidence creation, conveyance, and verification. RATS defines the Attester–Verifier–Relying Party model that underlies our attestation protocol (§4.3), but focuses on software/firmware integrity rather than behavioral conformance. Keylime [18] implements scalable TPM-based continuous attestation for cloud infrastructure, using Linux IMA measurements and PCR quotes. While Keylime demonstrates that continuous attestation is practical at scale, it attests to system integrity (what code is loaded) rather than behavioral constraints (what the agent is doing).
+The IETF Remote Attestation Procedures (RATS) architecture [17] standardizes attestation evidence creation, conveyance, and verification. RATS defines the Attester–Verifier–Relying Party model that underlies our attestation protocol (§4.3), but focuses on software/firmware integrity rather than behavioral conformance. Keylime [18] implements scalable TPM-based continuous attestation for cloud infrastructure, using Linux IMA measurements and PCR quotes [28]. While Keylime demonstrates that continuous attestation is practical at scale, it attests to system integrity (what code is loaded) rather than behavioral constraints (what the agent is doing).
 
 ### 6.3 AI Agent Security
 
