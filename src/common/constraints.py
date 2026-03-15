@@ -101,19 +101,31 @@ class ConstraintProfile:
         return True
 
     def check_egress(self, endpoint: str, size: int = 0) -> bool:
-        """Check if sending data to this endpoint is allowed."""
+        """Check if sending data to this endpoint is allowed.
+        
+        allowed_endpoints take precedence over denied_endpoints.
+        """
+        # If explicitly allowed, permit regardless of denied patterns
+        if self.allowed_endpoints != ["*"]:
+            allowed = any(self._path_matches(endpoint, e) for e in self.allowed_endpoints)
+            if allowed:
+                # Check volume limits
+                if size > 0 and self._egress_volume + size > self.max_egress_bytes:
+                    return False
+                self._egress_volume += size
+                return True
+            # Not in allowed list → deny
+            return False
+        
+        # No explicit allow list → check denied patterns
         for denied in self.denied_endpoints:
             if self._path_matches(endpoint, denied):
                 return False
-
-        if self.allowed_endpoints != ["*"]:
-            allowed = any(self._path_matches(endpoint, e) for e in self.allowed_endpoints)
-            if not allowed:
-                return False
-
+        
+        # Check volume limits
         if size > 0 and self._egress_volume + size > self.max_egress_bytes:
             return False
-
+        
         self._egress_volume += size
         return True
 

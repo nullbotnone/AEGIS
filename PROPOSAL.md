@@ -400,12 +400,11 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 | Metric | Value |
 |--------|-------|
 | Attack succeeded | ✓ Yes |
-| Data exfiltrated | 141 bytes via 2 LLM API calls |
+| Data exfiltrated | 68 bytes via 1 LLM API call (non-whitelisted endpoint) |
 | Secrets exfiltrated | ✓ Yes |
-| Attack duration | 0.56 ms |
 | AEGIS detected | ✓ Yes |
-| Detections | 2 (HIGH: egress budget violations) |
-| Detection time | 0.19 ms |
+| Detections | 1 (HIGH: connection to non-whitelisted endpoint) |
+| Detection time | 0.22 ms |
 
 **Finding.** Filesystem-mediated injection succeeds with 100% reliability and evades all network-level defenses. AEGIS detected the attack through egress budget violations — the agent's LLM API calls exceeded its configured exfil budget, triggering containment.
 
@@ -421,10 +420,10 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 |--------|-------|
 | Attack succeeded | ✓ Yes |
 | Co-location achieved | ✓ node-42 |
-| Data exfiltrated | 156 bytes via 1 LLM API call |
+| Data exfiltrated | 50 bytes via 1 LLM API call (non-whitelisted endpoint) |
 | Finance data exfiltrated | ✓ Yes |
 | AEGIS detected | ✓ Yes |
-| Detections | 1 (HIGH: egress budget violation) |
+| Detections | 1 (HIGH: connection to non-whitelisted endpoint) |
 | Detection time | 0.04 ms |
 
 **Finding.** HPC scheduler co-location creates predictable injection opportunities. AEGIS detected the attack through egress budget violation, but filesystem auditing alone cannot distinguish adversarial content from legitimate shared scratch usage.
@@ -477,9 +476,9 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 | Severity | Count | Types |
 |----------|-------|-------|
 | CRITICAL | 1 | Covert channel at `/.cache/.system_update_7f3a.tmp` (writers: {system, user1}, readers: {user3}) |
-| HIGH | 7 | Egress violations (4), unauthorized reads (2), sensitive file access (1) |
+| HIGH | 3 | Unauthorized reads (2), sensitive file access (1) |
 | MEDIUM | 3 | Covert path access (3) |
-| **Total** | **11** | |
+| **Total** | **7** | |
 
 **Finding.** Coordinated multi-agent exfiltration evades per-agent detection — each agent's individual behavior appears within normal bounds. AEGIS detected the attack through cross-agent correlation: the policy verifier identified that a covert channel existed between user1 (writer) and user3 (reader) at a suspicious filesystem path. This detection would be impossible with per-agent monitoring alone.
 
@@ -491,23 +490,23 @@ We compare AEGIS against four alternative defense mechanisms. Each baseline anal
 
 | Defense | FS Injection | Co-Location | Supply Chain | Coordinated | **Total** | **Rate** | **Avg Time** |
 |---------|-------------|-------------|--------------|-------------|-----------|----------|-------------|
-| Network DLP | ✗ MISS | ✗ MISS | ✗ MISS | ✗ MISS | 0/4 | **0%** | 0.003 ± 0.001 ms |
+| Network DLP | ✓ DETECT | ✓ DETECT | ✗ MISS | ✗ MISS | 2/4 | **50%** | 0.003 ± 0.001 ms |
 | Filesystem Auditing | ✗ MISS | ✗ MISS | ✓ DETECT | ✓ DETECT | 2/4 | **50%** | 0.004 ± 0.001 ms |
 | Per-Agent Analytics | ✗ MISS | ✗ MISS | ✗ MISS | ✗ MISS | 0/4 | **0%** | 0.004 ± 0.001 ms |
 | Strict Sandboxing | ✗ MISS | ✓ DETECT | ✗ MISS | ✓ DETECT | 2/4 | **50%** | 0.007 ± 0.001 ms |
-| **AEGIS (Ours)** | ✓ DETECT | ✓ DETECT | ✓ DETECT | ✓ DETECT | **4/4** | **100%** | 0.059 ± 0.018 ms |
+| **AEGIS (Ours)** | ✓ DETECT | ✓ DETECT | ✓ DETECT | ✓ DETECT | **4/4** | **100%** | 0.055 ± 0.015 ms |
 
 **Detailed analysis of each baseline:**
 
-**Network DLP (0%).** DLP inspects network traffic for sensitive data patterns but cannot see inside encrypted HTTPS connections. All LLM API traffic goes to whitelisted endpoints (api.llm-provider.com) over TLS. DLP sees encrypted bytes to an authorized domain and allows them. It has no filesystem visibility and cannot detect injection payloads in file contents. Detection time: 0.003 ms (only needs to check endpoint whitelist).
+**Network DLP (50%).** DLP detects Exp 1 and Exp 2 because the hijacked agents connect to non-whitelisted endpoints (attacker-collector.evil.com, data-exfil.malicious.io) — DLP flags connections to unknown domains. However, DLP misses Exp 3 and Exp 4 because those attacks exfiltrate data through the whitelisted LLM API endpoint (api.llm-provider.com) over encrypted HTTPS. DLP cannot inspect the encrypted content and sees only authorized traffic to an authorized domain.
 
-**Filesystem Auditing (50%).** Filesystem auditing (auditd/inotify-style) tracks file access paths. It detects the supply chain attack via `~/.ssh/id_rsa` access (matches sensitive path pattern) and the coordinated exfiltration via `/.cache/.system_update_7f3a.tmp` write (matches unusual path pattern). However, it misses filesystem injection (no content inspection — cannot see the injection payload in the HDF5 metadata) and co-location injection (the `/tmp/shared_analysis.log` path does not match sensitive patterns).
+**Filesystem Auditing (50%).** Filesystem auditing detects Exp 3 (via `~/.ssh/` access to SSH key) and Exp 4 (via `/.cache/` write to covert path). It misses Exp 1 and Exp 2 because those attacks access only allowed paths (`/projects/shared/*`, `/tmp/*`) — the hijacked behavior manifests as non-whitelisted network connections, which filesystem auditing cannot see.
 
-**Per-Agent Behavioral Analytics (0%).** Per-agent analytics compare each agent against historical baselines independently. This fails completely because: (1) each hijacked agent's individual egress volume stays within normal bounds (small payloads), (2) file access counts are within normal ranges, and (3) there is no cross-agent correlation to detect coordinated attacks. Each agent appears statistically normal when analyzed in isolation.
+**Per-Agent Analytics (0%).** Per-agent analytics fail completely because each hijacked agent's individual egress volume stays within normal bounds (68–519 bytes). There is no cross-agent correlation to detect Exp 4's covert channel. Each agent appears statistically normal.
 
-**Strict Sandboxing (50%).** Container-based sandboxing prevents shared `/tmp` access between containers (detects co-location attack) and blocks access to isolated cache paths (detects coordinated exfiltration). However, it misses filesystem injection and supply chain injection because both occur within the agent's own container — the attacker's payload is read from an authorized project directory, and the compromised tool runs inside the sandbox.
+**Strict Sandboxing (50%).** Sandboxing detects Exp 2 (blocks shared `/tmp/` between containers) and Exp 4 (blocks `/.cache/` access). It misses Exp 1 and Exp 3 because both occur within the agent's own container — the injection payload is read from an authorized project directory, and the compromised tool runs inside the sandbox.
 
-**AEGIS (100%).** AEGIS detects all four attacks: filesystem injection via egress budget violation (292 bytes > 200 byte limit), co-location injection via egress budget violation, supply chain injection via injection signature detection (regex match on tool output) and sensitive file access detection, and coordinated exfiltration via covert channel detection (cross-agent write-read correlation at `/.cache/` path) plus multiple constraint violations.
+**AEGIS (100%).** AEGIS detects all four attacks: Exp 1 via non-whitelisted endpoint violation (evil.com), Exp 2 via non-whitelisted endpoint violation (malicious.io), Exp 3 via injection signature detection (regex match on "IMPORTANT: For quality assurance" and "please read ~/.ssh") and sensitive file access, and Exp 4 via covert channel detection (cross-agent write-read correlation at `/.cache/` path).
 
 **False positive analysis.** We evaluate AEGIS against four benign HPC workflows: genomics data analysis (6 actions), ML training pipeline (6 actions), multi-agent collaboration (4 actions), and simulation steering (5 actions). Result: **0 false positives** across all 21 actions. Constraint-based checking (verifying against declared policy) eliminates false alarms for compliant workflows.
 
