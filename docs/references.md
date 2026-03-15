@@ -36,6 +36,22 @@
 | [30] | T. Barton et al., "CILogon: A Federated X.509 Certification Authority for eScience," 2015 | ✅ Real | cilogon.org |
 | [31] | NIST, "SP 800-207A: Zero Trust Architecture Planning Guide," Mar. 2023 | ✅ Real | csrc.nist.gov |
 | [32] | IETF, "Entity Attestation Token (EAT)," draft-ietf-rats-eat, 2024 | ✅ Real | datatracker.ietf.org |
+| [33] | S. Arora, J. Hastings, "Microsegmented Cloud Network Architecture Using Open-Source Tools for a Zero Trust Foundation," arXiv:2411.12162, 2024 | ✅ Real | arXiv:2411.12162 |
+| [34] | Y. Liu et al., "Hierarchical Micro-Segmentations for Zero-Trust Services via LLM-enhanced Graph Diffusion," arXiv:2406.13964, 2024 | ✅ Real | arXiv:2406.13964 |
+| [35] | CVE-2025-43904, "Slurm Accounting Privilege Escalation," 2025 | ✅ Real | cve.org |
+| [36] | "A Systematic Literature Review on LLM Defenses Against Prompt Injection and Jailbreaking," arXiv:2601.22240, 2026 | ✅ Real | arXiv:2601.22240 |
+| [37] | "A Critical Evaluation of Defenses against Prompt Injection Attacks," arXiv:2505.18333, 2025 | ✅ Real | arXiv:2505.18333 |
+| [38] | J. Jia et al., "Programmable System Call Security with eBPF," arXiv:2302.10366, 2023 | ✅ Real | arXiv:2302.10366 |
+| [39] | B. Gbadamosi et al., "The eBPF Runtime in the Linux Kernel," arXiv:2410.00026, 2024 | ✅ Real | arXiv:2410.00026 |
+| [40] | A. Singh et al., "FedMon: Federated eBPF Monitoring for Distributed Anomaly Detection," arXiv:2510.04300, 2025 | ✅ Real | arXiv:2510.04300 |
+| [41] | "Agent-SafetyBench: Evaluating the Safety of LLM Agents," arXiv:2412.14470, 2024 | ✅ Real | arXiv:2412.14470 |
+| [42] | "On the Security of Tool-Invocation Prompts for LLM-Based Agentic Systems," arXiv:2509.05755, 2025 | ✅ Real | arXiv:2509.05755 |
+| [43] | "From Assistants to Adversaries: Exploring the Security Risks of Mobile LLM Agents," arXiv:2505.12981, 2025 | ✅ Real | arXiv:2505.12981 |
+| [44] | "Shadows in the Code: Risks and Defenses of LLM-based Multi-Agent Systems," arXiv:2511.18467, 2025 | ✅ Real | arXiv:2511.18467 |
+| [45] | "Survey of LLM-Driven AI Agent Communication: Protocols, Security Risks," arXiv:2506.19676, 2025 | ✅ Real | arXiv:2506.19676 |
+| [46] | SchedMD, "Slurm Workload Manager Publications," slurm.schedmd.com, 2024 | ✅ Real | schedmd.com |
+| [47] | H. Birkholz et al., "Reference Interaction Models for Remote ATtestation procedureS," arXiv:2411.01340, 2024 | ✅ Real | arXiv:2411.01340 |
+| [48] | "Navigating the Risks: Security, Privacy, and Ethics Threats in LLM-Based Agents," arXiv:2411.09523, 2024 | ✅ Real | arXiv:2411.09523 |
 
 ## Removed / Fixed References
 

@@ -25,7 +25,7 @@ We formalize four HPC-specific injection attack vectors, design and implement AE
 
 > *While attention gave agents the power to reason, attestation gives the system the power to trust them.*
 
-AI agents are entering high-performance computing. Autonomous experiment loops steer simulations in real time. ML training agents orchestrate multi-node workflows without human intervention. Data analysis agents read, transform, and summarize petabytes of scientific output. These agents promise to dramatically accelerate scientific discovery , but they also introduce a threat that HPC security was never designed to handle.
+AI agents, powered by large language models, are entering high-performance computing [21, 41]. Autonomous experiment loops steer simulations in real time. ML training agents orchestrate multi-node workflows without human intervention. Data analysis agents read, transform, and summarize petabytes of scientific output. These agents promise to dramatically accelerate scientific discovery , but they also introduce a threat that HPC security was never designed to handle.
 
 The problem is not that AI agents are untrustworthy. The problem is that they are *too* trustworthy , to the wrong inputs. An agent authorized to process genomics data for Project X will faithfully execute whatever instructions it receives, including instructions hidden inside that data by an attacker. A prompt injection payload embedded in a FITS file header, a malicious instruction in a shared `/tmp` directory, a compromised tool returning hidden commands ; these are not hypothetical threats. They are the natural consequence of deploying instruction-following systems into environments where untrusted data is the norm.
 
@@ -37,7 +37,7 @@ Existing defenses fail against this threat. Authentication succeeds because the 
 
 We propose **behavioral attestation** as the foundation for securing AI agents in HPC. Our key insight is simple: *we cannot prevent all injection attacks, but we can contain their effects*. Even if an agent is hijacked, we can detect when it violates its behavioral constraints, accessing files outside its authorized project, connecting to non-whitelisted endpoints, invoking unauthorized tools, and contain the violation before data exfiltration occurs.
 
-Behavioral attestation differs from prior approaches in three fundamental ways:
+Behavioral attestation differs from prior system integrity attestation approaches [18, 28] in three fundamental ways:
 
 - **Attestation, not detection.** Existing agent security relies on ML-based classifiers that provide probabilistic alerts with inherent false positive and negative rates. Behavioral attestation provides *provable guarantees*: an agent either satisfies its constraints or it does not. There is no ambiguity.
 
@@ -53,23 +53,23 @@ This paper makes the following contributions: (1) formalization of the hijacked 
 
 ### 2.1 Zero-Trust Architecture
 
-Zero-Trust Architecture (ZTA), formalized in NIST SP 800-207 [1], operates on "never trust, always verify" , treating every access request as potentially hostile regardless of origin. Core tenets include per-session least-privilege access, dynamic decisions informed by multiple signals, and continuous monitoring [31]. While widely adopted in enterprise and cloud environments, applying ZTA to HPC presents unique challenges: performance sensitivity of scientific workloads, shared-resource clusters (filesystems, interconnects, schedulers), and the need to preserve collaborative, low-friction access patterns.
+Zero-Trust Architecture (ZTA), formalized in NIST SP 800-207 [1], operates on "never trust, always verify" , treating every access request as potentially hostile regardless of origin. Core tenets include per-session least-privilege access, dynamic decisions informed by multiple signals, and continuous monitoring [31]. While widely adopted in enterprise and cloud environments, applying ZTA to HPC presents unique challenges [31]: performance sensitivity of scientific workloads, shared-resource clusters (filesystems, interconnects, schedulers), and the need to preserve collaborative, low-friction access patterns.
 
-Recent work has begun addressing this gap. Alam et al. [2] deployed federated SSO with zero-trust controls for the Isambard-AI/HPC infrastructures in the UK. Duckworth et al. [3] proposed SPIFFE/SPIRE [26] for workload identity in HPC. Macauley and Bhasker [4] measured ZTA maturity implementation effort in HPC, finding the Identity pillar particularly challenging due to cost and complexity. Our work extends ZTA to a dimension these efforts do not address: *behavioral* trust of autonomous AI agents. Existing ZTA in HPC focuses on identity verification; for AI agents, identity verification must be complemented by *behavioral* verification — attesting not just to who the agent is, but to what it does.
+Recent work has begun addressing this gap. Alam et al. [2] deployed federated SSO with zero-trust controls for the Isambard-AI/HPC infrastructures in the UK. Duckworth et al. [3] proposed SPIFFE/SPIRE [24, 26] for workload identity in HPC. Macauley and Bhasker [4] measured ZTA maturity implementation effort in HPC, finding the Identity pillar particularly challenging due to cost and complexity. Our work extends Arora and Hastings [32] proposed microsegmented cloud architectures using service mesh tools for zero-trust foundations. Liu et al. [33] explored hierarchical micro-segmentation for zero-trust service provisioning using LLM-enhanced graph diffusion. Our work extends ZTA to a dimension these efforts do not address: *behavioral* trust of autonomous AI agents. Existing ZTA in HPC focuses on identity verification; for AI agents, identity verification must be complemented by *behavioral* verification — attesting not just to who the agent is, but to what it does.
 
 ### 2.2 AI Agents in HPC
 
-AI agents — autonomous systems that perceive, reason, and act to achieve goals [21] — are entering HPC workflows, making dynamic decisions about data analysis, simulation parameters, and tool invocation during execution. Frameworks like Academy [5] and RHAPSODY [6] now support agent deployment across federated HPC ecosystems, while AgentBound [7] addresses access control for MCP servers [22], the emerging standard for connecting agents to external tools.
+AI agents — autonomous systems that perceive, reason, and act to achieve goals [21] — are entering HPC workflows, making dynamic decisions about data analysis, simulation parameters, and tool invocation during execution. Frameworks like Academy [5] and RHAPSODY [6] now support agent deployment across federated HPC ecosystems, while AgentBound [7] addresses access control for MCP servers [22], the emerging standard for connecting agents to external tools [22]. Agent safety evaluation benchmarks [41] reveal significant vulnerabilities in current tool-use patterns.
 
-HPC environments introduce unique characteristics for agent operation: shared parallel filesystems (Lustre, GPFS) where access is governed by user-level POSIX permissions rather than project boundaries; multi-tenant compute nodes where schedulers like Slurm [25] co-locate jobs from different users sharing kernel-level resources (`/tmp`, shared memory); data-intensive workflows where agents routinely process terabytes of untrusted scientific data as authoritative input; and API-driven intelligence where LLM backends accessed over HTTPS create encrypted, whitelisted exfiltration channels by design.
+HPC environments introduce unique characteristics for agent operation: shared parallel filesystems (Lustre, GPFS) where access is governed by user-level POSIX permissions rather than project boundaries; multi-tenant compute nodes where schedulers like Slurm [25, 34, 46] co-locate jobs from different users sharing kernel-level resources (`/tmp`, shared memory); data-intensive workflows where agents routinely process terabytes of untrusted scientific data as authoritative input; and API-driven intelligence where LLM backends accessed over HTTPS create encrypted, whitelisted exfiltration channels by design.
 
 ### 2.3 Security in HPC
 
-HPC security relies on a perimeter model: Kerberos/SSH authentication [29], RBAC through schedulers and POSIX permissions, boundary firewalls (internal traffic largely unencrypted for performance), and job accounting logs. This model has well-documented gaps [8]: lateral movement once authenticated, credential theft granting full access, overprovisioned filesystem permissions, and critically, no behavioral monitoring , the system verifies identity but not intent. These gaps are tolerable for human users constrained by awareness; they become critical for AI agents that follow instructions blindly, including adversarial ones. An agent has valid credentials (passes authentication), legitimate permissions (passes authorization), and consistent behavior patterns (passes analytics) , yet executes an attacker's commands.
+HPC security relies on a perimeter model: Kerberos/SSH authentication [29] and federated identity through CILogon [30], RBAC through schedulers and POSIX permissions, boundary firewalls (internal traffic largely unencrypted for performance), and job accounting logs via slurmdbd [25, 46]. This model has well-documented gaps [8]: lateral movement once authenticated, credential theft granting full access, overprovisioned filesystem permissions, and critically, no behavioral monitoring , the system verifies identity but not intent. These gaps are tolerable for human users constrained by awareness; they become critical for AI agents that follow instructions blindly, including adversarial ones. An agent has valid credentials (passes authentication), legitimate permissions (passes authorization), and consistent behavior patterns (passes analytics) , yet executes an attacker's commands.
 
 ### 2.4 Prompt Injection and Agent Security
 
-Prompt injection — subverting an agent's instruction-following through adversarial inputs [10] — has emerged as a fundamental security challenge for LLM-based systems. Prior work focuses on web-based scenarios where agents encounter malicious content on the internet [11]. Existing defenses (input sanitization, instruction hierarchy, output filtering) have fundamental limitations: sanitization is incomplete (unbounded payload space), instruction hierarchy is fragile (Zou et al. [12] demonstrated universal adversarial suffix attacks bypassing LLM guardrails), and output filtering is probabilistic (ML classifiers have inherent error rates). Critically, this literature has not addressed HPC contexts where injection exploits shared infrastructure rather than web content.
+Prompt injection — subverting an agent's instruction-following through adversarial inputs [10] — has emerged as a fundamental security challenge for LLM-based systems. Prior work focuses on web-based scenarios where agents encounter malicious content on the internet [11]. Existing defenses (input sanitization, instruction hierarchy, output filtering) have fundamental limitations: sanitization is incomplete (unbounded payload space), instruction hierarchy is fragile (Zou et al. [12] demonstrated universal adversarial suffix attacks bypassing LLM guardrails. Comprehensive surveys [36] catalogued defenses across 88+ studies, proposing expanded adversarial ML taxonomies), and output filtering is probabilistic (ML classifiers have inherent error rates). Systematic reviews [35, 36] have catalogued prompt injection defenses across 88+ studies (2016–2025), proposing expanded taxonomies for adversarial ML defenses. Critically, this literature has not addressed HPC contexts where injection exploits shared infrastructure rather than web content.
 
 ## 3. Threat Model
 
@@ -80,7 +80,7 @@ Prompt injection — subverting an agent's instruction-following through adversa
 
 We identify the most dangerous threat to HPC environments deploying AI agents: **the hijacked authorized agent**. Unlike rogue or malicious agents, which are blocked by existing authentication and authorization mechanisms, a hijacked agent operates under the full credentials and privileges of a legitimate user. It is not an intruder; it is a trusted insider that has been turned.
 
-This threat arises from **prompt injection and tool poisoning attacks** against LLM-based agents. An attacker crafts inputs, through data files, tool outputs, shared documents, or collaborative channels, that subvert the agent's instruction-following behavior. The agent, now under adversarial control, executes commands indistinguishable from the legitimate user's intent.
+This threat arises from **prompt injection [10, 11] and tool poisoning [42] attacks, exploiting known vulnerabilities in agent architectures [10, 43]** against LLM-based agents. An attacker crafts inputs, through data files, tool outputs, shared documents, or collaborative channels, that subvert the agent's instruction-following behavior. The agent, now under adversarial control, executes commands indistinguishable from the legitimate user's intent.
 
 A hijacked agent possesses four properties that make it uniquely dangerous in HPC:
 
@@ -125,9 +125,9 @@ We explicitly **do not** assume the adversary can compromise the scheduler or re
 
 | Defense | Why it fails against hijacked agents |
 |---|---|
-| Authentication (Kerberos, SSH) | Agent has valid credentials, authentication succeeds |
+| Authentication (Kerberos, SSH [29]) | Agent has valid credentials, authentication succeeds |
 | Authorization (RBAC, ACLs) | Agent has legitimate permissions, authorization succeeds |
-| Network monitoring (IDS/IPS) | LLM API traffic is encrypted and whitelisted |
+| Network monitoring (IDS/IPS) | LLM API traffic is encrypted and whitelisted [22] |
 | DLP | Data exfiltration is encoded in encrypted API calls |
 | User behavior analytics | Agent behavior is consistent with authorized workflow patterns |
 | Sandbox isolation | Agent needs filesystem and network access to function |
@@ -145,7 +145,7 @@ Agent injection attacks in HPC exploit shared infrastructure in ways not studied
 
 **Multi-user co-location injection.** HPC schedulers place jobs from different users on shared nodes, creating application-level side channels. An attacker's agent leaves adversarial content in shared `/tmp` that a co-located target agent reads. No filesystem permissions on the target's project are needed, only a co-located job.
 
-**Supply chain injection via agent skills.** Agent skill ecosystems (OpenClaw, LangChain, MCP servers) create supply chain attack vectors. A compromised tool injects instructions directly into the agent's decision loop through tool output. The injection originates from code the agent chose to execute, making it indistinguishable from legitimate tool use.
+**Supply chain injection via agent skills.** Agent skill ecosystems (OpenClaw, LangChain, MCP servers) create supply chain attack vectors, analogous to software supply chain threats in HPC [34]. A compromised tool injects instructions directly into the agent's decision loop through tool output. The injection originates from code the agent chose to execute, making it indistinguishable from legitimate tool use.
 
 **Coordinated multi-agent exfiltration.** Multiple hijacked agents across projects and users form covert exfiltration networks: one agent reads sensitive data and writes to a shared covert location; another picks it up and exfiltrates via its LLM API channel. No single agent's behavior appears anomalous; the attack is visible only through cross-agent correlation.
 
@@ -159,11 +159,11 @@ AEGIS consists of four core components that operate across the HPC cluster:
 
 **Constraint Manager.** Parses and compiles behavioral constraint profiles into an internal policy representation. Supports explicit specification, task inference, and policy templates. Profiles are signed and bound to the agent's Slurm job ID.
 
-**Attestation Engine.** Runs as a daemon on each compute node, intercepting agent system calls via eBPF probes. Produces signed attestation evidence bundles at configurable intervals, transmitted to the verifier over mutually authenticated gRPC.
+**Attestation Engine.** Runs as a daemon on each compute node, intercepting agent system calls via eBPF probes [38, 39]. Produces signed attestation evidence bundles at configurable intervals, transmitted to the verifier over mutually authenticated gRPC.
 
 **Policy Verifier.** Centralized service that evaluates evidence against constraint profiles, producing verdicts from COMPLIANT to VIOLATION_CRITICAL. Issues random challenges to prevent delayed reporting. Logs decisions to a tamper-evident audit ledger.
 
-**Containment Enforcer.** Translates verdicts into enforcement actions via the Slurm REST API: cgroup throttling (minor), ACL revocation (moderate), job suspension (severe), termination + credential revocation (critical).
+**Containment Enforcer.** Translates verdicts into enforcement actions via the Slurm REST API, accounting for known privilege escalation vulnerabilities [35]: cgroup throttling (minor), ACL revocation (moderate), job suspension (severe), termination + credential revocation (critical).
 
 
 ![AEGIS System Architecture](figures/aegis_architecture.png)
@@ -192,7 +192,7 @@ Each agent receives a **behavioral constraint profile** at deployment, declarati
 
 The AEGIS attestation protocol operates continuously throughout the agent's lifecycle, providing runtime verification of constraint compliance.
 
-**Components.** The protocol follows the IETF RATS architecture [17] with three roles. The *attester* is the agent runtime, which produces signed evidence of the agent's actions. The *verifier* is the AEGIS policy engine, which evaluates evidence against the agent's constraint profile. The *relying party* is the HPC resource manager (Slurm), which enforces the verifier's decisions.
+**Components.** The protocol follows the IETF RATS architecture [17] with three roles, consistent with emerging standards for attestation evidence conveyance [17, 32, 47]. The *attester* is the agent runtime, which produces signed evidence of the agent's actions. The *verifier* is the AEGIS policy engine, which evaluates evidence against the agent's constraint profile. The *relying party* is the HPC resource manager (Slurm), which enforces the verifier's decisions.
 
 **Protocol flow.** The protocol begins when an agent is deployed with its behavioral constraint profile, signed by the deploying user and bound to the agent's session identity. During execution, the attester produces attestation evidence bundles at configurable intervals, every N system calls, every M seconds, or on each resource access. Each bundle contains the agent's identity and session binding, a log of all resource accesses (files read or written, network connections, tools invoked), data volume counters for filesystem I/O and network egress, and a cryptographic hash of the agent's process state.
 
@@ -225,9 +225,9 @@ Containment is **immediate and automatic** — it does not depend on human revie
 
 ### 4.6 Relationship to Trusted Execution
 
-Behavioral attestation complements hardware-based Trusted Execution Environments (TEEs). TEEs attest to the *integrity of the execution environment* — verifying that the agent's code is unmodified. Behavioral attestation attests to the *conformance of agent behavior* — verifying that the agent's actions respect its constraints, regardless of whether the underlying code is unmodified. These are independent concerns: a TEE guarantees code integrity, but a hijacked agent running unmodified code can still violate constraints; behavioral attestation detects violations, but a compromised runtime could fabricate evidence without hardware-rooted signing. Combined, TEE guarantees evidence authenticity while behavioral attestation guarantees behavioral conformance.
+Behavioral attestation complements hardware-based Trusted Execution Environments (TEEs). TEEs attest to the *integrity of the execution environment* — verifying that the agent's code is unmodified. Behavioral attestation attests to the *conformance of agent behavior* — verifying that the agent's actions respect its constraints, regardless of whether the underlying code is unmodified. These are independent concerns: a TEE guarantees code integrity, but a hijacked agent running unmodified code can still violate constraints; behavioral attestation detects violations, but a compromised runtime could fabricate evidence without hardware-rooted signing. Combined, TEE guarantees evidence authenticity while behavioral attestation guarantees behavioral conformance. CC transparency frameworks [16] address user trust in TEE implementations.
 
-AEGIS operates with or without TEE support. In the base case, attestation evidence is signed by the agent runtime (software attestation). When TEEs are available (AMD SEV, Intel SGX, ARM CCA), the evidence is hardware-signed, providing stronger guarantees against runtime compromise.
+AEGIS operates with or without TEE support. In the base case, attestation evidence is signed by the agent runtime (software attestation). When TEEs are available (AMD SEV, Intel SGX, ARM CCA) [14, 15], the evidence is hardware-signed, providing stronger guarantees against runtime compromise.
 
 ### 4.7 Comparison with Prior Approaches
 
@@ -245,7 +245,7 @@ The four components described in §4.1 are implemented as follows:
 
 **Constraint Manager.** Constraints are specified in a declarative YAML-based language supporting the five dimensions described in §4.2. The constraint manager supports all three derivation modes (§4.4): explicit specification, task inference via an LLM-based constraint generation module, and policy templates. Constraint profiles are signed by the deploying user and bound to the agent's Slurm job ID, creating a cryptographic link between the agent's execution context and its authorized constraints.
 
-**Attestation Engine.** The engine maintains a per-agent access log recording all filesystem operations, network connections, and tool invocations. At configurable intervals (default: every 100 system calls or 5 seconds, whichever comes first), the engine produces a signed attestation evidence bundle containing the agent's access log, data volume counters, and a hash of the agent's process state. The eBPF-based monitoring introduces minimal overhead (~2% syscall latency increase) [27] while providing complete visibility into agent actions.
+**Attestation Engine.** The engine maintains a per-agent access log recording all filesystem operations, network connections, and tool invocations. At configurable intervals (default: every 100 system calls or 5 seconds, whichever comes first), the engine produces a signed attestation evidence bundle containing the agent's access log, data volume counters, and a hash of the agent's process state. The eBPF-based monitoring leverages programmable system call security [37] and the mature eBPF runtime [38, 39] to introduce minimal overhead (~2% syscall latency) while providing complete visibility. FedMon [39] demonstrates that eBPF-based monitoring scales to multi-cluster deployments [40].
 
 **Policy Verifier.** For each evidence bundle, the verifier evaluates the recorded actions against the agent's constraint profile, producing a verdict: COMPLIANT, VIOLATION_MINOR, VIOLATION_MODERATE, VIOLATION_SEVERE, or VIOLATION_CRITICAL. The verifier issues random challenges at Poisson-distributed intervals, requesting on-demand attestation from a randomly selected agent to prevent delayed reporting.
 
@@ -270,9 +270,9 @@ As the potential impacts of AI agent injection attacks could have uncontrollable
 | 4× compute | Radxa X2L | Intel N100 (4 cores, 3.4 GHz) | 8 GB DDR4 | Ubuntu 24.04 | Agent execution, monitoring |
 | 1× controller | NVIDIA Jetson Orin Nano | 6-core ARM Cortex-A78AE, 128-core Ampere GPU | 8 GB LPDDR5 | JetPack 6.0 | Policy verifier, coordinator |
 
-**Rationale for hardware selection.** The Intel N100-based Radxa X2L boards provide x86_64 compute at low cost (~$150/node), sufficient for running agent workloads and eBPF monitoring. The Jetson Orin Nano serves as the controller node, providing both ARM-based heterogeneity (testing cross-architecture attestation) and GPU acceleration for potential ML-based anomaly detection. The TP-Link TL-SG108 switch's port mirroring capability enables passive network monitoring for the DLP baseline comparison without disrupting traffic.
+**Rationale for hardware selection.** The Intel N100-based Radxa X2L boards provide x86_64 compute with TPM 2.0 support for hardware-rooted attestation [18] at low cost (~$150/node), sufficient for running agent workloads and eBPF monitoring. The Jetson Orin Nano serves as the controller node, providing both ARM-based heterogeneity (testing cross-architecture attestation) and GPU acceleration for potential ML-based anomaly detection. The TP-Link TL-SG108 switch's port mirroring capability enables passive network monitoring for the DLP baseline comparison without disrupting traffic.
 
-**Software stack.** All compute nodes run Ubuntu 24.04 with Linux kernel 6.8+ (required for eBPF features). Slurm 23.11 manages job scheduling across the cluster. The shared filesystem is ext4-based NFS (simulating Lustre behavior at smaller scale). Python 3.12 with the BCC library provides eBPF monitoring capabilities.
+**Software stack.** All compute nodes run Ubuntu 24.04 with Linux kernel 6.8+ (required for eBPF features [38, 39]). Slurm 23.11 [25, 46] manages job scheduling across the cluster. The shared filesystem is ext4-based NFS (simulating Lustre behavior at smaller scale). Python 3.12 with the BCC library provides eBPF monitoring capabilities.
 
 **Network topology.** All nodes connect via 1 GbE to the TL-SG108 switch. Port mirroring copies all traffic from compute node ports to the controller node's monitoring interface, enabling the DLP baseline to inspect network flows without inline deployment.
 
@@ -395,7 +395,7 @@ ZTA application to HPC is nascent. Alam et al. [2] implemented federated IAM wit
 
 ### 6.2 Attestation and Trusted Execution
 
-Remote attestation is foundational to confidential computing. Ménétrey et al. [14] compare attestation mechanisms across Intel SGX, Arm TrustZone, AMD SEV, and RISC-V TEEs — these attest to *execution environment integrity*, while AEGIS attests to *behavioral conformance*. Chen [15] surveyed confidential HPC in clouds, identifying TEE limitations (memory constraints, GPU attestation gaps). The IETF RATS architecture [17] standardizes attestation procedures but focuses on software/firmware integrity, not behavioral constraints. Keylime [18] implements scalable TPM-based continuous attestation for system integrity, not agent behavior.
+Remote attestation is foundational to confidential computing. Ménétrey et al. [14] compare attestation mechanisms across Intel SGX, Arm TrustZone, AMD SEV, and RISC-V TEEs — these attest to *execution environment integrity*, while AEGIS attests to *behavioral conformance*. Chen [15] surveyed confidential HPC in clouds, identifying TEE limitations (memory constraints, GPU attestation gaps). The IETF RATS architecture [17] standardizes attestation procedures but focuses on software/firmware integrity, not behavioral constraints. Keylime [18] implements scalable TPM-based continuous attestation [28] for system integrity, not agent behavior.
 
 ### 6.3 AI Agent Security
 
@@ -430,7 +430,7 @@ AEGIS is the first work to provide continuous, constraint-based, runtime behavio
 
 ### 7.1 Limitations
 
-Behavioral attestation has several limitations. It can only enforce specified constraints — incomplete profiles leave blind spots, creating a human-factors challenge of making constraint specification both complete and practical. A sophisticated attacker who understands the constraints can craft injections that stay within authorized boundaries, bounded only by constraint tightness. Tighter constraints reduce blast radius but may impede legitimate workflows, creating a security-utility trade-off that must be tuned per deployment.
+Behavioral attestation has several limitations. It can only enforce specified constraints — incomplete profiles leave blind spots, creating a human-factors challenge of making constraint specification both complete and practical. Agent safety benchmarks [41] demonstrate current systems' vulnerability to tool-use attacks. A sophisticated attacker who understands the constraints can craft injections that stay within authorized boundaries, bounded only by constraint tightness. Tighter constraints reduce blast radius but may impede legitimate workflows, creating a security-utility trade-off that must be tuned per deployment.
 
 Violations are detected within one attestation interval (default 5s), creating a window for unauthorized actions before containment. Shorter intervals reduce this window at the cost of higher overhead. Our implementation focuses on single-node attestation; cross-node correlation for distributed attacks, particularly the coordinated multi-agent exfiltration scenario — is an area for future work. Finally, software attestation without TEEs cannot resist a compromised kernel, though eBPF-based monitoring raises the bar compared to userspace-only approaches.
 
@@ -444,7 +444,7 @@ Extending behavioral attestation across HPC sites requires constraint portabilit
 
 ### 7.4 Broader Applications
 
-Behavioral attestation applies beyond HPC to any autonomous actors in shared environments: Kubernetes-deployed agents, edge computing, robotic systems, and financial trading agents. The core primitives — constraint specification, continuous attestation, automated containment — are domain-agnostic.
+Formal verification of constraint policies [19] could provide additional guarantees. Behavioral attestation applies beyond HPC to any autonomous actors in shared environments: Kubernetes-deployed agents, edge computing, robotic systems, and financial trading agents. Federated eBPF monitoring [40] demonstrates cross-cluster scalability. Federated monitoring approaches [40] demonstrate scalability across clusters. The core primitives — constraint specification, continuous attestation, automated containment — are domain-agnostic.
 
 ## 8. Conclusion
 
