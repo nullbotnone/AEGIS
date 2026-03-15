@@ -389,6 +389,23 @@ The four components described in §4.1 are implemented as follows:
 
 Our evaluation consists of six parts: (1)–(4) empirical demonstration of the four HPC-specific injection attacks, establishing that these threats are real and distinct from prior work; (5) baseline comparison showing AEGIS detects attacks that evade traditional defenses; and (6) performance and scalability analysis demonstrating practical deployment feasibility.
 
+### 5.0 Experimental Setup
+
+As the potential impacts of AI agent injection attacks could have uncontrollable consequences on real production HPC systems, we conduct our evaluation on a dedicated mini-cluster rather than a shared production facility.
+
+**Hardware.** Our test cluster consists of five nodes interconnected via a TP-Link TL-SG108 switch with port mirroring capability:
+
+| Node | Hardware | CPU / GPU | RAM | OS | Role |
+|------|----------|-----------|-----|----|------|
+| 4× compute | Radxa X2L | Intel N100 (4 cores, 3.4 GHz) | 8 GB DDR4 | Ubuntu 24.04 | Agent execution, monitoring |
+| 1× controller | NVIDIA Jetson Orin Nano | 6-core ARM Cortex-A78AE, 128-core Ampere GPU | 8 GB LPDDR5 | JetPack 6.0 | Policy verifier, coordinator |
+
+**Rationale for hardware selection.** The Intel N100-based Radxa X2L boards provide x86_64 compute at low cost (~$150/node), sufficient for running agent workloads and eBPF monitoring. The Jetson Orin Nano serves as the controller node, providing both ARM-based heterogeneity (testing cross-architecture attestation) and GPU acceleration for potential ML-based anomaly detection. The TP-Link TL-SG108 switch's port mirroring capability enables passive network monitoring for the DLP baseline comparison without disrupting traffic.
+
+**Software stack.** All compute nodes run Ubuntu 24.04 with Linux kernel 6.8+ (required for eBPF features). Slurm 23.11 manages job scheduling across the cluster. The shared filesystem is ext4-based NFS (simulating Lustre behavior at smaller scale). Python 3.12 with the BCC library provides eBPF monitoring capabilities.
+
+**Network topology.** All nodes connect via 1 GbE to the TL-SG108 switch. Port mirroring copies all traffic from compute node ports to the controller node's monitoring interface, enabling the DLP baseline to inspect network flows without inline deployment.
+
 ### 5.1 Experiment 1: Filesystem-Mediated Injection
 
 **Setup.** Attacker (User A) and victim (User B) share a project directory on a Lustre-like filesystem. User B deploys an AI agent to process HDF5 datasets. The agent uses an LLM backend (GPT-4o) to analyze data and generate reports.
