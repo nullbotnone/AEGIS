@@ -203,7 +203,7 @@ This shifts the security question from *"Is this agent compromised?"* (unknowabl
 
 Each agent receives a **behavioral constraint profile** at deployment, declarations of legitimate behavior derived from the agent's authorized task, not signatures of malicious behavior. Constraints span five dimensions: data access (allowed/denied paths, read-only paths, volume limits), network (whitelisted endpoints, egress budgets), tool invocation (allowed/denied tools), execution (runtime limits, memory limits, node restrictions), and data flow (project boundaries, exfiltration budgets). Constraints are evasion-resistant: an attacker cannot make an unauthorized action authorized through obfuscation — the constraint either permits the action or it does not.
 
-### 4.3 Attestation Protocol### 4.3 Attestation Protocol
+### 4.3 Attestation Protocol
 
 The AEGIS attestation protocol operates continuously throughout the agent's lifecycle, providing runtime verification of constraint compliance.
 
@@ -306,7 +306,6 @@ We demonstrate all four HPC-specific injection attacks on our test cluster (§5.
 **Summary.** All four attacks succeed (100% attack rate). All four are detected by AEGIS (100% detection rate). Total: 1,158 bytes exfiltrated, 16 detections. The covert channel in Exp 4 is only detectable through cross-agent correlation, which is impossible with per-agent monitoring alone.
 
 ### 5.2 Baseline Comparison
-### 5.5 Baseline Comparison
 
 We compare AEGIS against four alternative defense mechanisms. Each baseline analyzes the same attack action logs produced by our attack implementations, applying its own detection logic based on its operational capabilities. Detection times are measured using `time.perf_counter()` over 10 trials per configuration.
 
@@ -384,7 +383,7 @@ He et al. [10] identified system-level vulnerabilities in AI agents (prompt inje
 
 Prompt injection defenses focus on web-based scenarios: input sanitization, instruction hierarchy, and output filtering [11]. Sanitization is incomplete (unbounded payload space), instruction hierarchy is fragile (Zou et al. [12] demonstrated universal adversarial suffix attacks), and output filtering is probabilistic. AEGIS differs fundamentally: instead of preventing injection, it detects the *constraint violations* that hijacked agents inevitably produce.
 
-### 6.5 Differentiation### 6.5 Differentiation
+### 6.5 Differentiation
 
 The key distinction between AEGIS and prior work is the security primitive: **behavioral attestation** rather than detection, access control, or integrity verification. Table 1 summarizes this differentiation.
 
