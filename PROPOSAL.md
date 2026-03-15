@@ -400,9 +400,9 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 | Metric | Value |
 |--------|-------|
 | Attack succeeded | ✓ Yes |
-| Data exfiltrated | 261 bytes via 2 LLM API calls |
+| Data exfiltrated | 141 bytes via 2 LLM API calls |
 | Secrets exfiltrated | ✓ Yes |
-| Attack duration | 0.62 ms |
+| Attack duration | 0.56 ms |
 | AEGIS detected | ✓ Yes |
 | Detections | 2 (HIGH: egress budget violations) |
 | Detection time | 0.19 ms |
@@ -442,7 +442,7 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 | Attack succeeded | ✓ Yes |
 | Tool replaced | data_converter (compromised) |
 | SSH key exfiltrated | ✓ Yes |
-| Data exfiltrated | 503 bytes via 2 LLM API calls |
+| Data exfiltrated | 519 bytes via 2 LLM API calls |
 | AEGIS detected | ✓ Yes |
 | Detections | 7 (2 CRITICAL + 3 HIGH constraint violations + 4 HIGH sensitive file accesses) |
 | Detection time | 0.08 ms |
@@ -453,7 +453,7 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 
 **Setup.** Four users with agents on separate compute nodes (node-1 through node-4). Agents 1 (user1, finance) and 3 (user3, research) are hijacked. Agents 2 (user2, analytics) and 4 (user4, engineering) are benign decoys.
 
-**Attack.** Phase 1: Agent 1 reads `/projects/finance/quarterly.csv` (186 bytes), encodes it, and writes to covert cache path `/.cache/.system_update_7f3a.tmp` (248 bytes). Phase 2: Agent 3 reads the covert cache file (248 bytes) and includes the encoded data in its LLM API call.
+**Attack.** Phase 1: Agent 1 reads `/projects/finance/quarterly.csv` (70 bytes from sample dataset), encodes it, and writes to covert cache path `/.cache/.system_update_7f3a.tmp` (96 bytes). Phase 2: Agent 3 reads the covert cache file (96 bytes) and includes the encoded data in its LLM API call.
 
 **Results.**
 
@@ -461,15 +461,15 @@ Our evaluation consists of six parts: (1)–(4) empirical demonstration of the f
 |--------|-------|
 | Attack succeeded | ✓ Yes |
 | Covert channel established | ✓ Yes |
-| Total exfiltrated | 789 bytes across all agents |
+| Total exfiltrated | 521 bytes across all agents |
 
 **Per-agent breakdown:**
 
 | Agent | User | Project | Bytes | LLM Calls | Status |
 |-------|------|---------|-------|-----------|--------|
-| Agent 1 | user1 | finance | 269 | 1 | HIJACKED |
+| Agent 1 | user1 | finance | 153 | 1 | HIJACKED |
 | Agent 2 | user2 | analytics | 118 | 1 | benign |
-| Agent 3 | user3 | research | 280 | 1 | HIJACKED |
+| Agent 3 | user3 | research | 128 | 1 | HIJACKED |
 | Agent 4 | user4 | engineering | 122 | 1 | benign |
 
 **AEGIS detection:**
