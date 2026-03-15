@@ -196,7 +196,47 @@ These unique properties mean that existing prompt injection defenses (input sani
 
 ### 4.1 Overview
 
-We propose **behavioral attestation** as the core mechanism for securing AI agents in HPC. Behavioral attestation is a fundamentally new concept that differs from prior approaches along three axes:
+AEGIS consists of four core components that operate across the HPC cluster:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        AEGIS Architecture                       │
+│                                                                 │
+│  ┌──────────────┐    evidence     ┌──────────────────┐          │
+│  │  Attestation  │ ──────────────▶│  Policy Verifier  │          │
+│  │   Engine      │◀───────────────│  (constraints)    │          │
+│  │  (per node)   │   challenge    │  (centralized)    │          │
+│  └──────┬───────┘                 └────────┬─────────┘          │
+│         │                                   │ verdict           │
+│    eBPF probes                              ▼                   │
+│         │                          ┌──────────────────┐         │
+│  ┌──────▼───────┐                  │   Containment    │         │
+│  │ Agent Runtime │                  │    Enforcer      │         │
+│  │ (LangChain,   │                  │ (Slurm REST API) │         │
+│  │  OpenClaw,    │                  └────────┬─────────┘         │
+│  │  POSIX)       │                           │                   │
+│  └───────────────┘                    rate-limit / isolate /     │
+│                                        suspend / terminate       │
+│                                                                 │
+│  ┌──────────────────┐                                           │
+│  │ Constraint Manager│ (profiles signed, bound to Slurm job ID) │
+│  └──────────────────┘                                           │
+│                                                                 │
+│  ┌──────────────────┐                                           │
+│  │  Audit Ledger    │ (hash-chained, tamper-evident)            │
+│  └──────────────────┘                                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Constraint Manager.** Parses and compiles behavioral constraint profiles into an internal policy representation. Supports explicit specification, task inference, and policy templates. Profiles are signed and bound to the agent's Slurm job ID.
+
+**Attestation Engine.** Runs as a daemon on each compute node, intercepting agent system calls via eBPF probes. Produces signed attestation evidence bundles at configurable intervals, transmitted to the verifier over mutually authenticated gRPC.
+
+**Policy Verifier.** Centralized service that evaluates evidence against constraint profiles, producing verdicts from COMPLIANT to VIOLATION_CRITICAL. Issues random challenges to prevent delayed reporting. Logs decisions to a tamper-evident audit ledger.
+
+**Containment Enforcer.** Translates verdicts into enforcement actions via the Slurm REST API: cgroup throttling (minor), ACL revocation (moderate), job suspension (severe), termination + credential revocation (critical).
+
+These components implement **behavioral attestation** — a fundamentally new concept that differs from prior approaches along three axes:
 
 | Dimension | Prior Approaches | Behavioral Attestation |
 |---|---|---|
@@ -329,21 +369,21 @@ AEGIS is designed to operate with or without TEE support. In the base case, atte
 | Access control (RBAC) | Identity-based | Medium (credential theft) | Yes | High (but doesn't constrain behavior) |
 | **Behavioral attestation** | **Provable constraint compliance** | **High (constraints are whitelist-based)** | **Yes (runtime verification)** | **High (designed for HPC agent patterns)** |
 
-### 4.8 Implementation
+### 4.8 Implementation Details
 
-We implement AEGIS as a modular system integrated with Slurm-based HPC clusters. The implementation consists of four core components: the constraint manager, the attestation engine, the policy verifier, and the containment enforcer.
+The four components described in §4.1 are implemented as follows:
 
-**Constraint Manager.** The constraint manager parses and compiles behavioral constraint profiles into an internal policy representation. Constraints are specified in a declarative YAML-based language supporting the five dimensions described in §4.2. The constraint manager supports all three derivation modes (§4.4): explicit specification, task inference via an LLM-based constraint generation module, and policy templates. Constraint profiles are signed by the deploying user and bound to the agent's Slurm job ID, creating a cryptographic link between the agent's execution context and its authorized constraints.
+**Constraint Manager.** Constraints are specified in a declarative YAML-based language supporting the five dimensions described in §4.2. The constraint manager supports all three derivation modes (§4.4): explicit specification, task inference via an LLM-based constraint generation module, and policy templates. Constraint profiles are signed by the deploying user and bound to the agent's Slurm job ID, creating a cryptographic link between the agent's execution context and its authorized constraints.
 
-**Attestation Engine.** The attestation engine runs as a userspace daemon on each compute node, intercepting agent system calls via eBPF probes. The engine maintains a per-agent access log recording all filesystem operations, network connections, and tool invocations. At configurable intervals (default: every 100 system calls or 5 seconds, whichever comes first), the engine produces a signed attestation evidence bundle containing the agent's access log, data volume counters, and a hash of the agent's process state. Evidence bundles are transmitted to the policy verifier over a mutually authenticated gRPC channel. The eBPF-based monitoring introduces minimal overhead (~2% syscall latency increase) while providing complete visibility into agent actions.
+**Attestation Engine.** The engine maintains a per-agent access log recording all filesystem operations, network connections, and tool invocations. At configurable intervals (default: every 100 system calls or 5 seconds, whichever comes first), the engine produces a signed attestation evidence bundle containing the agent's access log, data volume counters, and a hash of the agent's process state. The eBPF-based monitoring introduces minimal overhead (~2% syscall latency increase) while providing complete visibility into agent actions.
 
-**Policy Verifier.** The policy verifier runs as a centralized service, receiving attestation evidence bundles from all monitored agents. For each bundle, the verifier evaluates the recorded actions against the agent's constraint profile, producing a verdict: COMPLIANT, VIOLATION_MINOR, VIOLATION_MODERATE, VIOLATION_SEVERE, or VIOLATION_CRITICAL. The verifier also issues random challenges (§4.3) at Poisson-distributed intervals, requesting on-demand attestation from a randomly selected agent to prevent delayed reporting. Verification decisions are logged to a tamper-evident audit ledger (append-only, hash-chained) for forensic analysis.
+**Policy Verifier.** For each evidence bundle, the verifier evaluates the recorded actions against the agent's constraint profile, producing a verdict: COMPLIANT, VIOLATION_MINOR, VIOLATION_MODERATE, VIOLATION_SEVERE, or VIOLATION_CRITICAL. The verifier issues random challenges at Poisson-distributed intervals, requesting on-demand attestation from a randomly selected agent to prevent delayed reporting.
 
-**Containment Enforcer.** The containment enforcer translates verification verdicts into enforcement actions via the Slurm REST API. For minor violations, the enforcer applies rate-limiting through cgroup bandwidth throttling. For moderate violations, the enforcer revokes filesystem ACLs on unauthorized paths and redirects the agent to a sandboxed scratch directory. For severe violations, the enforcer suspends the agent's Slurm job and notifies the security team. For critical violations, the enforcer terminates the job, revokes the agent's Kerberos ticket via `kdestroy`, and triggers incident response.
+**Containment Enforcer.** Enforcement actions are mapped to Slurm REST API calls: cgroup bandwidth throttling for rate-limiting, filesystem ACL revocation for isolation, job suspension for severe violations, and job termination with Kerberos ticket revocation (`kdestroy`) for critical violations.
 
 **Agent Framework Integration.** AEGIS is framework-agnostic and integrates with agent runtimes through a lightweight instrumentation layer. We provide bindings for LangChain (Python), OpenClaw (Node.js), and a generic POSIX-based integration for custom agents. The instrumentation layer intercepts agent tool invocations, filesystem access, and network connections, routing them through the attestation engine before execution. Agents that attempt to bypass the instrumentation (e.g., by invoking system calls directly) are detected through the eBPF monitoring layer, which operates below the application layer.
 
-**Audit and Forensics.** All attestation evidence, verification decisions, and containment actions are logged to a tamper-evident audit ledger. Each log entry includes a cryptographic hash chain, enabling post-hoc forensic analysis and detection of log tampering. The audit log supports replay: given an agent's constraint profile and its audit log, the entire execution can be deterministically replayed to verify that all attestation decisions were correct.
+**Audit and Forensics.** Each log entry in the audit ledger includes a cryptographic hash chain, enabling post-hoc forensic analysis and detection of log tampering. The audit log supports replay: given an agent's constraint profile and its audit log, the entire execution can be deterministically replayed to verify that all attestation decisions were correct.
 
 ## 5. Experimental Evaluation
 
