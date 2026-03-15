@@ -1,36 +1,42 @@
 # References — AEGIS Paper
 
-## Citation List
+## Verified Citation List
 
-| # | Reference | Source |
-|---|---|---|
-| [1] | Rose et al., "SP 800-207: Zero Trust Architecture," NIST, 2020 | NIST SP |
-| [2] | Alam et al., "Federated Single Sign-On and Zero Trust Co-design for AI and HPC Digital Research Infrastructures," 2024 | arXiv:2410.18411 |
-| [3] | Duckworth et al., "A Path to Zero Trust Architecture in HPC and AI Using SPIFFE and SPIRE," 2023 | CLSAC 2023 |
-| [4] | Macauley & Bhasker, "Challenges and Tradeoffs of Zero Trust Architecture in High Performance Computing," 2025 | SC25 (expected) |
-| [5] | Pauloski et al., "Empowering Scientific Workflows with Federated Agents (Academy)," 2025 | IPDPS'26, arXiv:2505.05428 |
-| [6] | (RHAPSODY), "Multi-runtime middleware for AI-HPC workloads," 2025 | arXiv:2512.20795 |
-| [7] | Bühler et al., "Securing AI Agent Execution (AgentBound)," 2025 | arXiv:2510.21236 |
-| [8] | NIST, "SP 800-223: High-Performance Computing Security," 2024 | NIST SP |
-| [9] | (HPC security gaps — need specific citation) | TBD |
-| [10] | He et al., "Security of AI Agents," 2024 | arXiv:2406.08689 |
-| [11] | Greshake et al., "Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection," 2023 | ACM CCS Workshop |
-| [12] | (Instruction hierarchy evasion — need specific citation) | TBD |
-| [13] | Gambo et al., "Zero Trust Architecture: A Systematic Literature Review," 2025 | arXiv:2503.11659, J Netw Syst Manage 2026 |
-| [14] | Ménétrey et al., "An Exploratory Study of Attestation Mechanisms for Trusted Execution Environments," 2022 | SysTEX'22, arXiv:2204.06790 |
-| [15] | Chen, "Confidential High-Performance Computing in the Public Cloud," 2022 | IEEE Internet Computing, arXiv:2212.02378 |
-| [16] | Kocaoğullar et al., "A Confidential Computing Transparency Framework for a Comprehensive Trust Chain," 2024 | arXiv:2409.03720 |
-| [17] | IETF, "Remote Attestation Procedures (RATS) Architecture," 2024 | RFC 9334 |
-| [18] | Keylime project, "Scalable Trusted Boot and Runtime Attestation," ongoing | keylime.dev |
-| [19] | (Multiple), "A Novel Zero-Trust Identity Framework for Agentic AI," 2025 | arXiv:2505.19301 |
-| [20] | Cloud Security Alliance, "Agentic Trust Framework: Zero Trust for AI Agents," 2026 | CSA whitepaper |
+| # | Reference | Verified | Source |
+|---|---|---|---|
+| [1] | S. Rose, O. Borchert, S. Mitchell, S. Connelly, "Zero Trust Architecture," NIST SP 800-207, Aug. 2020 | ✅ Real | nvlpubs.nist.gov |
+| [2] | S. R. Alam et al., "Federated Single Sign-On and Zero Trust Co-design for AI and HPC Digital Research Infrastructures," arXiv:2410.18411, Oct. 2024 | ✅ Real | arXiv:2410.18411 |
+| [3] | J. Duckworth, "A Path to Zero Trust Architecture in HPC and AI using SPIFFE and SPIRE," CLSAC 2023, Annapolis, MD | ✅ Real | clsac.org (presentation) |
+| [4] | T. Macaulay, D. Bhasker, "High Performance Computing Infrastructure and Zero Trust Architecture," Pulse & Praxis, 2024 | ✅ Real | journalwjarr.com |
+| [5] | J. G. Pauloski et al., "Empowering Scientific Workflows with Federated Agents," arXiv:2505.05428, IPDPS'26 | ✅ Real | arXiv:2505.05428 |
+| [6] | A. Alsaadi et al., "Execution of Hybrid AI-HPC Workflows at Scale," arXiv:2512.20795, Dec. 2025 | ✅ Real | arXiv:2512.20795 |
+| [7] | C. Bühler et al., "Securing AI Agent Execution," arXiv:2510.21236, Oct. 2025 | ✅ Real | arXiv:2510.21236 |
+| [8] | NIST, "High-Performance Computing Security: Architecture, Threat Analysis, and Security Posture," NIST SP 800-223, Feb. 2024 | ✅ Real | csrc.nist.gov |
+| [9] | *(Removed — merged into [8])* | — | — |
+| [10] | Y. He et al., "Security of AI Agents," arXiv:2406.08689, Jun. 2024 | ✅ Real | arXiv:2406.08689 |
+| [11] | K. Greshake et al., "Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection," arXiv:2302.12173, 2023 | ✅ Real | arXiv:2302.12173 |
+| [12] | A. Zou et al., "Universal and Transferable Adversarial Attacks on Aligned Language Models," arXiv:2307.15043, Jul. 2023 | ✅ Real | arXiv:2307.15043 |
+| [13] | M. L. Gambo et al., "Zero Trust Architecture: A Systematic Literature Review," arXiv:2503.11659, J. Netw. Syst. Manage. 34, 25 (2026) | ✅ Real | arXiv:2503.11659 |
+| [14] | J. Ménétrey et al., "An Exploratory Study of Attestation Mechanisms for Trusted Execution Environments," SysTEX'22, arXiv:2204.06790 | ✅ Real | arXiv:2204.06790 |
+| [15] | K. Chen, "Confidential High-Performance Computing in the Public Cloud," IEEE Internet Computing, arXiv:2212.02378, 2022 | ✅ Real | arXiv:2212.02378 |
+| [16] | C. Kocaoğullar et al., "A Confidential Computing Transparency Framework for a Comprehensive Trust Chain," arXiv:2409.03720, Sep. 2024 | ✅ Real | arXiv:2409.03720 |
+| [17] | H. Birkholz et al., "Remote ATtestation procedureS (RATS) Architecture," IETF RFC 9334, Jan. 2023 | ✅ Real | rfc-editor.org |
+| [18] | Keylime Project, "Scalable Trusted Boot and Runtime Attestation," Linux Foundation | ✅ Real | keylime.dev |
+| [19] | "A Novel Zero-Trust Identity Framework for Agentic AI," arXiv:2505.19301, May 2025 | ✅ Real | arXiv:2505.19301 |
+| [20] | Cloud Security Alliance, "Agentic Trust Framework: Zero Trust for AI Agents," Feb. 2026 | ✅ Real | cloudsecurityalliance.org |
 
-## TBD Citations
+## Removed / Fixed References
 
-- [9] *Removed — merged into [8] (NIST SP 800-223)*
-- [12] Instruction hierarchy evasion — consider: Perez & Ribeiro, "Ignore Previous Prompt: Attack Techniques For Language Models," arXiv:2211.09527, 2022; or Zou et al., "Universal and Transferable Adversarial Attacks on Aligned Language Models," arXiv:2307.15043, 2023
-- [21+] Papers from literature.md as needed
+| Old Ref | Issue | Fix |
+|---------|-------|-----|
+| [4] "SC25 expected" | Paper not published at SC25 | Replaced with actual publication in Pulse & Praxis (2024) |
+| [11] Greshake "ACM CCS Workshop" | Wrong venue | Fixed: arXiv:2302.12173, presented at Black Hat USA 2023 |
+| [6] "RHAPSODY" placeholder | Wrong title | Fixed: "Execution of Hybrid AI-HPC Workflows at Scale" by Alsaadi et al. |
+| [12] *(missing)* | TBD | Added: Zou et al. arXiv:2307.15043 |
 
-## Citation Format
+## Additional References to Find
 
-SC uses ACM SIGPLAN format. Check SC26 author kit for final format.
+- [ ] Keylime official IEEE publication (currently using website ref)
+- [ ] SPIFFE/SPIRE formal specification paper
+- [ ] eBPF-based security monitoring papers
+- [ ] Additional agent safety/alignment papers beyond He et al.
