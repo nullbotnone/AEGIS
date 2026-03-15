@@ -153,37 +153,9 @@ Agent injection attacks in HPC exploit shared infrastructure in ways not studied
 
 ### 4.1 Overview
 
-AEGIS consists of four core components that operate across the HPC cluster (Figure 3, left):
+AEGIS consists of four core components that operate across the HPC cluster:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        AEGIS Architecture                       │
-│                                                                 │
-│  ┌──────────────┐    evidence     ┌──────────────────┐          │
-│  │  Attestation  │ ──────────────▶│  Policy Verifier  │          │
-│  │   Engine      │◀───────────────│  (constraints)    │          │
-│  │  (per node)   │   challenge    │  (centralized)    │          │
-│  └──────┬───────┘                 └────────┬─────────┘          │
-│         │                                   │ verdict           │
-│    eBPF probes                              ▼                   │
-│         │                          ┌──────────────────┐         │
-│  ┌──────▼───────┐                  │   Containment    │         │
-│  │ Agent Runtime │                  │    Enforcer      │         │
-│  │ (LangChain,   │                  │ (Slurm REST API) │         │
-│  │  OpenClaw,    │                  └────────┬─────────┘         │
-│  │  POSIX)       │                           │                   │
-│  └───────────────┘                    rate-limit / isolate /     │
-│                                        suspend / terminate       │
-│                                                                 │
-│  ┌──────────────────┐                                           │
-│  │ Constraint Manager│ (profiles signed, bound to Slurm job ID) │
-│  └──────────────────┘                                           │
-│                                                                 │
-│  ┌──────────────────┐                                           │
-│  │  Audit Ledger    │ (hash-chained, tamper-evident)            │
-│  └──────────────────┘                                           │
-└─────────────────────────────────────────────────────────────────┘
-```
+
 
 **Constraint Manager.** Parses and compiles behavioral constraint profiles into an internal policy representation. Supports explicit specification, task inference, and policy templates. Profiles are signed and bound to the agent's Slurm job ID.
 
@@ -193,8 +165,9 @@ AEGIS consists of four core components that operate across the HPC cluster (Figu
 
 **Containment Enforcer.** Translates verdicts into enforcement actions via the Slurm REST API: cgroup throttling (minor), ACL revocation (moderate), job suspension (severe), termination + credential revocation (critical).
 
+
 ![AEGIS System Architecture](figures/aegis_architecture.png)
-**Figure 7:** AEGIS system architecture. Four core components: Attestation Engine (per-node, eBPF-based), Policy Verifier (centralized), Containment Enforcer (Slurm REST API), and Constraint Manager. Data flows through signed evidence bundles over gRPC. Tamper-evident audit ledger records all decisions.
+**Figure 3:** AEGIS system architecture. Four core components: Attestation Engine (per-node, eBPF-based), Policy Verifier (centralized), Containment Enforcer (Slurm REST API), and Constraint Manager. Data flows through signed evidence bundles over gRPC. Tamper-evident audit ledger records all decisions.
 
 These components implement **behavioral attestation** — a fundamentally new concept that differs from prior approaches along three axes:
 
@@ -211,7 +184,7 @@ This shifts the security question from *"Is this agent compromised?"* (unknowabl
 ### 4.2 Constraint Specification
 
 ![Behavioral Constraint Dimensions](figures/constraint_dimensions.png)
-**Figure 3:** Five constraint dimensions for agent behavioral attestation: data access (paths, volumes), network (endpoints, egress), tool invocation (allowed/denied), execution (runtime, memory), and data flow (project boundaries, exfil budget). Each dimension maps to specific detection mechanisms.
+**Figure 4:** Five constraint dimensions for agent behavioral attestation: data access (paths, volumes), network (endpoints, egress), tool invocation (allowed/denied), execution (runtime, memory), and data flow (project boundaries, exfil budget). Each dimension maps to specific detection mechanisms.
 
 Each agent receives a **behavioral constraint profile** at deployment, declarations of legitimate behavior derived from the agent's authorized task, not signatures of malicious behavior. Constraints span five dimensions: data access (allowed/denied paths, read-only paths, volume limits), network (whitelisted endpoints, egress budgets), tool invocation (allowed/denied tools), execution (runtime limits, memory limits, node restrictions), and data flow (project boundaries, exfiltration budgets). Constraints are evasion-resistant: an attacker cannot make an unauthorized action authorized through obfuscation — the constraint either permits the action or it does not.
 
@@ -316,14 +289,14 @@ We demonstrate all four HPC-specific injection attacks on our test cluster (§5.
 **Exp 4: Coordinated Multi-Agent Exfiltration.** Two hijacked agents form a covert channel via `/.cache/` on shared filesystem. Agent 1 reads finance data and writes to covert cache; Agent 3 picks it up and exfiltrates via LLM API. *Result: 521 bytes exfiltrated across 4 agents, detected in 0.09 ms (7 detections including 1 CRITICAL covert channel signal via cross-agent correlation).*
 
 ![Attack Results Summary](figures/attack_results.png)
-**Figure 4:** Experimental attack results. (Left) Bytes exfiltrated per attack. (Right) Detections triggered per attack. All four attacks succeed while AEGIS detects all four.
+**Figure 5:** Experimental attack results. (Left) Bytes exfiltrated per attack. (Right) Detections triggered per attack. All four attacks succeed while AEGIS detects all four.
 
 **Summary.** All four attacks succeed (100% attack rate). All four are detected by AEGIS (100% detection rate). Total: 1,158 bytes exfiltrated, 16 detections. The covert channel in Exp 4 is only detectable through cross-agent correlation, which is impossible with per-agent monitoring alone.
 
 ### 5.2 Baseline Comparison
 
 ![Baseline Defense Comparison](figures/baseline_comparison.png)
-**Figure 5:** Detection rate comparison across defense mechanisms. Network DLP and per-agent analytics detect 0% of attacks (encrypted channels, no cross-agent correlation). Filesystem auditing and sandboxing detect 50% (limited visibility). AEGIS achieves 100% detection through behavioral attestation.
+**Figure 6:** Detection rate comparison across defense mechanisms. Network DLP and per-agent analytics detect 0% of attacks (encrypted channels, no cross-agent correlation). Filesystem auditing and sandboxing detect 50% (limited visibility). AEGIS achieves 100% detection through behavioral attestation.
 
 
 We compare AEGIS against four alternative defense mechanisms. Each baseline analyzes the same attack action logs produced by our attack implementations, applying its own detection logic based on its operational capabilities. Detection times are measured using `time.perf_counter()` over 10 trials per configuration.
@@ -373,7 +346,7 @@ We compare AEGIS against four alternative defense mechanisms. Each baseline anal
 **Practical overhead.** Based on component characterization and comparable systems (Keylime reports <3% overhead for TPM-based attestation at 5s intervals), we estimate AEGIS's total overhead at **1–3% for a 1.0s attestation interval** on representative HPC workloads. This is within the acceptable range for production HPC deployment, where security overhead of 2–5% is typically tolerated for significant security benefits.
 
 ![Estimated Performance Overhead](figures/performance_overhead.png)
-**Figure 8:** Estimated performance overhead (left axis, bars) and detection latency (right axis, line) vs. attestation interval. At 1.0s interval: ~1.5% overhead with ~500ms average detection latency.
+**Figure 7:** Estimated performance overhead (left axis, bars) and detection latency (right axis, line) vs. attestation interval. At 1.0s interval: ~1.5% overhead with ~500ms average detection latency.
 
 **Note:** Full end-to-end performance evaluation on an HPC cluster is planned as future work. The estimates above are based on component microbenchmarks and should be validated on production hardware.
 
@@ -393,7 +366,7 @@ To understand the contribution of individual AEGIS components, we design four at
 | Tool Injection | Compromised tool returns output with injection regex | Injection signature detection |
 
 ![Ablation Study Results](figures/ablation_heatmap.png)
-**Figure 6:** Ablation study results. Each row removes one AEGIS component; each column tests one attack type. Green = detected, red = missed. Full AEGIS detects all attacks (100%). Removing any component drops detection to 75%. Minimal configuration achieves 0%.
+**Figure 8:** Ablation study results. Each row removes one AEGIS component; each column tests one attack type. Green = detected, red = missed. Full AEGIS detects all attacks (100%). Removing any component drops detection to 75%. Minimal configuration achieves 0%.
 
 **Results:**
 
