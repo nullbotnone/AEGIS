@@ -570,20 +570,17 @@ This ablation demonstrates that the specialized detection mechanisms (volume lim
 
 ### 5.8 Detection Latency
 
-The detection latency of AEGIS is bounded by the attestation interval: violations are detected at the next evidence evaluation cycle after they occur. For a 1.0s interval, this means a maximum detection latency of 1.0 seconds from violation to detection.
+The detection latency of AEGIS is determined by the attestation interval $I$: violations are detected at the next evidence evaluation cycle after they occur. In the worst case, a violation occurs immediately after an evaluation, requiring a full interval before detection. In the average case, detection occurs within $I/2$.
 
-The relationship between attestation interval and security posture is straightforward:
+This is a property of the protocol design, not an empirical measurement. Given an attestation interval $I$:
 
-| Interval | Max Detection Latency | Max Exfil Before Detection | Estimated Overhead |
-|----------|----------------------|---------------------------|-------------------|
-| 0.5s | 500 ms | ~30 KB | ~3–5% |
-| **1.0s** | **1,000 ms** | **~60 KB** | **~1–3%** |
-| 5.0s | 5,000 ms | ~300 KB | <1% |
-| 10.0s | 10,000 ms | ~600 KB | <1% |
+- **Worst-case detection latency**: $I$ (violation occurs right after an evaluation)
+- **Average detection latency**: $I/2$ (violation occurs uniformly at random within the interval)
+- **Maximum exfiltration before detection**: bounded by $I \times R$ where $R$ is the agent's maximum data egress rate
 
-**Key insight.** Constraint-based detection catches violations at the next attestation cycle — attacks never "slip through" undetected. The only trade-off is latency and the volume of data exfiltrated before containment. Unlike probabilistic detection systems that may miss attacks entirely, AEGIS's detection guarantee is deterministic: if an action violates a constraint, it will be detected within one interval.
+The choice of interval represents a security–performance trade-off: shorter intervals provide faster detection at higher computational cost. Our empirical measurements in §5.6 show that a 1.0s interval introduces approximately 1–3% overhead while providing average detection latency of 500ms. For environments requiring faster response, a 0.5s interval is feasible at slightly higher overhead.
 
-**Recommendation.** A 1.0s interval provides the best balance for standard HPC environments: ~1 second detection latency, ~60KB maximum exfiltration before containment, and ~1–3% overhead. For high-security environments handling classified or regulated data, a 0.5s interval reduces detection latency to ~500ms at the cost of slightly higher overhead.
+The critical property of AEGIS's detection model is that violations are **guaranteed** to be detected within one interval — unlike probabilistic detection systems that may miss attacks entirely regardless of timing. This deterministic detection guarantee holds for any attestation interval.
 
 ## 6. Related Work
 
