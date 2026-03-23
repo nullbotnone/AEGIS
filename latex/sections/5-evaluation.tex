@@ -1,0 +1,108 @@
+\section{Experimental Evaluation}
+
+Our evaluation proceeds in two phases: simulation-based validation on a small test cluster and performance measurement on representative AMD EPYC hardware.
+
+\subsection{Experimental Setup}
+
+As the potential impacts of AI agent injection attacks could have uncontrollable consequences on real production HPC systems, we conduct initial validation on a dedicated mini-cluster. Our test cluster consists of five nodes interconnected via a TP-Link TL-SG108 switch with port mirroring capability.
+
+\begin{table}
+  \caption{Test Cluster Configuration}
+  \label{tab:cluster}
+  \begin{tabular}{ccccc}
+    \toprule
+    Node & Hardware & CPU & RAM & Role \\
+    \midrule
+    4x compute & Radxa X2L & Intel N100 (4 cores) & 8 GB & Agent execution, monitoring \\
+    1x controller & Jetson Orin Nano & 6-core ARM + 128-core GPU & 8 GB & Policy verifier, coordinator \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The Intel N100-based Radxa X2L boards provide x86\_64 compute with TPM 2.0 support for hardware-rooted attestation at low cost, approximately \$150 per node. The Jetson Orin Nano serves as the controller node, providing ARM-based heterogeneity and GPU acceleration for potential ML-based anomaly detection.
+
+Phase 2 evaluates performance on AMD EPYC 7713 64-core processors with 512GB DDR4 RAM, running Rocky Linux 9.6 with Linux kernel 5.14.0. This represents realistic HPC compute node specifications. The eBPF-based attestation engine is compiled with clang and runs with kernel-side syscall interception. AMD EPYC processors are widely deployed in HPC centers including Frontier, LUMI, and Polaris.
+
+All compute nodes run Ubuntu 24.04 with Linux kernel 6.8+ required for eBPF features. Slurm 23.11 manages job scheduling across the cluster. The shared filesystem is ext4-based NFS, simulating Lustre behavior at smaller scale. Python 3.12 with the BCC library provides eBPF monitoring capabilities.
+
+Port mirroring on the TP-Link TL-SG108 switch copies all traffic from compute node ports to the controller node's monitoring interface, enabling the DLP baseline to inspect network flows without inline deployment.
+
+\subsection{Attack Demonstrations}
+
+We demonstrate all four HPC-specific injection attacks on our test cluster. Full details including attack code, payloads, and execution traces are available in the supplementary materials.
+
+In Exp 1 (Filesystem-Mediated Injection), the attacker places a dataset with hidden injection payload in a shared project directory. The victim's agent reads it and exfiltrates secrets via a non-whitelisted endpoint. We measure 68 bytes exfiltrated, detected by AEGIS in 0.22ms with 1 detection for unauthorized endpoint.
+
+In Exp 2 (Multi-User Co-Location Injection), co-located agents share /tmp on a compute node. The attacker writes adversarial content; the victim's agent reads it and exfiltrates data. We measure 50 bytes exfiltrated, detected in 0.04ms with 1 detection for unauthorized endpoint.
+
+In Exp 3 (Supply Chain Injection via Agent Skills), a compromised data\_converter tool returns hidden instructions. The agent reads its SSH key and includes it in LLM API calls. We measure 519 bytes exfiltrated, detected in 0.08ms with 7 detections including 2 injection signatures and 5 constraint/sensitive-file violations.
+
+In Exp 4 (Coordinated Multi-Agent Exfiltration), two hijacked agents form a covert channel via /.cache/ on shared filesystem. Agent 1 reads finance data and writes to covert cache; Agent 3 picks it up and exfiltrates via LLM API. We measure 521 bytes exfiltrated across 4 agents, detected in 0.09ms with 7 detections including 1 CRITICAL covert channel signal via cross-agent correlation.
+
+All four attacks succeed (100\% attack rate). All four are detected by AEGIS (100\% detection rate). The covert channel in Exp 4 is only detectable through cross-agent correlation, which is impossible with per-agent monitoring alone.
+
+\subsection{Baseline Comparison}
+
+We compare AEGIS against four alternative defense mechanisms. Each baseline analyzes the same attack action logs produced by our attack implementations, applying its own detection logic based on its operational capabilities.
+
+\begin{table}
+  \caption{Detection Rate by Defense Mechanism}
+  \label{tab:baselines}
+  \begin{tabular}{lccccc}
+    \toprule
+    Defense & FS Injection & Co-Location & Supply Chain & Coordinated & Total \\
+    \midrule
+    Network DLP & DETECT & DETECT & MISS & MISS & 50\% \\
+    Filesystem Auditing & MISS & MISS & DETECT & DETECT & 50\% \\
+    Per-Agent Analytics & MISS & MISS & MISS & MISS & 0\% \\
+    Strict Sandboxing & MISS & DETECT & MISS & DETECT & 50\% \\
+    AEGIS (Ours) & DETECT & DETECT & DETECT & DETECT & 100\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Network DLP detects Exp 1 and Exp 2 because the hijacked agents connect to non-whitelisted endpoints. However, DLP misses Exp 3 and Exp 4 because those attacks exfiltrate data through the whitelisted LLM API endpoint over encrypted HTTPS. DLP cannot inspect the encrypted content and sees only authorized traffic to an authorized domain.
+
+Filesystem auditing detects Exp 3 via access to ~/.ssh/ and Exp 4 via access to /.cache/. It misses Exp 1 and Exp 2 because those attacks access only allowed paths. The hijacked behavior manifests as non-whitelisted network connections, which filesystem auditing cannot see.
+
+Per-agent analytics fails completely because each hijacked agent's individual egress volume stays within normal bounds. There is no cross-agent correlation to detect Exp 4's covert channel. Each agent appears statistically normal.
+
+Sandboxing detects Exp 2 (blocks shared /tmp between containers) and Exp 4 (blocks /.cache/ access). It misses Exp 1 and Exp 3 because both occur within the agent's own container.
+
+AEGIS detects all four attacks. We evaluate AEGIS against four benign HPC workflows: genomics data analysis, ML training pipeline, multi-agent collaboration, and simulation steering. We measure zero false positives across all 21 actions. Constraint-based checking (verifying against declared policy) eliminates false alarms for compliant workflows.
+
+\subsection{Performance Overhead}
+
+We characterize AEGIS overhead through microbenchmarks of individual component costs and end-to-end measurements on representative workloads with varying attestation intervals and agent counts.
+
+The attestation engine's eBPF-based syscall monitoring introduces approximately 2\% additional latency per monitored syscall. Evidence bundle generation requires O(n) time where n is the number of actions in the interval. Constraint evaluation requires O(m * k) time where m is the number of constraints and k is the number of actions per evidence bundle. For constraint profiles with 10-20 constraints and evidence bundles with 50-200 actions at 1-second intervals, evaluation completes in less than 1ms.
+
+We measure end-to-end overhead on AMD EPYC 7713 processors. At a 1.0-second attestation interval with approximately 50 actions per bundle, we measure less than 0.5ms evaluation time and 1-3\% overhead.
+
+The centralized verifier's cost scales linearly with agent count (one evaluation per agent per interval). At 1.0-second intervals with 500 agents, the verifier processes approximately 500 evidence bundles per second, each requiring less than 0.5ms evaluation, comfortably within a single CPU core's capacity. The per-node attestation daemon's overhead is independent of total agent count, as it only monitors agents on its local node.
+
+Based on measurements on AMD EPYC, AEGIS's total overhead is 1-3\% for a 1.0-second attestation interval on representative HPC workloads. This is within the acceptable range for production HPC deployment, where security overhead of 2-5\% is typically tolerated for significant security benefits.
+
+\subsection{Ablation Study}
+
+To understand the contribution of individual AEGIS components, we design four attacks, each targeting a single detection mechanism, and measure whether removing that component causes the attack to be missed.
+
+For this study, we use permissive path constraints so that basic path checking does not catch any attack. This isolates the specialized detection mechanisms. Volume exfil is detectable only by egress budget checking. Sensitive file access is detectable only by sensitive file detection. Covert channel is detectable only by cross-agent correlation. Tool injection is detectable only by injection signature detection.
+
+\begin{table}
+  \caption{Ablation Study Results}
+  \label{tab:ablation}
+  \begin{tabular}{lccccc}
+    \toprule
+    Configuration & Volume & Sensitive & Covert & Injection & Detection \\
+    \midrule
+    Full AEGIS & DETECT & DETECT & DETECT & DETECT & 100\% \\
+    No Volume Limits & MISS & DETECT & DETECT & DETECT & 75\% \\
+    No Sensitive Detection & DETECT & MISS & DETECT & DETECT & 75\% \\
+    No Covert Channel & DETECT & DETECT & MISS & DETECT & 75\% \\
+    No Injection Signatures & DETECT & DETECT & DETECT & MISS & 75\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Removing any single component drops detection to 75\%. The constraint layer alone achieves 75\% detection. Each component contributes independently to the overall detection rate.

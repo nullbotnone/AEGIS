@@ -1,0 +1,43 @@
+\section{Threat Model}
+
+We identify the most dangerous threat to HPC environments deploying AI agents: the hijacked authorized agent. Unlike rogue or malicious agents, which are blocked by existing authentication and authorization mechanisms, a hijacked agent operates under the full credentials and privileges of a legitimate user. It is not an intruder; it is a trusted insider that has been turned.
+
+This threat arises from prompt injection and tool poisoning attacks exploiting known vulnerabilities in agent architectures against LLM-based agents. An attacker crafts inputs, through data files, tool outputs, shared documents, or collaborative channels, that subvert the agent's instruction-following behavior. The agent, now under adversarial control, executes commands indistinguishable from the legitimate user's intent.
+
+A hijacked agent possesses four properties that make it uniquely dangerous in HPC. First, full credential inheritance: the agent operates with the user's Kerberos tickets, SSH keys, and scheduler permissions. No privilege escalation is needed; the agent already has access. From the access control system's perspective, every action is authorized. Second, cross-project filesystem access: HPC shared filesystems (Lustre, GPFS, BeeGFS) are typically organized by user, not by project. A user authorized on Projects A, B, and C grants their agent simultaneous access to all three datasets. A hijacked agent can traverse project boundaries that would require separate authorization in a properly segmented system. Third, appearance of legitimacy: the agent runs under an authorized user identity, invokes authorized tools, and follows authorized workflow patterns. Traditional anomaly detection fails because the agent's observable behavior including job submission, file I/O, and network access is consistent with its authorized role. Fourth, exfiltration through the LLM API channel: the agent communicates with its LLM backend via HTTPS API calls. Sensitive data can be encoded into prompts or tool outputs and transmitted through this channel, which is encrypted (invisible to network-level DLP), whitelisted (agents must communicate with the LLM to function), high-bandwidth (prompts can contain large context windows), and attributable to normal operation (no anomalous network destination).
+
+This exfiltration vector is invisible to traditional Data Loss Prevention (DLP) systems, which inspect network traffic for sensitive data patterns. The LLM API channel bypasses this by design.
+
+\subsection{Threat Scenarios}
+
+We describe four concrete attack scenarios that illustrate the hijacked authorized agent threat in HPC environments.
+
+In a data file injection scenario, an attacker embeds a prompt injection payload in a scientific dataset such as a comment field in a FITS header or a markdown cell in a Jupyter notebook. When the agent processes this file as part of a workflow, the injection hijacks the agent's subsequent actions. The agent treats the data as authoritative scientific input and executes the embedded commands.
+
+In a tool output poisoning scenario, a compromised or adversarial tool returns output containing hidden instructions. The agent, treating the tool output as trusted data, executes the injected commands. This differs from data file injection in that the attack vector originates from code execution rather than data processing.
+
+In a collaborative channel attack scenario, common in multi-agent workflows, a compromised agent in one project injects instructions through inter-agent communication channels. The hijack propagates laterally across project boundaries, allowing an attacker to escalate from a single compromised agent to access across multiple projects.
+
+In a supply chain compromise scenario, a malicious update to an agent framework, dependency library, or model weights introduces a backdoor that activates when specific conditions are met. The backdoor exfiltrates data through the normal API channel, making the attack appear as legitimate agent behavior.
+
+\subsection{Adversarial Capabilities}
+
+We assume an adversary with the following capabilities. The adversary can craft inputs that subvert agent instruction-following through prompt injection. The adversary can observe encrypted traffic metadata including timing and volume but not content through network access. The adversary has no direct HPC account and must operate through hijacked agents. The adversary can persist across multiple agent sessions and job submissions.
+
+We explicitly do not assume the adversary can compromise the scheduler or resource manager, access the LLM provider's infrastructure, or subvert hardware roots of trust including TPM and secure enclaves.
+
+\subsection{Why Existing Defenses Fail}
+
+Authentication succeeds because the agent has valid credentials. Authorization succeeds because the agent has legitimate permissions. Network monitoring fails because LLM API traffic is encrypted and whitelisted. DLP fails because data exfiltration is encoded in encrypted API calls. User behavior analytics fails because agent behavior is consistent with authorized workflow patterns. Sandbox isolation fails because the agent needs filesystem and network access to function. This threat model motivates the need for attestation: continuous verification that the agent's behavior conforms to its authorized intent, not just that its identity is valid.
+
+\subsection{Unique Properties of HPC Agent Injection Attacks}
+
+Agent injection attacks in HPC exploit shared infrastructure in ways not studied in prior work on prompt injection, which focuses on web-based and chatbot scenarios. These properties arise from the unique characteristics of HPC infrastructure: shared filesystems, multi-tenant compute nodes, and emerging agent skill ecosystems.
+
+Filesystem-mediated injection represents the first unique property. HPC shared filesystems such as Lustre and GPFS create injection surfaces with no web analogue. An attacker with shared project access places adversarial content, such as poisoned metadata or hidden instructions in log output, that the target agent reads as trusted scientific data. The trust assumption in shared storage, where scientific data is presumed benign, cannot be revoked without destroying workflow utility.
+
+Multi-user co-location injection represents the second unique property. HPC schedulers place jobs from different users on shared nodes, creating application-level side channels. An attacker's agent leaves adversarial content in shared /tmp that a co-located target agent reads. No filesystem permissions on the target's project are needed, only a co-located job on the same node.
+
+Supply chain injection via agent skills represents the third unique property. Agent skill ecosystems such as OpenClaw, LangChain, and MCP servers create supply chain attack vectors, analogous to software supply chain threats in HPC. A compromised tool injects instructions directly into the agent's decision loop through tool output. The injection originates from code the agent chose to execute, making it indistinguishable from legitimate tool use.
+
+Coordinated multi-agent exfiltration represents the fourth unique property. Multiple hijacked agents across projects and users form covert exfiltration networks. One agent reads sensitive data and writes to a shared covert location, while another picks it up and exfiltrates via its LLM API channel. No single agent's behavior appears anomalous; the attack is visible only through cross-agent correlation.

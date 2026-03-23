@@ -1,0 +1,31 @@
+\section{Discussion}
+
+We discuss limitations, integration with HPC resource managers, federated zero-trust, and broader applications.
+
+\subsection{Limitations}
+
+Behavioral attestation has several limitations that must be acknowledged.
+
+The fundamental guarantee of behavioral attestation depends on the completeness of the constraint profile. Incomplete profiles leave blind spots, attacking an unconstrained dimension is simply outside the system's threat model. This creates a human-factors challenge: users must accurately specify what their agent is allowed to do, a non-trivial task for complex workflows. We mitigate this through policy templates for common patterns and LLM-based inference, but ultimate correctness requires human validation.
+
+The task inference module uses an LLM to generate constraints from natural language task descriptions. If this LLM can be prompt-injected through the task description itself, it may generate permissive or adversarial constraints that authorize attacks. This creates a bootstrapping problem: we need trusted constraints to detect hijacked agents, yet we rely on an LLM to generate those constraints. Mitigations include sandboxing the constraint generation LLM, requiring human review of inferred constraints, and providing curated policy templates for common HPC agent patterns.
+
+A sophisticated attacker who understands the constraint profile can craft injections that stay within authorized boundaries. This is fundamentally a constraint-tightness problem: tighter constraints reduce the blast radius but may impede legitimate workflows. The security-utility trade-off must be tuned per deployment, and there is no fully automated way to determine optimal constraint tightness.
+
+Violations are detected within one attestation interval, with a default of 1 second, creating a window for unauthorized actions before containment. An attacker could exfiltrate data during this interval. Shorter intervals reduce this window but increase overhead as shown in Section 5.3.
+
+Our implementation maintains a global access graph for detecting coordinated multi-agent attacks, but the current design assumes all nodes report to a centralized verifier. True cross-node correlation at HPC scale, thousands of nodes, would require distributed coordination protocols, which we leave to future work.
+
+Software attestation without hardware roots of trust such as TPM, SEV, or SGX cannot resist a compromised kernel or privileged attacker. While eBPF-based monitoring operates below the application layer and raises the bar compared to userspace-only approaches, it does not provide cryptographic guarantees about runtime integrity. We support TPM 2.0 attestation for deployments requiring hardware-rooted trust.
+
+\subsection{Integration with HPC Resource Managers}
+
+AEGIS integrates with production schedulers via REST APIs, demonstrated with Slurm and applicable to PBS/LSF. Deeper integration, making constraint compliance a scheduling factor or using attestation evidence for fair-share accounting, represents future work.
+
+\subsection{Federated Zero-Trust Across Sites}
+
+Extending behavioral attestation across HPC sites requires constraint portability, cross-site attestation, and trust federation. Existing federated identity infrastructure including CILogon and eduGAIN provides a foundation for federated constraint verification.
+
+\subsection{Broader Applications}
+
+The core primitives of behavioral attestation, constraint specification, continuous attestation, and automated containment, are domain-agnostic. Formal verification of constraint policies could provide additional guarantees. Behavioral attestation applies beyond HPC to any autonomous actors in shared environments: Kubernetes-deployed agents, edge computing, robotic systems, and financial trading agents.

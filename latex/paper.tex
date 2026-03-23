@@ -1,0 +1,64 @@
+\documentclass[acmsmall,anonymous,review]{acmart}
+
+% Packages
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{textcomp}
+\usepackage{geometry}
+
+% Set up bibliography
+\bibliographystyle{acmart-num}
+\setcitestyle{numbers,open={[},close={]}}
+
+% Define commands
+\newcommand{\aegis}{AEGIS}
+\newcommand{\epyc}{AMD EPYC}
+\newcommand{\hpc}{HPC}
+\newcommand{\dlp}{DLP}
+\newcommand{\ebpf}{eBPF}
+\newcommand{\tpm}{TPM}
+\newcommand{\slurm}{Slurm}
+
+% Title and author
+\title{Attestation is All You Need: Toward a Zero-Trust Architecture for HPC AI Agents}
+
+\author{Anonymous Author}
+\affiliation{%
+  \institution{Anonymous Institution}
+}
+\email{anonymous@inst.edu}
+
+% Abstract
+\begin{abstract}
+The integration of AI agents into high-performance computing environments introduces a fundamentally new attack surface that existing HPC security mechanisms were never designed to address: the hijacked authorized agent. Through prompt injection attacks leveraging shared filesystems, co-located compute nodes, or compromised tools, an adversary can subvert an agent that operates with valid user credentials. The compromised agent then exfiltrates sensitive data through encrypted, whitelisted LLM API channels, precisely the channels that every legitimate agent must use, rendering traditional monitoring mechanisms ineffective.
+
+We propose behavioral attestation as the foundation for securing AI agents in HPC. Unlike probabilistic detection systems that rely on pattern matching or machine learning classifiers, behavioral attestation provides provable, constraint-based guarantees that an agent operates within its authorized behavioral boundaries, with runtime containment enforced before data exfiltration can occur.
+
+This paper makes four contributions. First, we formalize four HPC-specific injection attack vectors that exploit unique characteristics of HPC infrastructure: shared filesystems, multi-tenant node allocation, agent skill ecosystems, and coordinated multi-agent workflows. Second, we introduce behavioral attestation as a provable, constraint-based, runtime security primitive that differs fundamentally from prior approaches in its assurance model, policy structure, and timing. Third, we design and implement AEGIS (Attestation-based Environment for Guarding Injection-vulnerable Systems), a complete zero-trust architecture encompassing constraint specification, eBPF-based attestation, policy verification, and automated containment through Slurm integration. Fourth, we present empirical evaluation demonstrating that AEGIS achieves 100\% attack detection across all four vectors, compared to 0-50\% for traditional defenses including network data loss prevention (DLP), filesystem auditing, per-agent analytics, and strict sandboxing, while introducing less than 3\% overhead on AMD EPYC hardware.
+\end{abstract}
+
+% Keywords
+\keywords{HPC security, AI agents, behavioral attestation, zero-trust, prompt injection}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/1-introduction}
+\input{sections/2-background}
+\input{sections/3-threatmodel}
+\input{sections/4-aegis}
+\input{sections/5-evaluation}
+\input{sections/6-relatedwork}
+\input{sections/7-discussion}
+\input{sections/8-conclusion}
+
+% Bibliography
+\bibliography{references}
+
+\end{document}

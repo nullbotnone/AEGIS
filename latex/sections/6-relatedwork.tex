@@ -1,0 +1,13 @@
+\section{Related Work}
+
+We survey related work across four areas: zero-trust in HPC, agent security, system attestation, and data loss prevention.
+
+Zero-trust architecture in HPC has received increasing attention. Alam et al. deployed federated SSO with zero-trust controls for HPC infrastructures. Duckworth et al. proposed SPIFFE/SPIRE for workload identity in HPC. Macauley and Bhasker measured ZTA maturity implementation effort, finding the Identity pillar particularly challenging. Our work extends ZTA to behavioral trust of autonomous agents, a dimension not addressed by prior efforts.
+
+Agent security research has identified significant vulnerabilities in current tool-use patterns. AgentBounds addresses access control for MCP servers, the emerging standard for connecting agents to external tools. Agent safety evaluation benchmarks reveal vulnerabilities. Our threat model extends this work to the HPC context, where shared infrastructure creates unique attack vectors.
+
+System attestation has a long history in trusted computing. TPM-based attestation provides hardware-rooted verification of system state. Keylime implements TPM attestation for cloud workloads. IMA measures system integrity through runtime measurement. Our work differs by focusing on behavioral attestation of agent actions rather than system integrity.
+
+Data loss prevention in network and endpoint contexts has been extensively studied. Network DLP inspects traffic for sensitive patterns. Endpoint DLP monitors file operations. However, these approaches fail against hijacked agents because the exfiltration channel (encrypted LLM API) is whitelisted and the data is encoded within legitimate requests.
+
+AEGIS is the first work to provide continuous, constraint-based, runtime behavioral attestation specifically designed for AI agents in HPC environments.
