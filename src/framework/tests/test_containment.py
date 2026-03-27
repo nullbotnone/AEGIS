@@ -3,12 +3,12 @@
 import time
 import unittest
 
-from framework.containment import (
+from src.framework.containment import (
     ContainmentAction,
     ContainmentDecision,
     ContainmentEnforcer,
 )
-from framework.verifier import ConstraintViolation, VerificationResult, Verdict
+from src.framework.verifier import ConstraintViolation, VerificationResult, Verdict
 
 
 class TestContainmentEnforcer(unittest.TestCase):

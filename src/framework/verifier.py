@@ -196,7 +196,7 @@ class PolicyVerifier:
             List of ConstraintViolation instances (empty if compliant).
         """
         # Import here to avoid circular imports at module level
-        from framework.attestation import ActionType
+        from .attestation import ActionType
 
         violations: List[ConstraintViolation] = []
 
@@ -271,9 +271,12 @@ class PolicyVerifier:
             window = self.volume_windows.get(agent_id, {})
             window_start = window.get("window_start", time.time())
             elapsed_hours = (time.time() - window_start) / 3600
+            current_egress = (
+                window.get("network_egress_mb", 0)
+                + self._peek_delta_total(window, "last_total_network_egress_mb", evidence.total_network_egress_mb)
+            )
 
             if elapsed_hours > 0:
-                current_egress = window.get("network_egress_mb", 0) + evidence.total_network_egress_mb
                 rate = current_egress / elapsed_hours
 
                 if rate > profile.data_flow.max_exfil_budget_mb_per_hour:
@@ -339,9 +342,37 @@ class PolicyVerifier:
         if agent_id not in self.volume_windows:
             return
 
-        self.volume_windows[agent_id]["file_read_mb"] += evidence.total_file_read_mb
-        self.volume_windows[agent_id]["file_write_mb"] += evidence.total_file_write_mb
-        self.volume_windows[agent_id]["network_egress_mb"] += evidence.total_network_egress_mb
+        window = self.volume_windows[agent_id]
+        window["file_read_mb"] += self._delta_total(
+            window, "last_total_file_read_mb", evidence.total_file_read_mb
+        )
+        window["file_write_mb"] += self._delta_total(
+            window, "last_total_file_write_mb", evidence.total_file_write_mb
+        )
+        window["network_egress_mb"] += self._delta_total(
+            window, "last_total_network_egress_mb", evidence.total_network_egress_mb
+        )
+
+    def _peek_delta_total(
+        self,
+        window: Dict[str, float],
+        total_key: str,
+        current_total: float,
+    ) -> float:
+        """Estimate the next per-cycle delta without mutating state."""
+        previous_total = window.get(total_key, 0)
+        return max(0.0, current_total - previous_total)
+
+    def _delta_total(
+        self,
+        window: Dict[str, float],
+        total_key: str,
+        current_total: float,
+    ) -> float:
+        """Convert cumulative evidence counters into per-cycle deltas."""
+        delta = self._peek_delta_total(window, total_key, current_total)
+        window[total_key] = current_total
+        return delta
 
     def get_violation_count(self, agent_id: str) -> int:
         """Get the total number of violations for an agent.

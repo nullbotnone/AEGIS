@@ -33,8 +33,8 @@ sudo dnf install -y \
 # Install Python dependencies
 sudo dnf install -y python3 python3-pip
 
-# Install Python packages
-pip3 install libbpf-python
+# No pip package is required for libbpf.
+# The collector now uses the system libbpf shared library directly.
 ```
 
 ### 3. Verify eBPF Support
@@ -69,7 +69,7 @@ cd /home/user/aegis
 ### 2. Build eBPF Object
 
 ```bash
-cd /home/user/aegis/research/AEGIS
+cd /home/user/aegis
 
 # Build the eBPF probe
 make bpfall
@@ -89,7 +89,7 @@ file src/bpf/aegis_probe.bpf.o
 # Output: ELF 64-bit LSB relocatable, eBPF executable
 
 # Check symbols
-llvm-objdump -t src/bpf/aegis_probe.bpf.o | grep -E "trace_openat|trace_connect|trace_execve"
+llvm-objdump -t src/bpf/aegis_probe.bpf.o | grep -E "trace_sys_enter_openat|trace_sys_enter_connect|trace_sys_enter_execve"
 ```
 
 ---
@@ -100,17 +100,24 @@ llvm-objdump -t src/bpf/aegis_probe.bpf.o | grep -E "trace_openat|trace_connect|
 
 ```bash
 # Load and run the eBPF collector
-cd /home/user/aegis/research/AEGIS
+cd /home/user/aegis
 sudo python3 -m src.attestation.bpf_collector --verbose
 ```
 
 Expected output:
 ```
-=== AEGIS eBPF Collector Test ===
-Loading eBPF program from /usr/share/aegis/aegis_probe.bpf.o
+INFO:aegis.bpf_collector:Loading eBPF program from /home/user/aegis/src/bpf/aegis_probe.bpf.o
 eBPF program loaded successfully
 Collector started
 AEGIS eBPF Collector running. Press Ctrl+C to stop.
+```
+
+If you want to force a specific object file, pass it explicitly:
+
+```bash
+sudo python3 -m src.attestation.bpf_collector \
+  --bpf src/bpf/aegis_probe.bpf.o \
+  --verbose
 ```
 
 ### 2. In Another Terminal - Generate Load
@@ -138,7 +145,7 @@ Event: PID=1234 NETWORK_CONN endpoint=api.openai.com
 ### 1. Test Baseline Defenses
 
 ```bash
-cd /home/user/aegis/research/AEGIS
+cd /home/user/aegis
 
 # Run baseline comparison
 python3 -m src.defense.baseline_comparison
@@ -165,7 +172,7 @@ Strict Sandboxing         filesystem_injection MISSED       0.007
 ### 1. Create Benchmark Script
 
 ```bash
-cd /home/user/aegis/research/AEGIS
+cd /home/user/aegis
 cat > benchmark_overhead.py << 'EOF'
 #!/usr/bin/env python3
 """AEGIS overhead benchmark on EPYC."""
@@ -355,7 +362,7 @@ dmesg | tail -50
 ```bash
 # Must run as root for eBPF
 sudo su -
-cd /home/user/aegis/research/AEGIS
+cd /home/user/aegis
 python3 -m src.attestation.bpf_collector
 ```
 

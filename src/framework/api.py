@@ -12,7 +12,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse, parse_qs
 
-from framework.policy_engine import PolicyEngine
+from .policy_engine import PolicyEngine
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +153,7 @@ class AegisAPIHandler(BaseHTTPRequestHandler):
 
     def _handle_register_agent(self) -> None:
         """Register a new agent for attestation."""
-        from framework.constraints import ConstraintProfile
+        from .constraints import ConstraintProfile
 
         body = self._read_body()
         try:
@@ -185,7 +185,7 @@ class AegisAPIHandler(BaseHTTPRequestHandler):
 
     def _handle_record_action(self, agent_id: str) -> None:
         """Record an action for an agent."""
-        from framework.attestation import ActionType, AgentAction
+        from .attestation import ActionType, AgentAction
 
         if agent_id not in self.policy_engine.monitored_agents:
             self._send_error(404, f"Agent {agent_id} not found")

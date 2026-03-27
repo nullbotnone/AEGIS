@@ -171,7 +171,7 @@ class AttestationEngine:
             agent_id: The agent to monitor.
             constraint_profile: The agent's constraint profile.
         """
-        session_id = f"session_{agent_id}_{int(time.time())}"
+        session_id = getattr(constraint_profile, "session_id", None) or f"session_{agent_id}_{int(time.time())}"
         self.monitored_agents[agent_id] = session_id
         self.action_buffers[agent_id] = []
         self.volume_counters[agent_id] = {

@@ -3,15 +3,15 @@
 import time
 import unittest
 
-from framework.attestation import ActionType, AgentAction, AttestationEvidence
-from framework.constraints import (
+from src.framework.attestation import ActionType, AgentAction, AttestationEvidence
+from src.framework.constraints import (
     ConstraintProfile,
     DataAccessConstraints,
     DataFlowConstraints,
     NetworkConstraints,
     ToolConstraints,
 )
-from framework.verifier import ConstraintViolation, PolicyVerifier, Verdict, VerificationResult
+from src.framework.verifier import ConstraintViolation, PolicyVerifier, Verdict, VerificationResult
 
 
 class TestVerdict(unittest.TestCase):

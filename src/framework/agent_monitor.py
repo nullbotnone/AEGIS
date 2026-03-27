@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 from typing import Any, List, Optional
 
-from framework.attestation import AgentAction, ActionType, AttestationEngine
+from .attestation import AgentAction, ActionType, AttestationEngine
 
 
 class AgentMonitor:
@@ -39,10 +39,10 @@ class AgentMonitor:
         self.agent_id = agent_id
         self.constraint_profile = constraint_profile
         self.attestation_engine = attestation_engine
-        self.session_id = f"session_{agent_id}_{int(time.time())}"
 
         # Register with attestation engine
         attestation_engine.register_agent(agent_id, constraint_profile)
+        self.session_id = attestation_engine.monitored_agents[agent_id]
 
     def on_file_read(self, path: str, size_mb: float = 0) -> None:
         """Called when agent reads a file.

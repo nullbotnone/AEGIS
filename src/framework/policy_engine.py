@@ -12,11 +12,12 @@ import threading
 import time
 from typing import Dict, Optional
 
-from framework.agent_monitor import AgentMonitor
-from framework.attestation import AttestationEngine
-from framework.audit import AuditLedger
-from framework.containment import ContainmentEnforcer
-from framework.verifier import PolicyVerifier
+from .agent_monitor import AgentMonitor
+from .attestation import AttestationEngine
+from .audit import AuditLedger
+from .containment import ContainmentEnforcer
+from .constraints import ConstraintProfile
+from .verifier import PolicyVerifier
 
 logger = logging.getLogger(__name__)
 
@@ -195,15 +196,20 @@ class PolicyEngine:
         Returns:
             Dictionary with agent state, violation count, and last verification.
         """
+        last_verification = next(
+            (
+                result.timestamp
+                for result in reversed(self.verifier.verification_history)
+                if result.agent_id == agent_id
+            ),
+            None,
+        )
+
         return {
             "agent_id": agent_id,
             "state": self.containment.get_agent_state(agent_id),
             "violations": self.verifier.get_violation_count(agent_id),
-            "last_verification": (
-                self.verifier.verification_history[-1].timestamp
-                if self.verifier.verification_history
-                else None
-            ),
+            "last_verification": last_verification,
             "is_monitored": agent_id in self.monitored_agents,
         }
 

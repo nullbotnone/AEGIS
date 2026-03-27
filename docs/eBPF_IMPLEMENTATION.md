@@ -27,12 +27,12 @@ The Attestation Engine needs to intercept agent system calls in real-time on HPC
 ┌─────────────────────────────────────────────────────────────┐
 │                     Compute Node                            │
 ├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │  eBPF Probe  │───▶│  Ring Buffer │───▶│  Python API  │  │
-│  │  (kernel)    │    │  (kernel)    │    │  (userspace) │  │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
+│  │  eBPF Probe  │───▶│  Ring Buffer │───▶│  Python API  │   │
+│  │  (kernel)    │    │  (kernel)    │    │  (userspace) │   │
+│  └──────────────┘    └──────────────┘    └──────────────┘   │
 │         │                                       │           │
-│   sys_openat,                               Generates      │
+│   sys_openat,                               Generates       │
 │   sys_connect,                              Attestation     │
 │   sys_execve                                Evidence        │
 └─────────────────────────────────────────────────────────────┘

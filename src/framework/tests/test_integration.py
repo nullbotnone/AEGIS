@@ -7,16 +7,16 @@ evidence generation → verification → containment → audit.
 import time
 import unittest
 
-from framework.constraints import (
+from src.framework.constraints import (
     ConstraintProfile,
     DataAccessConstraints,
     DataFlowConstraints,
     NetworkConstraints,
     ToolConstraints,
 )
-from framework.policy_engine import PolicyEngine
-from framework.containment import ContainmentAction
-from framework.verifier import Verdict
+from src.framework.policy_engine import PolicyEngine
+from src.framework.containment import ContainmentAction
+from src.framework.verifier import Verdict
 
 
 class TestAEGISEndToEnd(unittest.TestCase):

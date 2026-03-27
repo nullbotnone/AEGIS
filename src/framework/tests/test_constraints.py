@@ -2,7 +2,7 @@
 
 import unittest
 
-from framework.constraints import (
+from src.framework.constraints import (
     ConstraintProfile,
     DataAccessConstraints,
     DataFlowConstraints,

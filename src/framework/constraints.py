@@ -13,7 +13,141 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-import yaml
+try:
+    import yaml  # type: ignore[import-not-found]
+except ModuleNotFoundError:
+    yaml = None
+
+
+def _parse_yaml_scalar(value: str) -> Any:
+    """Parse a scalar value from a simple YAML subset."""
+    lowered = value.lower()
+    if lowered in {"true", "false"}:
+        return lowered == "true"
+    if lowered in {"null", "none", "~"}:
+        return None
+    if value.startswith(("'", '"')) and value.endswith(("'", '"')):
+        return value[1:-1]
+    try:
+        return int(value)
+    except ValueError:
+        pass
+    try:
+        return float(value)
+    except ValueError:
+        pass
+    return value
+
+
+def _parse_yaml_block(lines: List[str], start: int, indent: int) -> tuple[Any, int]:
+    """Parse a simple indentation-based YAML mapping or list."""
+    index = start
+    while index < len(lines) and not lines[index].strip():
+        index += 1
+
+    if index >= len(lines):
+        return {}, index
+
+    stripped = lines[index].lstrip()
+    if stripped.startswith("- "):
+        items: List[Any] = []
+        while index < len(lines):
+            line = lines[index]
+            if not line.strip():
+                index += 1
+                continue
+            current_indent = len(line) - len(line.lstrip(" "))
+            if current_indent < indent:
+                break
+            if current_indent != indent:
+                raise ValueError(f"Invalid YAML indentation at line: {line!r}")
+            item_text = line.strip()[2:].strip()
+            if item_text:
+                items.append(_parse_yaml_scalar(item_text))
+                index += 1
+                continue
+            item_value, index = _parse_yaml_block(lines, index + 1, indent + 2)
+            items.append(item_value)
+        return items, index
+
+    mapping: Dict[str, Any] = {}
+    while index < len(lines):
+        line = lines[index]
+        if not line.strip():
+            index += 1
+            continue
+        current_indent = len(line) - len(line.lstrip(" "))
+        if current_indent < indent:
+            break
+        if current_indent != indent:
+            raise ValueError(f"Invalid YAML indentation at line: {line!r}")
+        key, separator, raw_value = line.strip().partition(":")
+        if not separator:
+            raise ValueError(f"Invalid YAML mapping entry: {line!r}")
+        value = raw_value.strip()
+        if value:
+            mapping[key] = _parse_yaml_scalar(value)
+            index += 1
+            continue
+        nested_value, index = _parse_yaml_block(lines, index + 1, indent + 2)
+        mapping[key] = nested_value
+    return mapping, index
+
+
+def _yaml_safe_load(content: str) -> Dict[str, Any]:
+    """Load YAML, falling back to a constrained built-in parser."""
+    if yaml is not None:
+        data = yaml.safe_load(content)
+        return data or {}
+
+    lines = [
+        line.rstrip()
+        for line in content.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    if not lines:
+        return {}
+    data, next_index = _parse_yaml_block(lines, 0, 0)
+    if next_index != len(lines):
+        raise ValueError("Unexpected trailing YAML content")
+    if not isinstance(data, dict):
+        raise ValueError("Constraint profiles must be YAML mappings")
+    return data
+
+
+def _yaml_format_scalar(value: Any) -> str:
+    """Format a scalar value for YAML output."""
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if value is None:
+        return "null"
+    return str(value)
+
+
+def _yaml_dump_lines(value: Any, indent: int = 0) -> List[str]:
+    """Serialize a simple dict/list structure to YAML lines."""
+    prefix = " " * indent
+    if isinstance(value, dict):
+        lines: List[str] = []
+        for key, item in value.items():
+            if isinstance(item, (dict, list)):
+                lines.append(f"{prefix}{key}:")
+                lines.extend(_yaml_dump_lines(item, indent + 2))
+            else:
+                lines.append(f"{prefix}{key}: {_yaml_format_scalar(item)}")
+        return lines
+    if isinstance(value, list):
+        lines = []
+        for item in value:
+            if isinstance(item, (dict, list)):
+                lines.append(f"{prefix}-")
+                lines.extend(_yaml_dump_lines(item, indent + 2))
+            else:
+                lines.append(f"{prefix}- {_yaml_format_scalar(item)}")
+        return lines
+    return [f"{prefix}{_yaml_format_scalar(value)}"]
 
 
 class ConstraintType(Enum):
@@ -329,9 +463,11 @@ class ConstraintProfile:
         Returns:
             A ConstraintProfile instance.
         """
-        data = yaml.safe_load(yaml_content)
+        data = _yaml_safe_load(yaml_content)
         return cls.from_dict(data)
 
     def to_yaml(self) -> str:
         """Serialize to YAML string."""
-        return yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=False)
+        if yaml is not None:
+            return yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=False)
+        return "\n".join(_yaml_dump_lines(self.to_dict())) + "\n"

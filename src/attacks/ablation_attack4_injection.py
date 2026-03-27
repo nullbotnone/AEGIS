@@ -17,7 +17,7 @@ Scenario:
 
     The agent gets hijacked, reads /etc/config.json, and sends data via LLM.
 
-    Critical: The injection pattern "IMPORTANT:\s+For\s+quality\s+assurance"
+    Critical: The injection pattern "IMPORTANT:\\s+For\\s+quality\\s+assurance"
     must match EXACTLY. The tool output uses this exact phrase.
 """
 import time

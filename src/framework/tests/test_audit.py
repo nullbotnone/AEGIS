@@ -2,7 +2,7 @@
 
 import unittest
 
-from framework.audit import AuditEntry, AuditLedger
+from src.framework.audit import AuditEntry, AuditLedger
 
 
 class TestAuditEntry(unittest.TestCase):

@@ -62,7 +62,7 @@ Tamper-evident, append-only ledger with hash-chain integrity:
 ## Usage
 
 ```python
-from framework import PolicyEngine, ConstraintProfile, DataAccessConstraints, NetworkConstraints
+from src.framework import PolicyEngine, ConstraintProfile, DataAccessConstraints, NetworkConstraints
 
 # Create constraint profile
 constraints = ConstraintProfile(
@@ -102,8 +102,8 @@ engine.stop()
 ## Testing
 
 ```bash
-cd AEGIS/src
-python -m pytest framework/tests/ -v
+cd AEGIS
+python -m unittest discover -s src/framework/tests -v
 ```
 
 ## Production Integration

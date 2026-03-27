@@ -3,7 +3,7 @@
 import time
 import unittest
 
-from framework.attestation import (
+from src.framework.attestation import (
     ActionType,
     AgentAction,
     AttestationEngine,

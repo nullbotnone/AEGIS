@@ -82,7 +82,7 @@ class ContainmentEnforcer:
         Returns:
             The ContainmentDecision that was applied.
         """
-        from framework.verifier import Verdict
+        from .verifier import Verdict
 
         # Map verdict to containment action
         action = self._verdict_to_action(result.verdict)
@@ -124,7 +124,7 @@ class ContainmentEnforcer:
         Returns:
             The corresponding ContainmentAction.
         """
-        from framework.verifier import Verdict
+        from .verifier import Verdict
 
         mapping = {
             Verdict.COMPLIANT: ContainmentAction.NONE,
