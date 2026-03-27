@@ -11,12 +11,12 @@ import sys
 import os
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from experiments.run_attack1 import run_experiment as run_attack1
-from experiments.run_attack2 import run_experiment as run_attack2
-from experiments.run_attack3 import run_experiment as run_attack3
-from experiments.run_attack4 import run_experiment as run_attack4
+from .run_attack1 import run_experiment as run_attack1
+from .run_attack2 import run_experiment as run_attack2
+from .run_attack3 import run_experiment as run_attack3
+from .run_attack4 import run_experiment as run_attack4
 
 
 def run_all():

@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
-"""Experiment 1: Filesystem-Mediated Injection.
+"""Experiment 2: Multi-User Co-Location Injection.
 
-Sets up the environment, runs the attack, measures results,
-and runs the attestation defense.
+Demonstrates attack through shared scratch space on co-located compute nodes.
 """
 import sys
 import os
 
-# Add parent directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from common.agent import Agent
 from common.filesystem import SharedFilesystem
 from common.constraints import create_strict_constraints
 from common.logger import ActionLogger
-from attacks.filesystem_injection import FilesystemInjectionAttack
+from attacks.colocation_injection import CoLocationInjectionAttack, ComputeNode
 from defense.attestation import AttestationEngine
 
 
 def run_experiment():
-    """Run the filesystem injection experiment."""
+    """Run the co-location injection experiment."""
     print("=" * 70)
-    print("EXPERIMENT 1: FILESYSTEM-MEDIATED INJECTION")
+    print("EXPERIMENT 2: MULTI-USER CO-LOCATION INJECTION")
     print("=" * 70)
     print()
 
@@ -29,6 +27,9 @@ def run_experiment():
     print("[1] Setting up environment...")
     logger = ActionLogger()
     filesystem = SharedFilesystem(logger=logger)
+
+    # Create compute node (both agents co-located)
+    compute_node = ComputeNode("node-42", filesystem)
 
     # Create attacker agent
     attacker_constraints = create_strict_constraints("shared", "attacker")
@@ -40,32 +41,33 @@ def run_experiment():
         logger=logger,
     )
 
-    # Create victim agent (more restrictive — only supposed to read datasets)
-    victim_constraints = create_strict_constraints("shared", "victim")
+    # Create victim agent (working on finance project, but co-located on same node)
+    victim_constraints = create_strict_constraints("finance", "victim")
     victim_agent = Agent(
         user_id="victim",
-        project_id="shared",
+        project_id="finance",
         constraints=victim_constraints,
         filesystem=filesystem,
         logger=logger,
     )
 
+    print(f"  Compute node: {compute_node.node_id}")
     print(f"  Attacker: {attacker_agent.user_id} (project: {attacker_agent.project_id})")
     print(f"  Victim:   {victim_agent.user_id} (project: {victim_agent.project_id})")
-    print(f"  Shared filesystem with {len(filesystem.files)} files")
     print()
 
     # Step 2: Set up and execute attack
     print("[2] Executing attack...")
-    attack = FilesystemInjectionAttack()
-    attack.setup(filesystem, attacker_agent, victim_agent)
+    attack = CoLocationInjectionAttack()
+    attack.setup(filesystem, compute_node, attacker_agent, victim_agent)
     results = attack.execute()
 
     print(f"  Attack: {results['attack_name']}")
+    print(f"  Co-location: {results['co_location']['node_id']}")
+    print(f"  Jobs on node: {results['co_location']['jobs_on_node']}")
     print(f"  Injection succeeded: {results['injection_succeeded']}")
     print(f"  Data exfiltrated: {results['data_exfiltrated']}")
     print(f"  Exfiltrated bytes: {results['exfiltrated_bytes']}")
-    print(f"  Duration: {results['attack_duration_ms']:.2f} ms")
     print()
 
     # Step 3: Measure exfiltration
@@ -73,7 +75,7 @@ def run_experiment():
     exfil = attack.measure_exfiltration()
     print(f"  Total egress: {exfil['total_exfiltrated_bytes']} bytes")
     print(f"  LLM calls made: {exfil['num_llm_calls']}")
-    print(f"  Secrets exfiltrated: {exfil['secrets_exfiltrated']}")
+    print(f"  Finance data exfiltrated: {exfil['finance_data_exfiltrated']}")
     print()
 
     # Step 4: Run attestation defense
@@ -96,12 +98,8 @@ def run_experiment():
     print(f"  Attestation detected:  {detection_success}")
     print(f"  Detection count:       {len(detections)}")
     print(f"  Detection time:        {attestation.detection_time_ms:.2f} ms")
-
-    if detections:
-        critical = [d for d in detections if d.threat_level.value == "critical"]
-        print(f"  Critical detections:   {len(critical)}")
-
     print()
+
     return {
         "attack_success": attack_success,
         "detection_success": detection_success,

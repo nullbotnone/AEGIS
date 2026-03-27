@@ -28,7 +28,8 @@ sudo dnf install -y \
     kernel-devel \
     elfutils-libelf-devel \
     make \
-    git
+    git \
+    perf
 
 # Install Python dependencies
 sudo dnf install -y python3 python3-pip
@@ -135,116 +136,234 @@ python3 -c "print('test')"
 You should see events being captured:
 ```
 Event: PID=1234 FILE_READ path=/etc/hostname
-Event: PID=1234 NETWORK_CONN endpoint=api.openai.com
+Event: PID=1234 NETWORK_CONN endpoint=ipv4
 ```
+
+Note: the current probe records network family (`ipv4` / `ipv6`) and port from the
+`connect` syscall tracepoint. It does not resolve hostnames such as `api.openai.com`
+at capture time.
 
 ---
 
-## Run Baseline Comparisons
+## Run Direct Kernel/eBPF Microbenchmark
 
-### 1. Test Baseline Defenses
+### 1. Build the Syscall Driver
 
 ```bash
 cd /home/user/aegis
 
-# Run baseline comparison
-python3 -m src.defense.baseline_comparison
+# Build the kernel-side probe and the userspace syscall driver
+make bpfall
+make bench
+```
+
+This produces:
+- `src/bpf/aegis_probe.bpf.o`
+- `src/bpf/syscall_microbench`
+
+If you install AEGIS system-wide later, `make install` now also installs the attach-only
+loader and the syscall microbenchmark under the AEGIS share directory.
+
+### 1a. Use the Automated Paired Benchmark Runner
+
+If you want one command that runs the baseline and attached trials, saves structured
+results, and prints the median overhead directly, use:
+
+```bash
+cd /home/user/aegis
+sudo python3 -m src.experiments.real.run_bpf_microbenchmark \
+  --mode openat \
+  --iters 200000 \
+  --repeats 9
+```
+
+That script:
+- builds the probe and syscall driver unless `--skip-build` is set
+- runs paired baseline and attached trials
+- pins the workload with `taskset`
+- captures `perf stat` counters plus the workload's `ops_per_sec`
+- writes a JSON artifact under `results/`
+
+Useful options:
+
+```bash
+# Network-focused measurement
+sudo python3 -m src.experiments.real.run_bpf_microbenchmark \
+  --mode connect \
+  --iters 100000 \
+  --repeats 9 \
+  --probe-scope auto
+
+# File-only probe path on a specific CPU
+sudo python3 -m src.experiments.real.run_bpf_microbenchmark \
+  --mode read \
+  --iters 200000 \
+  --size 4096 \
+  --cpu 4 \
+  --probe-scope file
+```
+
+### 2. Measure a Baseline Without eBPF Attached
+
+Use `perf stat` around the C microbenchmark, not around a Python loop. Pin the
+workload to one CPU to reduce scheduler noise:
+
+```bash
+cd /home/user/aegis
+taskset -c 2 perf stat -r 15 \
+  -e task-clock,cycles,instructions,branches,branch-misses,cache-misses,context-switches,cpu-migrations \
+  ./src/bpf/syscall_microbench --mode openat --iters 200000 --path /tmp/aegis-open.dat
+```
+
+Good first targets are:
+- `openat` for file-open tracepoints
+- `read` or `write` for steady file I/O hooks
+- `connect` for network hooks
+- `execve` for process-launch hooks
+
+### 3. Attach the Probe Without Userspace Ring-Buffer Polling
+
+For direct kernel/eBPF overhead, keep the probe attached but do not poll events in
+Python. The attach-only loader below uses the same BPF object and config map as the
+collector, but it avoids userspace event-processing noise.
+
+```bash
+cd /home/user/aegis
+sudo python3 -m src.attestation.bpf_attach --bpf src/bpf/aegis_probe.bpf.o
+```
+
+You can narrow the active policy paths while benchmarking:
+
+```bash
+# File-only overhead
+sudo python3 -m src.attestation.bpf_attach \
+  --bpf src/bpf/aegis_probe.bpf.o \
+  --disable-network --disable-exec
+
+# Network-only overhead
+sudo python3 -m src.attestation.bpf_attach \
+  --bpf src/bpf/aegis_probe.bpf.o \
+  --disable-file --disable-exec
+```
+
+### 4. Re-run the Exact Same Workload
+
+With the attach-only loader running in another terminal:
+
+```bash
+cd /home/user/aegis
+taskset -c 2 perf stat -r 15 \
+  -e task-clock,cycles,instructions,branches,branch-misses,cache-misses,context-switches,cpu-migrations \
+  ./src/bpf/syscall_microbench --mode openat --iters 200000 --path /tmp/aegis-open.dat
+```
+
+Compute overhead from the median `task-clock` or from the microbenchmark's
+`ops_per_sec` line:
+
+```text
+overhead % = 100 * (attached_time - baseline_time) / baseline_time
+```
+
+### 5. Example Modes
+
+```bash
+# File-open benchmark
+./src/bpf/syscall_microbench --mode openat --iters 200000 --path /tmp/aegis-open.dat
+
+# File-read benchmark
+./src/bpf/syscall_microbench --mode read --iters 200000 --size 4096 --path /tmp/aegis-read.dat
+
+# File-write benchmark
+./src/bpf/syscall_microbench --mode write --iters 100000 --size 4096 --path /tmp/aegis-write.dat
+
+# TCP connect benchmark (closed localhost port is fine; the connect syscall still executes)
+./src/bpf/syscall_microbench --mode connect --iters 100000 --host 127.0.0.1 --port 9
+
+# execve benchmark
+./src/bpf/syscall_microbench --mode execve --iters 5000
+```
+
+### 6. Notes on Interpreting the Numbers
+
+- This method measures direct kernel/eBPF hook cost much more cleanly than
+  `python3 -m src.experiments.simulated.run_performance`.
+- If you use `src.attestation.bpf_collector`, you will measure both kernel hook cost
+  and Python ring-buffer polling/parsing overhead.
+- Benchmark one syscall family at a time. Starting with the full mixed probe makes
+  the deltas harder to explain.
+- Report medians across repeats. Single-run `perf stat` numbers are too noisy for a
+  credible claim.
+
+## Run Baseline Comparisons
+
+### 1. Run the Comparative Baseline Experiment
+
+```bash
+cd /home/user/aegis
+
+# Run the simulated baseline-comparison experiment
+python3 -m src.experiments.simulated.run_baseline_comparison
 ```
 
 ### 2. Expected Output
 
 ```
-=== AEGIS Baseline Comparison Test ===
+================================================================================
+EXPERIMENT: BASELINE COMPARISON
+================================================================================
 
-=== Baseline Comparison Results ===
-Defense                   Attack               Result       Time (ms)
-----------------------------------------------------------------------
-Network DLP               filesystem_injection DETECTED     0.003
-Filesystem Auditing       filesystem_injection MISSED       0.004
-Per-Agent Analytics       filesystem_injection MISSED       0.004
-Strict Sandboxing         filesystem_injection MISSED       0.007
+Baseline: AEGIS
+  Detection rate: ...
+  Avg detection time: ... ms
+
+Baseline: Network DLP
+  Detection rate: ...
 ```
 
 ---
 
 ## Run Performance Benchmarks
 
-### 1. Create Benchmark Script
+### 1. Run Repo-Backed Performance Experiments
 
 ```bash
 cd /home/user/aegis
-cat > benchmark_overhead.py << 'EOF'
-#!/usr/bin/env python3
-"""AEGIS overhead benchmark on EPYC."""
 
-import time
-import statistics
-import subprocess
-import sys
+# Overall throughput/overhead sweep
+python3 -m src.experiments.simulated.run_performance
 
-def measure_overhead(interval=1.0, duration=10):
-    """Measure attestation overhead at given interval."""
-    times = []
-    
-    for _ in range(10):
-        start = time.perf_counter()
-        # Simulate evidence generation for 50 actions
-        for i in range(50):
-            _ = {"action": "test", "size": 4096}
-        end = time.perf_counter()
-        times.append((end - start) * 1000)  # ms
-    
-    return {
-        "mean_ms": statistics.mean(times),
-        "stdev_ms": statistics.stdev(times) if len(times) > 1 else 0,
-    }
+# Detection latency vs. attestation interval (measured verifier cycles)
+python3 -m src.experiments.real.run_latency_sweep
 
-def run_syscall_benchmark():
-    """Benchmark syscall interception overhead."""
-    print("=== EPYC Syscall Benchmark ===\n")
-    
-    intervals = [0.1, 0.5, 1.0, 5.0, 10.0]
-    results = []
-    
-    for interval in intervals:
-        # Measure evidence generation overhead
-        result = measure_overhead(interval)
-        
-        # Estimate overhead based on interval
-        # (This is simplified - real measurement would use eBPF)
-        overhead_pct = (result["mean_ms"] / (interval * 1000)) * 100
-        
-        results.append({
-            "interval": interval,
-            "eval_time_ms": result["mean_ms"],
-            "overhead_pct": overhead_pct
-        })
-        
-        print(f"Interval: {interval:>5.1f}s | "
-              f"Eval: {result['mean_ms']:>6.3f}ms | "
-              f"Overhead: {overhead_pct:>5.2f}%")
-    
-    return results
+# Real ablation study over measured framework controls
+python3 -m src.experiments.real.run_ablation \
+  --interval 1.0 \
+  --repeats 3
 
-if __name__ == "__main__":
-    run_syscall_benchmark()
-EOF
-chmod +x benchmark_overhead.py
-
-python3 benchmark_overhead.py
+# Single attack / interval capture with JSON output
+python3 -m src.experiments.real.run_real_latency_capture \
+  --attack filesystem \
+  --interval 1.0 \
+  --repeats 3
 ```
 
 ### 2. Expected Output
 
-```
-=== EPYC Syscall Benchmark ===
+Both scripts print summary tables to stdout. The exact numbers will vary by node,
+Python version, and background load, but you should see:
 
-Interval:   0.1s | Eval:  0.042ms | Overhead:  0.04%
-Interval:   0.5s | Eval:  0.038ms | Overhead:  0.01%
-Interval:   1.0s | Eval:  0.045ms | Overhead:  0.00%
-Interval:   5.0s | Eval:  0.041ms | Overhead:  0.00%
-Interval:  10.0s | Eval:  0.043ms | Overhead:  0.00%
-```
+- interval sweeps across multiple attestation settings
+- aggregate overhead or throughput summaries
+- measured latency / exfiltration summaries from real framework attestation cycles
+- measured ablation summaries showing which real controls still catch each attack
+- JSON artifacts under `results/` for `run_real_latency_capture` and `run_ablation`
+
+Note: `python3 -m src.experiments.simulated.run_performance` is still a simulation-style Python
+workload benchmark. `python3 -m src.experiments.real.run_latency_sweep`,
+`python3 -m src.experiments.real.run_real_latency_capture`, and
+`python3 -m src.experiments.real.run_ablation` use measured framework
+attestation and policy-verification cycles, but they are still not a direct substitute
+for kernel-level eBPF microbenchmarking of hook overhead.
 
 ---
 
@@ -260,10 +379,10 @@ python3 -m src.attestation.cross_node_coordinator --port 9090
 ### 2. Test Covert Channel Detection
 
 ```bash
-cd /home/artlands/.openclaw/workspace/research/AEGIS
+cd /home/user/aegis
 
-# Run the coordinated exfiltration test
-python3 -m src.experiments.run_attack4
+# Run the coordinated exfiltration test (simulation driver)
+python3 -m src.experiments.simulated.run_attack4
 ```
 
 Expected output:
@@ -304,43 +423,85 @@ python3 -m src.defense.slurm_integration terminate <JOB_ID>
 
 ## Generate Results for Paper
 
-### 1. Run Full Experiment Suite
+### 1. Run the Main Experiment Drivers
 
 ```bash
-cd /home/artlands/.openclaw/workspace/research/AEGIS
+cd /home/user/aegis
+mkdir -p results
 
-# Run all attacks
-python3 -m src.experiments.run_all
+# Run all simulated attack drivers and capture the console summary
+python3 -m src.experiments.simulated.run_all | tee results/run_all.txt
 
-# This generates:
-# - Detection rates for each attack
-# - Baseline comparison results
-# - Timing measurements
+# Run the simulated baseline comparison and capture the console summary
+python3 -m src.experiments.simulated.run_baseline_comparison | tee results/run_baseline_comparison.txt
+
+# Optional: run the simulated ablation and false-positive studies
+python3 -m src.experiments.simulated.run_ablation | tee results/run_ablation.txt
+python3 -m src.experiments.simulated.run_ablation_v2 | tee results/run_ablation_v2.txt
+python3 -m src.experiments.simulated.run_false_positive | tee results/run_false_positive.txt
+
+# Run performance-related experiments
+python3 -m src.experiments.simulated.run_performance | tee results/run_performance.txt
+python3 -m src.experiments.real.run_latency_sweep | tee results/run_latency_sweep.txt
+
+# Capture measured framework-path latency data as JSON
+python3 -m src.experiments.real.run_real_latency_capture \
+  --attack filesystem \
+  --interval 1.0 \
+  --repeats 3 \
+  --output results/real_latency_filesystem_1s.json
+
+# Capture measured real-ablation data as JSON
+python3 -m src.experiments.real.run_ablation \
+  --interval 1.0 \
+  --repeats 3 \
+  --output results/real_ablation_1s.json
+
+# Capture direct kernel/eBPF microbenchmark data as JSON
+sudo python3 -m src.experiments.real.run_bpf_microbenchmark \
+  --mode openat \
+  --iters 200000 \
+  --repeats 9 \
+  --output results/bpf_microbenchmark_openat.json
 ```
 
 ### 2. Output Format
 
-Results will be saved to `results/`:
+The current repository prints summaries to stdout and, for the real-metrics paths,
+also writes JSON artifacts. Documented outputs that are directly supported by the code are:
 
-```
-results/
-├── attack_results.csv
-├── baseline_comparison.csv
-├── overhead_measurements.csv
-└── figures/
-    ├── attack_results.png
-    ├── baseline_comparison.png
-    └── performance_overhead.png
-```
+- `results/run_all.txt`
+- `results/run_baseline_comparison.txt`
+- `results/run_ablation.txt`
+- `results/run_ablation_v2.txt`
+- `results/run_false_positive.txt`
+- `results/run_performance.txt`
+- `results/run_latency_sweep.txt`
+- `results/real_latency_*.json` from `src.experiments.real.run_real_latency_capture`
+- `results/real_ablation_*.json` from `src.experiments.real.run_ablation`
+- `results/bpf_microbenchmark_*.json` from `src.experiments.real.run_bpf_microbenchmark`
+- `experiments/baseline_results.md` from `src.experiments.simulated.run_baseline_comparison`
+
+For real metrics, use:
+- `src.experiments.real.run_bpf_microbenchmark` for direct kernel/eBPF hook overhead
+- `src.experiments.real.run_real_latency_capture` and `src.experiments.real.run_latency_sweep` for measured framework attestation / verification latency
+- `src.experiments.real.run_ablation` for measured control ablations over the real framework path
+
+`src.experiments.simulated.run_performance` remains a simulation benchmark and should not be
+used as your primary source for real performance claims.
+
+The attack, ablation, false-positive, and baseline-comparison drivers under
+`src.experiments.simulated.*` are also simulation-based. Use them for comparative
+evaluation, not for direct kernel/eBPF performance claims.
 
 ### 3. Collect Results
 
 ```bash
-# Tarball results for transfer to local machine
-tar -czvf aegis-results-$(date +%Y%m%d).tar.gz results/
+# Tarball captured results for transfer to local machine
+tar -czvf aegis-results-$(date +%Y%m%d).tar.gz results/ experiments/baseline_results.md
 
 # Copy to local
-scp epyc-node:/home/user/aegis-results-*.tar.gz ./
+scp epyc-node:/home/user/aegis/aegis-results-*.tar.gz ./
 ```
 
 ---
@@ -384,7 +545,9 @@ srun --wrap='slurmrestd -j localhost:8080'&
 - [ ] Build eBPF probe (`make bpfall`)
 - [ ] Run BPF collector (test basic capture)
 - [ ] Run baseline comparisons
-- [ ] Run performance benchmarks
+- [ ] Run real framework-latency capture (`run_real_latency_capture`)
+- [ ] Run direct kernel/eBPF microbenchmark (`run_bpf_microbenchmark`)
+- [ ] Run simulation benchmark only if needed for comparative modeling
 - [ ] Test cross-node coordinator
 - [ ] Test Slurm integration (if available)
 - [ ] Generate results and copy to local

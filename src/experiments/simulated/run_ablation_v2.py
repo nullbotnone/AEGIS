@@ -14,7 +14,7 @@ import time
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from common.agent import Agent
 from common.filesystem import SharedFilesystem

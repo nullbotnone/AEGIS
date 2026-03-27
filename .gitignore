@@ -22,3 +22,5 @@ node_modules/
 *.o
 *.so
 *.exe
+
+syscall_microbench

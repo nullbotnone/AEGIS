@@ -1,12 +1,15 @@
 # AEGIS eBPF Build System
 
 # Paths
-BPF_SRC := $(wildcard src/bpf/*.c)
-BPF_OBJ := $(BPF_SRC:.c=.bpf.o)
+BPF_SRC := src/bpf/aegis_probe.c
+BPF_OBJ := src/bpf/aegis_probe.bpf.o
 USER_SRC := $(wildcard src/attestation/*.py)
+MICROBENCH_SRC := src/bpf/syscall_microbench.c
+MICROBENCH_BIN := src/bpf/syscall_microbench
 
 # Compiler
 CLANG ?= $(firstword $(wildcard /usr/bin/clang /usr/bin/clang-18 /usr/bin/clang-17 /usr/bin/clang-16 /usr/bin/clang-15 /usr/local/bin/clang /usr/local/bin/clang-18 /usr/local/bin/clang-17 /usr/local/bin/clang-16 /usr/local/bin/clang-15))
+HOSTCC ?= cc
 LLVMLD ?= llvm-ld
 STRIP ?= strip
 
@@ -48,21 +51,33 @@ bpfall: $(BPF_OBJ)
 	@echo "=== eBPF objects built ==="
 	@ls -la $(BPF_OBJ)
 
+bench: $(MICROBENCH_BIN)
+	@echo "=== syscall microbenchmark built ==="
+	@ls -la $(MICROBENCH_BIN)
+
 %.bpf.o: %.c
 	@echo "Compiling $< -> $@"
 	$(CLANG) $(BPF_CFLAGS) -c $< -o $@
 
-install: bpfall
+$(MICROBENCH_BIN): $(MICROBENCH_SRC)
+	@echo "Compiling $< -> $@"
+	$(HOSTCC) -O2 -Wall -Wextra -std=c11 $< -o $@
+
+install: bpfall bench
 	@echo "Installing AEGIS eBPF components..."
 	install -d $(SHAREDIR)
 	install -m 755 src/attestation/bpf_collector.py $(SHAREDIR)/
+	install -m 755 src/attestation/bpf_attach.py $(SHAREDIR)/
+	install -m 755 $(MICROBENCH_BIN) $(SHAREDIR)/
 	install -m 644 $(BPF_OBJ) $(SHAREDIR)/
 	install -m 644 src/bpf/aegis_probe.c $(SHAREDIR)/
+	install -m 644 $(MICROBENCH_SRC) $(SHAREDIR)/
 	@echo "Installed to $(SHAREDIR)"
 
 clean:
 	rm -f src/bpf/*.bpf.o
 	rm -f src/bpf/*.stripped
+	rm -f $(MICROBENCH_BIN)
 
 test: bpfall
 	@echo "=== Running eBPF sanity test ==="

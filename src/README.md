@@ -69,7 +69,7 @@ sudo python3 -m src.attestation.bpf_collector --verbose
 ### Run Baseline Comparisons
 
 ```bash
-python3 -m src.defense.baseline_comparison
+python3 -m src.experiments.simulated.run_baseline_comparison
 ```
 
 ### Test Cross-Node Coordinator
@@ -78,10 +78,16 @@ python3 -m src.defense.baseline_comparison
 python3 -m src.attestation.cross_node_coordinator
 ```
 
+### Run Real Ablation Experiments
+
+```bash
+python3 -m src.experiments.real.run_ablation --interval 1.0 --repeats 3
+```
+
 ### Run All Experiments
 
 ```bash
-python3 -m src.experiments.run_all
+python3 -m src.experiments.simulated.run_all
 ```
 
 ## Requirements

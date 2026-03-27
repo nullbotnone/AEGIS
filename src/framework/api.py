@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import urlparse, parse_qs
 
 from .policy_engine import PolicyEngine
@@ -60,13 +60,24 @@ class AegisAPIHandler(BaseHTTPRequestHandler):
         if content_length == 0:
             return {}
         body = self.rfile.read(content_length)
-        return json.loads(body)
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSON body: {exc.msg}") from exc
+        if not isinstance(data, dict):
+            raise ValueError("JSON body must be an object")
+        return data
+
+    def _path_segments(self) -> list[str]:
+        parsed = urlparse(self.path)
+        return [segment for segment in parsed.path.split("/") if segment]
 
     def do_GET(self) -> None:
         """Handle GET requests."""
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/")
         params = parse_qs(parsed.query)
+        _ = params
 
         if path == "/status":
             self._handle_get_status()
@@ -103,12 +114,9 @@ class AegisAPIHandler(BaseHTTPRequestHandler):
 
     def do_DELETE(self) -> None:
         """Handle DELETE requests."""
-        parsed = urlparse(self.path)
-        path = parsed.path.rstrip("/")
-
-        if path.startswith("/agents/"):
-            agent_id = path.split("/")[2]
-            self._handle_unregister_agent(agent_id)
+        segments = self._path_segments()
+        if len(segments) == 2 and segments[0] == "agents":
+            self._handle_unregister_agent(segments[1])
         else:
             self._send_error(404, f"Not found: {self.path}")
 
@@ -155,11 +163,14 @@ class AegisAPIHandler(BaseHTTPRequestHandler):
         """Register a new agent for attestation."""
         from .constraints import ConstraintProfile
 
-        body = self._read_body()
         try:
+            body = self._read_body()
             constraints = ConstraintProfile.from_dict(body)
-        except (KeyError, TypeError) as e:
-            self._send_error(400, f"Invalid constraint profile: {e}")
+        except ValueError as exc:
+            self._send_error(400, str(exc))
+            return
+        except (KeyError, TypeError) as exc:
+            self._send_error(400, f"Invalid constraint profile: {exc}")
             return
 
         agent_id = body.get("agent_id", constraints.agent_id)
@@ -191,11 +202,15 @@ class AegisAPIHandler(BaseHTTPRequestHandler):
             self._send_error(404, f"Agent {agent_id} not found")
             return
 
-        body = self._read_body()
+        try:
+            body = self._read_body()
+        except ValueError as exc:
+            self._send_error(400, str(exc))
+            return
         try:
             action_type = ActionType(body["action_type"])
-        except (KeyError, ValueError) as e:
-            self._send_error(400, f"Invalid action type: {e}")
+        except (KeyError, ValueError) as exc:
+            self._send_error(400, f"Invalid action type: {exc}")
             return
 
         import time

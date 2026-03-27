@@ -55,20 +55,20 @@ All experiments use these datasets. To reproduce:
 
 ```bash
 # Generate datasets
-cd AEGIS/src
-python3 data/generate_datasets.py
+cd AEGIS
+python3 -m src.data.generate_datasets
 
-# Run all attack experiments
-python3 experiments/run_all.py
+# Run all simulated attack experiments
+python3 -m src.experiments.simulated.run_all
 
-# Run baseline comparison
-python3 experiments/run_baseline_comparison.py
+# Run simulated baseline comparison
+python3 -m src.experiments.simulated.run_baseline_comparison
 
-# Run false positive analysis
-python3 experiments/run_false_positive.py
+# Run simulated false positive analysis
+python3 -m src.experiments.simulated.run_false_positive
 
-# Run ablation study
-python3 experiments/run_ablation_v2.py
+# Run simulated ablation study
+python3 -m src.experiments.simulated.run_ablation_v2
 ```
 
 ## Data Provenance

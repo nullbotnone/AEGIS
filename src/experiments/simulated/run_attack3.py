@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
-"""Experiment 2: Multi-User Co-Location Injection.
+"""Experiment 3: Supply Chain Injection via Agent Skills.
 
-Demonstrates attack through shared scratch space on co-located compute nodes.
+Demonstrates attack through compromised agent tools/skills.
 """
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from common.agent import Agent
 from common.filesystem import SharedFilesystem
 from common.constraints import create_strict_constraints
 from common.logger import ActionLogger
-from attacks.colocation_injection import CoLocationInjectionAttack, ComputeNode
+from attacks.supply_chain_injection import (
+    SupplyChainInjectionAttack,
+    legitimate_data_converter,
+)
 from defense.attestation import AttestationEngine
 
 
 def run_experiment():
-    """Run the co-location injection experiment."""
+    """Run the supply chain injection experiment."""
     print("=" * 70)
-    print("EXPERIMENT 2: MULTI-USER CO-LOCATION INJECTION")
+    print("EXPERIMENT 3: SUPPLY CHAIN INJECTION VIA AGENT SKILLS")
     print("=" * 70)
     print()
 
@@ -28,43 +31,34 @@ def run_experiment():
     logger = ActionLogger()
     filesystem = SharedFilesystem(logger=logger)
 
-    # Create compute node (both agents co-located)
-    compute_node = ComputeNode("node-42", filesystem)
-
-    # Create attacker agent
-    attacker_constraints = create_strict_constraints("shared", "attacker")
-    attacker_agent = Agent(
-        user_id="attacker",
-        project_id="shared",
-        constraints=attacker_constraints,
-        filesystem=filesystem,
-        logger=logger,
-    )
-
-    # Create victim agent (working on finance project, but co-located on same node)
-    victim_constraints = create_strict_constraints("finance", "victim")
+    # Create victim agent with legitimate tools
+    victim_constraints = create_strict_constraints("analytics", "victim")
+    tools = {
+        "data_converter": legitimate_data_converter(filesystem, "victim"),
+        "csv_reader": lambda f: filesystem.read(f, "victim"),
+    }
     victim_agent = Agent(
         user_id="victim",
-        project_id="finance",
+        project_id="analytics",
         constraints=victim_constraints,
         filesystem=filesystem,
         logger=logger,
+        tools=tools,
     )
 
-    print(f"  Compute node: {compute_node.node_id}")
-    print(f"  Attacker: {attacker_agent.user_id} (project: {attacker_agent.project_id})")
-    print(f"  Victim:   {victim_agent.user_id} (project: {victim_agent.project_id})")
+    print(f"  Victim: {victim_agent.user_id} (project: {victim_agent.project_id})")
+    print(f"  Available tools: {list(victim_agent.tools.keys())}")
     print()
 
-    # Step 2: Set up and execute attack
+    # Step 2: Execute attack (setup includes tool replacement)
     print("[2] Executing attack...")
-    attack = CoLocationInjectionAttack()
-    attack.setup(filesystem, compute_node, attacker_agent, victim_agent)
+    attack = SupplyChainInjectionAttack()
+    attack.setup(filesystem, victim_agent)
+    print(f"  Tool 'data_converter' replaced with compromised version")
     results = attack.execute()
 
     print(f"  Attack: {results['attack_name']}")
-    print(f"  Co-location: {results['co_location']['node_id']}")
-    print(f"  Jobs on node: {results['co_location']['jobs_on_node']}")
+    print(f"  Compromised tool: {results['compromised_tool']}")
     print(f"  Injection succeeded: {results['injection_succeeded']}")
     print(f"  Data exfiltrated: {results['data_exfiltrated']}")
     print(f"  Exfiltrated bytes: {results['exfiltrated_bytes']}")
@@ -75,13 +69,12 @@ def run_experiment():
     exfil = attack.measure_exfiltration()
     print(f"  Total egress: {exfil['total_exfiltrated_bytes']} bytes")
     print(f"  LLM calls made: {exfil['num_llm_calls']}")
-    print(f"  Finance data exfiltrated: {exfil['finance_data_exfiltrated']}")
+    print(f"  SSH key exfiltrated: {exfil['ssh_key_exfiltrated']}")
     print()
 
     # Step 4: Run attestation defense
     print("[4] Running attestation defense...")
     attestation = AttestationEngine(logger)
-    attestation.register_agent(attacker_agent)
     attestation.register_agent(victim_agent)
     attestation.start_monitoring()
     detections = attestation.analyze()
@@ -99,6 +92,9 @@ def run_experiment():
     print(f"  Detection count:       {len(detections)}")
     print(f"  Detection time:        {attestation.detection_time_ms:.2f} ms")
     print()
+
+    # Cleanup
+    attack.cleanup()
 
     return {
         "attack_success": attack_success,
