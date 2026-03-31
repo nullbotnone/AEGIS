@@ -1,0 +1,13 @@
+{
+  "socket_path": "/run/aegis/verifier.sock",
+  "listen_host": "0.0.0.0",
+  "listen_port": 50051,
+  "profiles_dir": "/var/lib/aegis/verifier/profiles",
+  "audit_dir": "/var/log/aegis/verifier",
+  "slurm_url": "http://slurm-controller.internal:8080",
+  "slurm_user": "root",
+  "correlation_window_seconds": 30,
+  "challenge_ttl_seconds": 5,
+  "profile_signing_key": "replace-me-with-a-real-hmac-key",
+  "evidence_signing_key": "replace-me-with-a-real-hmac-key"
+}

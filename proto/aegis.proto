@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package aegis.v1;
+
+message ConstraintProfileDocument {
+  string agent_id = 1;
+  string session_id = 2;
+  string slurm_job_id = 3;
+  string yaml_profile = 4;
+}
+
+message AgentAction {
+  double timestamp = 1;
+  string action_type = 2;
+  map<string, string> details = 3;
+  int32 pid = 4;
+  string syscall = 5;
+}
+
+message EvidenceBundle {
+  string agent_id = 1;
+  string session_id = 2;
+  string slurm_job_id = 3;
+  string node_id = 4;
+  double timestamp = 5;
+  double interval_start = 6;
+  double interval_end = 7;
+  repeated AgentAction actions = 8;
+  double total_file_read_mb = 9;
+  double total_file_write_mb = 10;
+  double total_network_egress_mb = 11;
+  int32 network_connection_count = 12;
+  string process_state_hash = 13;
+  repeated string monitored_syscalls = 14;
+  string transport = 15;
+  string challenge_id = 16;
+  string challenge_nonce = 17;
+  string signature = 18;
+}
+
+message HealthRequest {}
+message HealthResponse {
+  string status = 1;
+  uint64 registered_profiles = 2;
+  uint64 audit_entries = 3;
+  uint64 pending_challenges = 4;
+  uint64 tracked_paths = 5;
+}
+
+message RegisterProfileRequest {
+  ConstraintProfileDocument profile = 1;
+}
+message RegisterProfileResponse {
+  string status = 1;
+  string agent_id = 2;
+  string session_id = 3;
+  string slurm_job_id = 4;
+}
+
+message SubmitEvidenceRequest {
+  EvidenceBundle evidence = 1;
+}
+message Violation {
+  string constraint_type = 1;
+  string description = 2;
+  string severity = 3;
+  string code = 4;
+}
+message SubmitEvidenceResponse {
+  string verdict = 1;
+  repeated Violation violations = 2;
+  string challenge_id = 3;
+  bool challenge_satisfied = 4;
+  repeated string access_graph_alerts = 5;
+}
+
+message CloseSessionRequest {
+  string agent_id = 1;
+  string session_id = 2;
+  string slurm_job_id = 3;
+}
+message CloseSessionResponse {
+  string status = 1;
+}
+
+message AuditEntry {
+  uint64 sequence = 1;
+  double timestamp = 2;
+  string entry_type = 3;
+  string agent_id = 4;
+  string json_data = 5;
+  string previous_hash = 6;
+  string hash = 7;
+}
+
+message GetAuditRequest {
+  string agent_id = 1;
+}
+message GetAuditResponse {
+  repeated AuditEntry entries = 1;
+}
+
+service AegisVerifier {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc RegisterProfile(RegisterProfileRequest) returns (RegisterProfileResponse);
+  rpc SubmitEvidence(SubmitEvidenceRequest) returns (SubmitEvidenceResponse);
+  rpc CloseSession(CloseSessionRequest) returns (CloseSessionResponse);
+  rpc GetAudit(GetAuditRequest) returns (GetAuditResponse);
+}

@@ -1,0 +1,22 @@
+[Unit]
+Description=AEGIS node-local eBPF collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/aegis
+EnvironmentFile=-/etc/aegis/collector.env
+ExecStart=/usr/bin/python3 -m src.attestation.bpf_collector --bpf /usr/share/aegis/aegis_probe.bpf.o --interval 1.0 --registry-dir /run/aegis/collector/registrations
+Restart=on-failure
+RestartSec=2
+RuntimeDirectory=aegis/collector/registrations
+RuntimeDirectoryMode=0750
+AmbientCapabilities=CAP_BPF CAP_PERFMON CAP_SYS_ADMIN
+CapabilityBoundingSet=CAP_BPF CAP_PERFMON CAP_SYS_ADMIN
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

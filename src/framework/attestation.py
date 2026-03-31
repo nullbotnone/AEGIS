@@ -1,7 +1,7 @@
 """Attestation engine for AEGIS.
 
-Simulates the eBPF-based syscall interception layer that monitors agent
-actions on compute nodes and produces signed evidence bundles for verification.
+Simulates the eBPF-backed node daemon that records syscall-derived agent
+activity and emits signed evidence bundles over mutually authenticated gRPC.
 """
 
 from __future__ import annotations
@@ -17,249 +17,211 @@ from typing import Any, Dict, List, Optional
 
 
 class ActionType(Enum):
-    """Types of actions that can be monitored."""
+    """Types of monitored actions emitted by the userspace collector."""
+
+    FILE_OPEN = "file_open"
     FILE_READ = "file_read"
     FILE_WRITE = "file_write"
     NETWORK_CONNECTION = "network_connection"
+    NETWORK_SEND = "network_send"
     TOOL_INVOCATION = "tool_invocation"
     LLM_API_CALL = "llm_api_call"
     PROCESS_SPAWN = "process_spawn"
 
 
+_SYSCALL_MAP = {
+    ActionType.FILE_OPEN: "sys_enter_openat",
+    ActionType.FILE_READ: "sys_enter_read",
+    ActionType.FILE_WRITE: "sys_enter_write",
+    ActionType.NETWORK_CONNECTION: "sys_enter_connect",
+    ActionType.NETWORK_SEND: "sys_enter_sendto",
+    ActionType.TOOL_INVOCATION: "sys_enter_execve",
+    ActionType.LLM_API_CALL: "sys_enter_sendto",
+    ActionType.PROCESS_SPAWN: "sys_enter_execve",
+}
+
+
 @dataclass
 class AgentAction:
-    """A single recorded action by an agent.
+    """A single syscall-derived action recorded for an agent."""
 
-    Attributes:
-        timestamp: Unix timestamp when the action occurred.
-        action_type: The type of action.
-        details: Action-specific details (path, endpoint, tool name, etc.).
-
-    Examples:
-        FILE_READ: {"path": "/projects/genomics/data.h5", "size_mb": 150}
-        NETWORK_CONNECTION: {"endpoint": "api.openai.com", "data_sent_mb": 0.5}
-        TOOL_INVOCATION: {"tool": "hdf5_reader", "args": ["data.h5"]}
-        LLM_API_CALL: {"endpoint": "api.openai.com", "prompt_size_kb": 12}
-    """
     timestamp: float
     action_type: ActionType
     details: Dict[str, Any]
+    pid: Optional[int] = None
+    syscall: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "timestamp": self.timestamp,
+            "action_type": self.action_type.value,
+            "details": self.details,
+            "pid": self.pid,
+            "syscall": self.syscall or _SYSCALL_MAP[self.action_type],
+        }
 
 
 @dataclass
 class AttestationEvidence:
-    """Signed evidence bundle from attestation engine.
+    """Signed evidence bundle emitted by the attestation engine."""
 
-    Contains all recorded actions for an agent during an attestation interval,
-    along with volume counters and an integrity signature.
-
-    Attributes:
-        agent_id: The agent this evidence pertains to.
-        session_id: The session identifier.
-        timestamp: When this evidence bundle was generated.
-        interval_start: Start of the attestation window.
-        interval_end: End of the attestation window.
-        actions: List of actions recorded during this interval.
-        total_file_read_mb: Cumulative file read volume.
-        total_file_write_mb: Cumulative file write volume.
-        total_network_egress_mb: Cumulative network egress volume.
-        agent_process_hash: Hash of agent process state.
-        signature: HMAC signature for integrity verification.
-    """
     agent_id: str
     session_id: str
+    node_id: str
+    slurm_job_id: str
     timestamp: float
     interval_start: float
     interval_end: float
-
     actions: List[AgentAction] = field(default_factory=list)
-
-    # Volume counters
-    total_file_read_mb: float = 0
-    total_file_write_mb: float = 0
-    total_network_egress_mb: float = 0
-
-    # State
-    agent_process_hash: Optional[str] = None
-
-    # Signature
+    total_file_read_mb: float = 0.0
+    total_file_write_mb: float = 0.0
+    total_network_egress_mb: float = 0.0
+    network_connection_count: int = 0
+    process_state_hash: Optional[str] = None
+    monitored_syscalls: List[str] = field(
+        default_factory=lambda: [
+            "sys_enter_openat",
+            "sys_enter_read",
+            "sys_enter_write",
+            "sys_enter_connect",
+            "sys_enter_sendto",
+            "sys_enter_execve",
+        ]
+    )
+    transport: str = "grpc+mTLS"
+    challenge_id: Optional[str] = None
+    challenge_nonce: Optional[str] = None
     signature: Optional[str] = None
 
+    @property
+    def agent_process_hash(self) -> Optional[str]:
+        """Backward-compatible alias for the process-state hash."""
+        return self.process_state_hash
+
     def compute_hash(self) -> str:
-        """Compute SHA-256 hash of evidence for integrity verification."""
-        content = json.dumps({
-            "agent_id": self.agent_id,
-            "session_id": self.session_id,
-            "timestamp": self.timestamp,
-            "actions": [
-                (a.timestamp, a.action_type.value, a.details)
-                for a in self.actions
-            ]
-        }, sort_keys=True)
-        return hashlib.sha256(content.encode()).hexdigest()
+        payload = json.dumps(
+            {
+                "agent_id": self.agent_id,
+                "session_id": self.session_id,
+                "node_id": self.node_id,
+                "slurm_job_id": self.slurm_job_id,
+                "timestamp": self.timestamp,
+                "interval_start": self.interval_start,
+                "interval_end": self.interval_end,
+                "actions": [action.to_dict() for action in self.actions],
+                "total_file_read_mb": self.total_file_read_mb,
+                "total_file_write_mb": self.total_file_write_mb,
+                "total_network_egress_mb": self.total_network_egress_mb,
+                "network_connection_count": self.network_connection_count,
+                "process_state_hash": self.process_state_hash,
+                "monitored_syscalls": self.monitored_syscalls,
+                "transport": self.transport,
+                "challenge_id": self.challenge_id,
+                "challenge_nonce": self.challenge_nonce,
+            },
+            sort_keys=True,
+        )
+        return hashlib.sha256(payload.encode()).hexdigest()
 
     def sign(self, signing_key: str) -> str:
-        """Sign the evidence bundle using HMAC-SHA256.
-
-        In production, this would use proper asymmetric cryptography.
-        For simulation, we use HMAC-based signing.
-
-        Args:
-            signing_key: The key to sign with (typically node_id or a shared secret).
-
-        Returns:
-            The hex-encoded signature.
-        """
-        content = self.compute_hash()
         self.signature = hmac.new(
             signing_key.encode(),
-            content.encode(),
-            hashlib.sha256
+            self.compute_hash().encode(),
+            hashlib.sha256,
         ).hexdigest()
         return self.signature
 
     def verify_signature(self, signing_key: str) -> bool:
-        """Verify the evidence signature.
-
-        Args:
-            signing_key: The key to verify against.
-
-        Returns:
-            True if signature is valid, False otherwise.
-        """
         if not self.signature:
             return False
         expected = hmac.new(
             signing_key.encode(),
             self.compute_hash().encode(),
-            hashlib.sha256
+            hashlib.sha256,
         ).hexdigest()
         return hmac.compare_digest(self.signature, expected)
 
 
 class AttestationEngine:
-    """Simulates the eBPF-based attestation engine running on compute nodes.
+    """Node-local daemon that buffers actions and emits signed evidence bundles."""
 
-    The attestation engine monitors agent actions, buffers them, and periodically
-    generates signed evidence bundles for the policy verifier to evaluate.
-
-    In production, this would be implemented as an eBPF program intercepting
-    syscalls. This simulation wraps method calls instead.
-    """
-
-    def __init__(self, node_id: str, attestation_interval: int = 5):
-        """Initialize the attestation engine.
-
-        Args:
-            node_id: Identifier for the compute node running this engine.
-            attestation_interval: Seconds between evidence generation cycles.
-        """
+    def __init__(self, node_id: str, attestation_interval: int = 1, transport: str = "grpc+mTLS"):
         self.node_id = node_id
         self.attestation_interval = attestation_interval
-
-        # Per-agent state
-        self.monitored_agents: Dict[str, Any] = {}  # agent_id -> session_id
+        self.transport = transport
+        self.monitored_agents: Dict[str, Dict[str, Any]] = {}
         self.action_buffers: Dict[str, List[AgentAction]] = {}
-
-        # Cumulative volume counters (don't reset between evidence cycles)
         self.volume_counters: Dict[str, Dict[str, float]] = {}
 
     def register_agent(self, agent_id: str, constraint_profile: Any) -> None:
-        """Start monitoring an agent.
-
-        Args:
-            agent_id: The agent to monitor.
-            constraint_profile: The agent's constraint profile.
-        """
         session_id = getattr(constraint_profile, "session_id", None) or f"session_{agent_id}_{int(time.time())}"
-        self.monitored_agents[agent_id] = session_id
+        slurm_job_id = getattr(constraint_profile, "slurm_job_id", None) or f"job_{agent_id}"
+        self.monitored_agents[agent_id] = {
+            "session_id": session_id,
+            "slurm_job_id": slurm_job_id,
+        }
         self.action_buffers[agent_id] = []
         self.volume_counters[agent_id] = {
-            "file_read_mb": 0,
-            "file_write_mb": 0,
-            "network_egress_mb": 0,
+            "file_read_mb": 0.0,
+            "file_write_mb": 0.0,
+            "network_egress_mb": 0.0,
+            "network_connection_count": 0.0,
         }
 
     def unregister_agent(self, agent_id: str) -> None:
-        """Stop monitoring an agent.
-
-        Args:
-            agent_id: The agent to stop monitoring.
-        """
         self.monitored_agents.pop(agent_id, None)
         self.action_buffers.pop(agent_id, None)
         self.volume_counters.pop(agent_id, None)
 
     def record_action(self, agent_id: str, action: AgentAction) -> None:
-        """Record an agent action (called by the monitoring layer).
-
-        Args:
-            agent_id: The agent that performed the action.
-            action: The action to record.
-        """
         if agent_id not in self.action_buffers:
-            return  # Agent not registered
+            return
 
+        if not action.syscall:
+            action.syscall = _SYSCALL_MAP[action.action_type]
         self.action_buffers[agent_id].append(action)
 
-        # Update volume counters
+        counters = self.volume_counters[agent_id]
         if action.action_type == ActionType.FILE_READ:
-            self.volume_counters[agent_id]["file_read_mb"] += action.details.get("size_mb", 0)
+            counters["file_read_mb"] += float(action.details.get("size_mb", 0))
         elif action.action_type == ActionType.FILE_WRITE:
-            self.volume_counters[agent_id]["file_write_mb"] += action.details.get("size_mb", 0)
-        elif action.action_type in (ActionType.NETWORK_CONNECTION, ActionType.LLM_API_CALL):
-            self.volume_counters[agent_id]["network_egress_mb"] += action.details.get("data_sent_mb", 0)
+            counters["file_write_mb"] += float(action.details.get("size_mb", 0))
+        elif action.action_type in {ActionType.NETWORK_SEND, ActionType.NETWORK_CONNECTION, ActionType.LLM_API_CALL}:
+            counters["network_egress_mb"] += float(action.details.get("data_sent_mb", 0))
 
-    def generate_evidence(self, agent_id: str) -> AttestationEvidence:
-        """Generate a signed evidence bundle for an agent.
+        if action.action_type in {ActionType.NETWORK_CONNECTION, ActionType.LLM_API_CALL}:
+            counters["network_connection_count"] += 1
 
-        Captures all buffered actions and resets the buffer. Volume counters
-        are cumulative and not reset.
+    def generate_evidence(self, agent_id: str, challenge: Optional[dict] = None) -> AttestationEvidence:
+        if agent_id not in self.monitored_agents:
+            raise ValueError(f"Agent {agent_id} is not registered")
 
-        Args:
-            agent_id: The agent to generate evidence for.
-
-        Returns:
-            A signed AttestationEvidence bundle.
-        """
         now = time.time()
-        session_id = self.monitored_agents.get(agent_id, "unknown")
-        counters = self.volume_counters.get(agent_id, {
-            "file_read_mb": 0,
-            "file_write_mb": 0,
-            "network_egress_mb": 0,
-        })
-
+        state = self.monitored_agents[agent_id]
+        counters = self.volume_counters[agent_id]
         evidence = AttestationEvidence(
             agent_id=agent_id,
-            session_id=session_id,
+            session_id=state["session_id"],
+            node_id=self.node_id,
+            slurm_job_id=state["slurm_job_id"],
             timestamp=now,
             interval_start=now - self.attestation_interval,
             interval_end=now,
-            actions=list(self.action_buffers.get(agent_id, [])),
+            actions=list(self.action_buffers[agent_id]),
             total_file_read_mb=counters["file_read_mb"],
             total_file_write_mb=counters["file_write_mb"],
             total_network_egress_mb=counters["network_egress_mb"],
-            agent_process_hash=self._compute_agent_hash(agent_id),
+            network_connection_count=int(counters["network_connection_count"]),
+            process_state_hash=self._compute_process_hash(agent_id),
+            transport=self.transport,
+            challenge_id=challenge.get("challenge_id") if challenge else None,
+            challenge_nonce=challenge.get("nonce") if challenge else None,
         )
         evidence.sign(self.node_id)
-
-        # Clear action buffer after generating evidence
         self.action_buffers[agent_id] = []
-
         return evidence
 
     def generate_challenge(self, agent_id: str) -> dict:
-        """Generate a random challenge requiring immediate attestation.
-
-        Used for spot-checking agents between regular attestation cycles.
-
-        Args:
-            agent_id: The agent to challenge.
-
-        Returns:
-            A challenge dictionary with challenge_id and nonce.
-        """
         return {
             "challenge_id": secrets.token_hex(16),
             "agent_id": agent_id,
@@ -267,33 +229,20 @@ class AttestationEngine:
             "nonce": secrets.token_hex(32),
         }
 
-    def _compute_agent_hash(self, agent_id: str) -> Optional[str]:
-        """Compute a hash representing the agent's current state.
-
-        In production, this would hash the agent's memory pages or code segment.
-        For simulation, we hash the buffered actions.
-
-        Args:
-            agent_id: The agent to hash.
-
-        Returns:
-            Hex-encoded SHA-256 hash, or None if agent not registered.
-        """
+    def _compute_process_hash(self, agent_id: str) -> Optional[str]:
         if agent_id not in self.action_buffers:
             return None
-        content = json.dumps(
-            [a.details for a in self.action_buffers[agent_id]],
+        payload = json.dumps(
+            {
+                "actions": [action.to_dict() for action in self.action_buffers[agent_id]],
+                "counters": self.volume_counters.get(agent_id, {}),
+            },
             sort_keys=True,
         )
-        return hashlib.sha256(content.encode()).hexdigest()
+        return hashlib.sha256(payload.encode()).hexdigest()
 
     def get_session_id(self, agent_id: str) -> str:
-        """Get the session ID for a monitored agent.
-
-        Args:
-            agent_id: The agent to look up.
-
-        Returns:
-            The session ID, or "unknown" if not registered.
-        """
-        return self.monitored_agents.get(agent_id, "unknown")
+        state = self.monitored_agents.get(agent_id)
+        if not state:
+            return "unknown"
+        return state["session_id"]

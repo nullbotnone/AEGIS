@@ -1,76 +1,24 @@
-# Sample Datasets for AEGIS Experiments
+# Sample Datasets
 
-These datasets are used by the AEGIS experimental evaluation to provide realistic data for attack demonstrations and defense evaluation.
+`src/data/sample_datasets/` contains synthetic inputs for the evaluation workflows.
 
-## Directory Structure
+## Layout
 
-```
-sample_datasets/
-├── shared/           # Shared project directory (Exp 1, Exp 3, Exp 4)
-│   ├── dataset.h5    # HDF5-like binary dataset (80 KB)
-│   └── secrets.txt   # Sensitive credentials file (406 B)
-├── genomics/         # Genomics project (Exp 3, Benign workflow)
-│   ├── sample_001.h5         # Whole genome sequencing sample (80 KB)
-│   ├── reference.fasta.h5    # Reference genome (80 KB)
-│   └── metadata.csv          # Sample metadata (100 rows)
-├── finance/          # Finance project (Exp 4)
-│   ├── quarterly_earnings.csv   # Quarterly earnings data (500 rows, 23 KB)
-│   └── trading_positions.csv    # Trading positions (200 rows, 8.7 KB)
-├── ml/               # ML project (Benign workflow)
-│   ├── train_features.csv   # Training features (1000 rows, 42 KB)
-│   └── model_config.yaml    # Model configuration
-└── physics/          # Physics simulation (Benign workflow)
-    ├── simulation_output.vtk.dat  # Simulation output (131 KB)
-    └── sim_params.yaml            # Simulation parameters
-```
+- `shared/`: shared-storage traces used by filesystem-oriented attacks
+- `genomics/`: benign genomics workflow inputs
+- `finance/`: coordinated-exfiltration and policy-violation inputs
+- `ml/`: benign ML workflow inputs
+- `physics/`: benign simulation-steering inputs
 
-## Dataset Details
-
-### shared/dataset.h5
-- **Used by:** Exp 1 (Filesystem Injection), Exp 3 (Supply Chain)
-- **Format:** HDF5-like with header metadata and float64 binary data
-- **Dimensions:** 5000 × 128
-- **Contains:** Instrument measurement data (synthetic)
-
-### shared/secrets.txt
-- **Used by:** Exp 1 (Filesystem Injection)
-- **Format:** Plain text with key-value pairs
-- **Contains:** API keys, database credentials, service tokens (synthetic)
-
-### genomics/sample_001.h5
-- **Used by:** Exp 3 (Supply Chain), Benign workflow
-- **Format:** HDF5-like binary
-- **Dimensions:** 10000 × 64
-- **Contains:** Whole genome sequencing data (synthetic)
-
-### finance/quarterly_earnings.csv
-- **Used by:** Exp 4 (Coordinated Exfiltration)
-- **Format:** CSV with headers
-- **Rows:** 500
-- **Columns:** company_id, ticker, revenue, net_income, eps, report_date
-
-## Reproducing Experiments
-
-All experiments use these datasets. To reproduce:
+## Regeneration
 
 ```bash
-# Generate datasets
-cd AEGIS
 python3 -m src.data.generate_datasets
-
-# Run all simulated attack experiments
-python3 -m src.experiments.simulated.run_all
-
-# Run simulated baseline comparison
-python3 -m src.experiments.simulated.run_baseline_comparison
-
-# Run simulated false positive analysis
-python3 -m src.experiments.simulated.run_false_positive
-
-# Run simulated ablation study
-python3 -m src.experiments.simulated.run_ablation_v2
 ```
 
-## Data Provenance
+## Consumers
 
-All data is synthetically generated for research purposes. No real credentials, financial data, or personal information is included.
+Common consumers include:
+- `python3 -m src.experiments.simulated.run_all`
+- `python3 -m src.experiments.simulated.run_false_positive`
+- `python3 -m src.experiments.simulated.run_ablation`

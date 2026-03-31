@@ -1,46 +1,58 @@
-"""AEGIS - Adaptive Enforcement for Guarding Intelligence Systems.
-
-Behavioral attestation framework for AI agents in HPC environments.
-Detects and contains hijacked agents through continuous constraint verification.
-"""
+"""AEGIS - Adaptive Enforcement for Guarding Intelligence Systems."""
 
 from .constraints import (
+    ConstraintManager,
+    ConstraintProfile,
     ConstraintType,
     DataAccessConstraints,
-    NetworkConstraints,
-    ToolConstraints,
-    ExecutionConstraints,
     DataFlowConstraints,
-    ConstraintProfile,
+    DerivationMode,
+    ExecutionConstraints,
+    NetworkConstraints,
+    PolicyTemplate,
+    SignatureRule,
+    ToolConstraints,
 )
-from .attestation import ActionType, AgentAction, AttestationEvidence, AttestationEngine
-from .verifier import Verdict, ConstraintViolation, VerificationResult, PolicyVerifier
-from .containment import ContainmentAction, ContainmentDecision, ContainmentEnforcer
-from .audit import AuditEntry, AuditLedger
+from .attestation import ActionType, AgentAction, AttestationEngine, AttestationEvidence
 from .agent_monitor import AgentMonitor
+from .containment import ContainmentAction, ContainmentDecision, ContainmentEnforcer
 from .policy_engine import PolicyEngine
+from .verifier import (
+    AuditEntry,
+    AuditLedger,
+    ConstraintViolation,
+    PolicyVerifier,
+    SharedAccessRecord,
+    VerificationResult,
+    Verdict,
+)
 
 __all__ = [
+    "ConstraintManager",
+    "ConstraintProfile",
     "ConstraintType",
     "DataAccessConstraints",
-    "NetworkConstraints",
-    "ToolConstraints",
-    "ExecutionConstraints",
     "DataFlowConstraints",
-    "ConstraintProfile",
+    "DerivationMode",
+    "ExecutionConstraints",
+    "NetworkConstraints",
+    "PolicyTemplate",
+    "SignatureRule",
+    "ToolConstraints",
     "ActionType",
     "AgentAction",
-    "AttestationEvidence",
     "AttestationEngine",
-    "Verdict",
-    "ConstraintViolation",
-    "VerificationResult",
-    "PolicyVerifier",
-    "ContainmentAction",
-    "ContainmentDecision",
-    "ContainmentEnforcer",
+    "AttestationEvidence",
     "AuditEntry",
     "AuditLedger",
     "AgentMonitor",
+    "ContainmentAction",
+    "ContainmentDecision",
+    "ContainmentEnforcer",
     "PolicyEngine",
+    "ConstraintViolation",
+    "PolicyVerifier",
+    "SharedAccessRecord",
+    "VerificationResult",
+    "Verdict",
 ]

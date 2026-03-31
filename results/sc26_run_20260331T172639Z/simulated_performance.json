@@ -1,0 +1,1614 @@
+{
+  "created_at": "2026-03-31T17:34:33.460501+00:00",
+  "experiment": "simulated_performance",
+  "interval_sweep": [
+    {
+      "attestation_interval": 0.1,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.3889,
+      "aegis_time_s": 1.439,
+      "overhead_percent": 3.61,
+      "throughput_reduction_percent": 3.48,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 900.0,
+      "aegis_throughput": 868.6,
+      "median_attestation_cycles": 15,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.2565,
+          "aegis_time_s": 1.3085,
+          "baseline_throughput": 994.8,
+          "aegis_throughput": 955.3,
+          "overhead_percent": 4.13,
+          "throughput_reduction_percent": 3.97,
+          "executed_ops": 1250,
+          "attestation_cycles": 14
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.3889,
+          "aegis_time_s": 1.439,
+          "baseline_throughput": 900.0,
+          "aegis_throughput": 868.6,
+          "overhead_percent": 3.61,
+          "throughput_reduction_percent": 3.48,
+          "executed_ops": 1250,
+          "attestation_cycles": 15
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.3973,
+          "aegis_time_s": 1.4477,
+          "baseline_throughput": 894.6,
+          "aegis_throughput": 863.5,
+          "overhead_percent": 3.6,
+          "throughput_reduction_percent": 3.48,
+          "executed_ops": 1250,
+          "attestation_cycles": 15
+        }
+      ]
+    },
+    {
+      "attestation_interval": 0.5,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.358,
+      "aegis_time_s": 1.3947,
+      "overhead_percent": 2.7,
+      "throughput_reduction_percent": 2.63,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 920.5,
+      "aegis_throughput": 896.3,
+      "median_attestation_cycles": 3,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.5029,
+          "aegis_time_s": 1.5407,
+          "baseline_throughput": 831.7,
+          "aegis_throughput": 811.3,
+          "overhead_percent": 2.51,
+          "throughput_reduction_percent": 2.45,
+          "executed_ops": 1250,
+          "attestation_cycles": 4
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.3341,
+          "aegis_time_s": 1.3715,
+          "baseline_throughput": 936.9,
+          "aegis_throughput": 911.4,
+          "overhead_percent": 2.8,
+          "throughput_reduction_percent": 2.72,
+          "executed_ops": 1250,
+          "attestation_cycles": 3
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.358,
+          "aegis_time_s": 1.3947,
+          "baseline_throughput": 920.5,
+          "aegis_throughput": 896.3,
+          "overhead_percent": 2.7,
+          "throughput_reduction_percent": 2.63,
+          "executed_ops": 1250,
+          "attestation_cycles": 3
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.601,
+      "aegis_time_s": 1.6361,
+      "overhead_percent": 2.14,
+      "throughput_reduction_percent": 2.09,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 780.7,
+      "aegis_throughput": 764.0,
+      "median_attestation_cycles": 2,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.6406,
+          "aegis_time_s": 1.6741,
+          "baseline_throughput": 761.9,
+          "aegis_throughput": 746.7,
+          "overhead_percent": 2.04,
+          "throughput_reduction_percent": 2.0,
+          "executed_ops": 1250,
+          "attestation_cycles": 2
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.601,
+          "aegis_time_s": 1.6361,
+          "baseline_throughput": 780.7,
+          "aegis_throughput": 764.0,
+          "overhead_percent": 2.19,
+          "throughput_reduction_percent": 2.14,
+          "executed_ops": 1250,
+          "attestation_cycles": 2
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.5956,
+          "aegis_time_s": 1.6297,
+          "baseline_throughput": 783.4,
+          "aegis_throughput": 767.0,
+          "overhead_percent": 2.14,
+          "throughput_reduction_percent": 2.09,
+          "executed_ops": 1250,
+          "attestation_cycles": 2
+        }
+      ]
+    },
+    {
+      "attestation_interval": 5.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.4568,
+      "aegis_time_s": 1.4925,
+      "overhead_percent": 2.45,
+      "throughput_reduction_percent": 2.39,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 858.0,
+      "aegis_throughput": 837.5,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.4568,
+          "aegis_time_s": 1.4925,
+          "baseline_throughput": 858.0,
+          "aegis_throughput": 837.5,
+          "overhead_percent": 2.45,
+          "throughput_reduction_percent": 2.39,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.5339,
+          "aegis_time_s": 1.5672,
+          "baseline_throughput": 814.9,
+          "aegis_throughput": 797.6,
+          "overhead_percent": 2.17,
+          "throughput_reduction_percent": 2.12,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.2168,
+          "aegis_time_s": 1.2531,
+          "baseline_throughput": 1027.2,
+          "aegis_throughput": 997.5,
+          "overhead_percent": 2.98,
+          "throughput_reduction_percent": 2.89,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 10.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.1781,
+      "aegis_time_s": 1.2138,
+      "overhead_percent": 3.03,
+      "throughput_reduction_percent": 2.94,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 1061.0,
+      "aegis_throughput": 1029.8,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.1781,
+          "aegis_time_s": 1.2138,
+          "baseline_throughput": 1061.0,
+          "aegis_throughput": 1029.8,
+          "overhead_percent": 3.03,
+          "throughput_reduction_percent": 2.94,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.4879,
+          "aegis_time_s": 1.5214,
+          "baseline_throughput": 840.1,
+          "aegis_throughput": 821.6,
+          "overhead_percent": 2.25,
+          "throughput_reduction_percent": 2.2,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.1688,
+          "aegis_time_s": 1.2043,
+          "baseline_throughput": 1069.5,
+          "aegis_throughput": 1037.9,
+          "overhead_percent": 3.04,
+          "throughput_reduction_percent": 2.95,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 30.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.5214,
+      "aegis_time_s": 1.5554,
+      "overhead_percent": 2.23,
+      "throughput_reduction_percent": 2.19,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 821.6,
+      "aegis_throughput": 803.7,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.6085,
+          "aegis_time_s": 1.6419,
+          "baseline_throughput": 777.1,
+          "aegis_throughput": 761.3,
+          "overhead_percent": 2.08,
+          "throughput_reduction_percent": 2.03,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.5214,
+          "aegis_time_s": 1.5554,
+          "baseline_throughput": 821.6,
+          "aegis_throughput": 803.7,
+          "overhead_percent": 2.23,
+          "throughput_reduction_percent": 2.19,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.4528,
+          "aegis_time_s": 1.4872,
+          "baseline_throughput": 860.4,
+          "aegis_throughput": 840.5,
+          "overhead_percent": 2.36,
+          "throughput_reduction_percent": 2.31,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 60.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.5607,
+      "aegis_time_s": 1.594,
+      "overhead_percent": 2.13,
+      "throughput_reduction_percent": 2.09,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 800.9,
+      "aegis_throughput": 784.2,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.5607,
+          "aegis_time_s": 1.594,
+          "baseline_throughput": 800.9,
+          "aegis_throughput": 784.2,
+          "overhead_percent": 2.13,
+          "throughput_reduction_percent": 2.09,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.6902,
+          "aegis_time_s": 1.7251,
+          "baseline_throughput": 739.5,
+          "aegis_throughput": 724.6,
+          "overhead_percent": 2.06,
+          "throughput_reduction_percent": 2.02,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.2068,
+          "aegis_time_s": 1.2433,
+          "baseline_throughput": 1035.8,
+          "aegis_throughput": 1005.4,
+          "overhead_percent": 3.03,
+          "throughput_reduction_percent": 2.94,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    }
+  ],
+  "agent_count_sweep": [
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 1,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.0238,
+      "aegis_time_s": 0.0247,
+      "overhead_percent": 3.76,
+      "throughput_reduction_percent": 3.62,
+      "baseline_ops": 25,
+      "aegis_ops": 25,
+      "baseline_throughput": 1049.8,
+      "aegis_throughput": 1011.8,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.0264,
+          "aegis_time_s": 0.0273,
+          "baseline_throughput": 945.5,
+          "aegis_throughput": 916.3,
+          "overhead_percent": 3.19,
+          "throughput_reduction_percent": 3.09,
+          "executed_ops": 25,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.0223,
+          "aegis_time_s": 0.0232,
+          "baseline_throughput": 1122.1,
+          "aegis_throughput": 1076.5,
+          "overhead_percent": 4.23,
+          "throughput_reduction_percent": 4.06,
+          "executed_ops": 25,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.0238,
+          "aegis_time_s": 0.0247,
+          "baseline_throughput": 1049.8,
+          "aegis_throughput": 1011.8,
+          "overhead_percent": 3.76,
+          "throughput_reduction_percent": 3.62,
+          "executed_ops": 25,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.3855,
+      "aegis_time_s": 0.3928,
+      "overhead_percent": 1.88,
+      "throughput_reduction_percent": 1.84,
+      "baseline_ops": 250,
+      "aegis_ops": 250,
+      "baseline_throughput": 648.5,
+      "aegis_throughput": 636.5,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3969,
+          "aegis_time_s": 0.404,
+          "baseline_throughput": 629.9,
+          "aegis_throughput": 618.8,
+          "overhead_percent": 1.8,
+          "throughput_reduction_percent": 1.77,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.2771,
+          "aegis_time_s": 0.2852,
+          "baseline_throughput": 902.2,
+          "aegis_throughput": 876.4,
+          "overhead_percent": 2.94,
+          "throughput_reduction_percent": 2.85,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3855,
+          "aegis_time_s": 0.3928,
+          "baseline_throughput": 648.5,
+          "aegis_throughput": 636.5,
+          "overhead_percent": 1.88,
+          "throughput_reduction_percent": 1.84,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 50,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.3087,
+      "aegis_time_s": 0.3201,
+      "overhead_percent": 3.67,
+      "throughput_reduction_percent": 3.54,
+      "baseline_ops": 250,
+      "aegis_ops": 250,
+      "baseline_throughput": 809.8,
+      "aegis_throughput": 781.1,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3087,
+          "aegis_time_s": 0.3201,
+          "baseline_throughput": 809.8,
+          "aegis_throughput": 781.1,
+          "overhead_percent": 3.67,
+          "throughput_reduction_percent": 3.54,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.4928,
+          "aegis_time_s": 0.502,
+          "baseline_throughput": 507.4,
+          "aegis_throughput": 498.1,
+          "overhead_percent": 1.87,
+          "throughput_reduction_percent": 1.83,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.1418,
+          "aegis_time_s": 0.1544,
+          "baseline_throughput": 1763.4,
+          "aegis_throughput": 1618.9,
+          "overhead_percent": 8.93,
+          "throughput_reduction_percent": 8.2,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 100,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.2022,
+      "aegis_time_s": 0.2212,
+      "overhead_percent": 9.38,
+      "throughput_reduction_percent": 8.57,
+      "baseline_ops": 300,
+      "aegis_ops": 300,
+      "baseline_throughput": 1483.6,
+      "aegis_throughput": 1356.4,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.489,
+          "aegis_time_s": 0.5054,
+          "baseline_throughput": 613.5,
+          "aegis_throughput": 593.5,
+          "overhead_percent": 3.36,
+          "throughput_reduction_percent": 3.25,
+          "executed_ops": 300,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.1219,
+          "aegis_time_s": 0.1407,
+          "baseline_throughput": 2461.6,
+          "aegis_throughput": 2132.5,
+          "overhead_percent": 15.44,
+          "throughput_reduction_percent": 13.37,
+          "executed_ops": 300,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.2022,
+          "aegis_time_s": 0.2212,
+          "baseline_throughput": 1483.6,
+          "aegis_throughput": 1356.4,
+          "overhead_percent": 9.38,
+          "throughput_reduction_percent": 8.57,
+          "executed_ops": 300,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 500,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.2946,
+      "aegis_time_s": 0.3693,
+      "overhead_percent": 25.36,
+      "throughput_reduction_percent": 20.23,
+      "baseline_ops": 1000,
+      "aegis_ops": 1000,
+      "baseline_throughput": 3394.8,
+      "aegis_throughput": 2708.1,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.2946,
+          "aegis_time_s": 0.3693,
+          "baseline_throughput": 3394.8,
+          "aegis_throughput": 2708.1,
+          "overhead_percent": 25.36,
+          "throughput_reduction_percent": 20.23,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.2501,
+          "aegis_time_s": 0.3244,
+          "baseline_throughput": 3998.7,
+          "aegis_throughput": 3082.9,
+          "overhead_percent": 29.7,
+          "throughput_reduction_percent": 22.9,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.4097,
+          "aegis_time_s": 0.4828,
+          "baseline_throughput": 2440.6,
+          "aegis_throughput": 2071.2,
+          "overhead_percent": 17.84,
+          "throughput_reduction_percent": 15.14,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        }
+      ]
+    }
+  ],
+  "workload_type_sweep": [
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "io_heavy",
+      "repeats": 3,
+      "baseline_time_s": 0.3617,
+      "aegis_time_s": 0.393,
+      "overhead_percent": 8.87,
+      "throughput_reduction_percent": 8.14,
+      "baseline_ops": 1000,
+      "aegis_ops": 1000,
+      "baseline_throughput": 2765.1,
+      "aegis_throughput": 2544.7,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3617,
+          "aegis_time_s": 0.393,
+          "baseline_throughput": 2765.1,
+          "aegis_throughput": 2544.7,
+          "overhead_percent": 8.66,
+          "throughput_reduction_percent": 7.97,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.3519,
+          "aegis_time_s": 0.3831,
+          "baseline_throughput": 2841.7,
+          "aegis_throughput": 2610.3,
+          "overhead_percent": 8.87,
+          "throughput_reduction_percent": 8.14,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3691,
+          "aegis_time_s": 0.4033,
+          "baseline_throughput": 2709.3,
+          "aegis_throughput": 2479.5,
+          "overhead_percent": 9.27,
+          "throughput_reduction_percent": 8.48,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "network_heavy",
+      "repeats": 3,
+      "baseline_time_s": 0.3443,
+      "aegis_time_s": 0.3575,
+      "overhead_percent": 3.81,
+      "throughput_reduction_percent": 3.67,
+      "baseline_ops": 400,
+      "aegis_ops": 400,
+      "baseline_throughput": 1161.6,
+      "aegis_throughput": 1118.9,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3382,
+          "aegis_time_s": 0.3514,
+          "baseline_throughput": 1182.7,
+          "aegis_throughput": 1138.3,
+          "overhead_percent": 3.9,
+          "throughput_reduction_percent": 3.76,
+          "executed_ops": 400,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.3515,
+          "aegis_time_s": 0.3647,
+          "baseline_throughput": 1138.1,
+          "aegis_throughput": 1096.8,
+          "overhead_percent": 3.76,
+          "throughput_reduction_percent": 3.63,
+          "executed_ops": 400,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3443,
+          "aegis_time_s": 0.3575,
+          "baseline_throughput": 1161.6,
+          "aegis_throughput": 1118.9,
+          "overhead_percent": 3.81,
+          "throughput_reduction_percent": 3.67,
+          "executed_ops": 400,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "compute_heavy",
+      "repeats": 3,
+      "baseline_time_s": 0.5607,
+      "aegis_time_s": 0.5642,
+      "overhead_percent": 0.63,
+      "throughput_reduction_percent": 0.62,
+      "baseline_ops": 140,
+      "aegis_ops": 140,
+      "baseline_throughput": 249.7,
+      "aegis_throughput": 248.2,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.5607,
+          "aegis_time_s": 0.5642,
+          "baseline_throughput": 249.7,
+          "aegis_throughput": 248.2,
+          "overhead_percent": 0.63,
+          "throughput_reduction_percent": 0.62,
+          "executed_ops": 140,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.5294,
+          "aegis_time_s": 0.5328,
+          "baseline_throughput": 264.4,
+          "aegis_throughput": 262.7,
+          "overhead_percent": 0.65,
+          "throughput_reduction_percent": 0.64,
+          "executed_ops": 140,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.5611,
+          "aegis_time_s": 0.5645,
+          "baseline_throughput": 249.5,
+          "aegis_throughput": 248.0,
+          "overhead_percent": 0.62,
+          "throughput_reduction_percent": 0.61,
+          "executed_ops": 140,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.3855,
+      "aegis_time_s": 0.3927,
+      "overhead_percent": 1.86,
+      "throughput_reduction_percent": 1.83,
+      "baseline_ops": 250,
+      "aegis_ops": 250,
+      "baseline_throughput": 648.4,
+      "aegis_throughput": 636.6,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3968,
+          "aegis_time_s": 0.4041,
+          "baseline_throughput": 630.0,
+          "aegis_throughput": 618.7,
+          "overhead_percent": 1.84,
+          "throughput_reduction_percent": 1.8,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.2772,
+          "aegis_time_s": 0.2852,
+          "baseline_throughput": 901.9,
+          "aegis_throughput": 876.7,
+          "overhead_percent": 2.88,
+          "throughput_reduction_percent": 2.8,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3855,
+          "aegis_time_s": 0.3927,
+          "baseline_throughput": 648.4,
+          "aegis_throughput": 636.6,
+          "overhead_percent": 1.86,
+          "throughput_reduction_percent": 1.83,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        }
+      ]
+    }
+  ],
+  "all_results": [
+    {
+      "attestation_interval": 0.1,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.3889,
+      "aegis_time_s": 1.439,
+      "overhead_percent": 3.61,
+      "throughput_reduction_percent": 3.48,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 900.0,
+      "aegis_throughput": 868.6,
+      "median_attestation_cycles": 15,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.2565,
+          "aegis_time_s": 1.3085,
+          "baseline_throughput": 994.8,
+          "aegis_throughput": 955.3,
+          "overhead_percent": 4.13,
+          "throughput_reduction_percent": 3.97,
+          "executed_ops": 1250,
+          "attestation_cycles": 14
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.3889,
+          "aegis_time_s": 1.439,
+          "baseline_throughput": 900.0,
+          "aegis_throughput": 868.6,
+          "overhead_percent": 3.61,
+          "throughput_reduction_percent": 3.48,
+          "executed_ops": 1250,
+          "attestation_cycles": 15
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.3973,
+          "aegis_time_s": 1.4477,
+          "baseline_throughput": 894.6,
+          "aegis_throughput": 863.5,
+          "overhead_percent": 3.6,
+          "throughput_reduction_percent": 3.48,
+          "executed_ops": 1250,
+          "attestation_cycles": 15
+        }
+      ]
+    },
+    {
+      "attestation_interval": 0.5,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.358,
+      "aegis_time_s": 1.3947,
+      "overhead_percent": 2.7,
+      "throughput_reduction_percent": 2.63,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 920.5,
+      "aegis_throughput": 896.3,
+      "median_attestation_cycles": 3,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.5029,
+          "aegis_time_s": 1.5407,
+          "baseline_throughput": 831.7,
+          "aegis_throughput": 811.3,
+          "overhead_percent": 2.51,
+          "throughput_reduction_percent": 2.45,
+          "executed_ops": 1250,
+          "attestation_cycles": 4
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.3341,
+          "aegis_time_s": 1.3715,
+          "baseline_throughput": 936.9,
+          "aegis_throughput": 911.4,
+          "overhead_percent": 2.8,
+          "throughput_reduction_percent": 2.72,
+          "executed_ops": 1250,
+          "attestation_cycles": 3
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.358,
+          "aegis_time_s": 1.3947,
+          "baseline_throughput": 920.5,
+          "aegis_throughput": 896.3,
+          "overhead_percent": 2.7,
+          "throughput_reduction_percent": 2.63,
+          "executed_ops": 1250,
+          "attestation_cycles": 3
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.601,
+      "aegis_time_s": 1.6361,
+      "overhead_percent": 2.14,
+      "throughput_reduction_percent": 2.09,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 780.7,
+      "aegis_throughput": 764.0,
+      "median_attestation_cycles": 2,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.6406,
+          "aegis_time_s": 1.6741,
+          "baseline_throughput": 761.9,
+          "aegis_throughput": 746.7,
+          "overhead_percent": 2.04,
+          "throughput_reduction_percent": 2.0,
+          "executed_ops": 1250,
+          "attestation_cycles": 2
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.601,
+          "aegis_time_s": 1.6361,
+          "baseline_throughput": 780.7,
+          "aegis_throughput": 764.0,
+          "overhead_percent": 2.19,
+          "throughput_reduction_percent": 2.14,
+          "executed_ops": 1250,
+          "attestation_cycles": 2
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.5956,
+          "aegis_time_s": 1.6297,
+          "baseline_throughput": 783.4,
+          "aegis_throughput": 767.0,
+          "overhead_percent": 2.14,
+          "throughput_reduction_percent": 2.09,
+          "executed_ops": 1250,
+          "attestation_cycles": 2
+        }
+      ]
+    },
+    {
+      "attestation_interval": 5.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.4568,
+      "aegis_time_s": 1.4925,
+      "overhead_percent": 2.45,
+      "throughput_reduction_percent": 2.39,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 858.0,
+      "aegis_throughput": 837.5,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.4568,
+          "aegis_time_s": 1.4925,
+          "baseline_throughput": 858.0,
+          "aegis_throughput": 837.5,
+          "overhead_percent": 2.45,
+          "throughput_reduction_percent": 2.39,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.5339,
+          "aegis_time_s": 1.5672,
+          "baseline_throughput": 814.9,
+          "aegis_throughput": 797.6,
+          "overhead_percent": 2.17,
+          "throughput_reduction_percent": 2.12,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.2168,
+          "aegis_time_s": 1.2531,
+          "baseline_throughput": 1027.2,
+          "aegis_throughput": 997.5,
+          "overhead_percent": 2.98,
+          "throughput_reduction_percent": 2.89,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 10.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.1781,
+      "aegis_time_s": 1.2138,
+      "overhead_percent": 3.03,
+      "throughput_reduction_percent": 2.94,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 1061.0,
+      "aegis_throughput": 1029.8,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.1781,
+          "aegis_time_s": 1.2138,
+          "baseline_throughput": 1061.0,
+          "aegis_throughput": 1029.8,
+          "overhead_percent": 3.03,
+          "throughput_reduction_percent": 2.94,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.4879,
+          "aegis_time_s": 1.5214,
+          "baseline_throughput": 840.1,
+          "aegis_throughput": 821.6,
+          "overhead_percent": 2.25,
+          "throughput_reduction_percent": 2.2,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.1688,
+          "aegis_time_s": 1.2043,
+          "baseline_throughput": 1069.5,
+          "aegis_throughput": 1037.9,
+          "overhead_percent": 3.04,
+          "throughput_reduction_percent": 2.95,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 30.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.5214,
+      "aegis_time_s": 1.5554,
+      "overhead_percent": 2.23,
+      "throughput_reduction_percent": 2.19,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 821.6,
+      "aegis_throughput": 803.7,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.6085,
+          "aegis_time_s": 1.6419,
+          "baseline_throughput": 777.1,
+          "aegis_throughput": 761.3,
+          "overhead_percent": 2.08,
+          "throughput_reduction_percent": 2.03,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.5214,
+          "aegis_time_s": 1.5554,
+          "baseline_throughput": 821.6,
+          "aegis_throughput": 803.7,
+          "overhead_percent": 2.23,
+          "throughput_reduction_percent": 2.19,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.4528,
+          "aegis_time_s": 1.4872,
+          "baseline_throughput": 860.4,
+          "aegis_throughput": 840.5,
+          "overhead_percent": 2.36,
+          "throughput_reduction_percent": 2.31,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 60.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 1.5607,
+      "aegis_time_s": 1.594,
+      "overhead_percent": 2.13,
+      "throughput_reduction_percent": 2.09,
+      "baseline_ops": 1250,
+      "aegis_ops": 1250,
+      "baseline_throughput": 800.9,
+      "aegis_throughput": 784.2,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 1.5607,
+          "aegis_time_s": 1.594,
+          "baseline_throughput": 800.9,
+          "aegis_throughput": 784.2,
+          "overhead_percent": 2.13,
+          "throughput_reduction_percent": 2.09,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 1.6902,
+          "aegis_time_s": 1.7251,
+          "baseline_throughput": 739.5,
+          "aegis_throughput": 724.6,
+          "overhead_percent": 2.06,
+          "throughput_reduction_percent": 2.02,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 1.2068,
+          "aegis_time_s": 1.2433,
+          "baseline_throughput": 1035.8,
+          "aegis_throughput": 1005.4,
+          "overhead_percent": 3.03,
+          "throughput_reduction_percent": 2.94,
+          "executed_ops": 1250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 1,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.0238,
+      "aegis_time_s": 0.0247,
+      "overhead_percent": 3.76,
+      "throughput_reduction_percent": 3.62,
+      "baseline_ops": 25,
+      "aegis_ops": 25,
+      "baseline_throughput": 1049.8,
+      "aegis_throughput": 1011.8,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.0264,
+          "aegis_time_s": 0.0273,
+          "baseline_throughput": 945.5,
+          "aegis_throughput": 916.3,
+          "overhead_percent": 3.19,
+          "throughput_reduction_percent": 3.09,
+          "executed_ops": 25,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.0223,
+          "aegis_time_s": 0.0232,
+          "baseline_throughput": 1122.1,
+          "aegis_throughput": 1076.5,
+          "overhead_percent": 4.23,
+          "throughput_reduction_percent": 4.06,
+          "executed_ops": 25,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.0238,
+          "aegis_time_s": 0.0247,
+          "baseline_throughput": 1049.8,
+          "aegis_throughput": 1011.8,
+          "overhead_percent": 3.76,
+          "throughput_reduction_percent": 3.62,
+          "executed_ops": 25,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.3855,
+      "aegis_time_s": 0.3928,
+      "overhead_percent": 1.88,
+      "throughput_reduction_percent": 1.84,
+      "baseline_ops": 250,
+      "aegis_ops": 250,
+      "baseline_throughput": 648.5,
+      "aegis_throughput": 636.5,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3969,
+          "aegis_time_s": 0.404,
+          "baseline_throughput": 629.9,
+          "aegis_throughput": 618.8,
+          "overhead_percent": 1.8,
+          "throughput_reduction_percent": 1.77,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.2771,
+          "aegis_time_s": 0.2852,
+          "baseline_throughput": 902.2,
+          "aegis_throughput": 876.4,
+          "overhead_percent": 2.94,
+          "throughput_reduction_percent": 2.85,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3855,
+          "aegis_time_s": 0.3928,
+          "baseline_throughput": 648.5,
+          "aegis_throughput": 636.5,
+          "overhead_percent": 1.88,
+          "throughput_reduction_percent": 1.84,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 50,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.3087,
+      "aegis_time_s": 0.3201,
+      "overhead_percent": 3.67,
+      "throughput_reduction_percent": 3.54,
+      "baseline_ops": 250,
+      "aegis_ops": 250,
+      "baseline_throughput": 809.8,
+      "aegis_throughput": 781.1,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3087,
+          "aegis_time_s": 0.3201,
+          "baseline_throughput": 809.8,
+          "aegis_throughput": 781.1,
+          "overhead_percent": 3.67,
+          "throughput_reduction_percent": 3.54,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.4928,
+          "aegis_time_s": 0.502,
+          "baseline_throughput": 507.4,
+          "aegis_throughput": 498.1,
+          "overhead_percent": 1.87,
+          "throughput_reduction_percent": 1.83,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.1418,
+          "aegis_time_s": 0.1544,
+          "baseline_throughput": 1763.4,
+          "aegis_throughput": 1618.9,
+          "overhead_percent": 8.93,
+          "throughput_reduction_percent": 8.2,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 100,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.2022,
+      "aegis_time_s": 0.2212,
+      "overhead_percent": 9.38,
+      "throughput_reduction_percent": 8.57,
+      "baseline_ops": 300,
+      "aegis_ops": 300,
+      "baseline_throughput": 1483.6,
+      "aegis_throughput": 1356.4,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.489,
+          "aegis_time_s": 0.5054,
+          "baseline_throughput": 613.5,
+          "aegis_throughput": 593.5,
+          "overhead_percent": 3.36,
+          "throughput_reduction_percent": 3.25,
+          "executed_ops": 300,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.1219,
+          "aegis_time_s": 0.1407,
+          "baseline_throughput": 2461.6,
+          "aegis_throughput": 2132.5,
+          "overhead_percent": 15.44,
+          "throughput_reduction_percent": 13.37,
+          "executed_ops": 300,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.2022,
+          "aegis_time_s": 0.2212,
+          "baseline_throughput": 1483.6,
+          "aegis_throughput": 1356.4,
+          "overhead_percent": 9.38,
+          "throughput_reduction_percent": 8.57,
+          "executed_ops": 300,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 500,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.2946,
+      "aegis_time_s": 0.3693,
+      "overhead_percent": 25.36,
+      "throughput_reduction_percent": 20.23,
+      "baseline_ops": 1000,
+      "aegis_ops": 1000,
+      "baseline_throughput": 3394.8,
+      "aegis_throughput": 2708.1,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.2946,
+          "aegis_time_s": 0.3693,
+          "baseline_throughput": 3394.8,
+          "aegis_throughput": 2708.1,
+          "overhead_percent": 25.36,
+          "throughput_reduction_percent": 20.23,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.2501,
+          "aegis_time_s": 0.3244,
+          "baseline_throughput": 3998.7,
+          "aegis_throughput": 3082.9,
+          "overhead_percent": 29.7,
+          "throughput_reduction_percent": 22.9,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.4097,
+          "aegis_time_s": 0.4828,
+          "baseline_throughput": 2440.6,
+          "aegis_throughput": 2071.2,
+          "overhead_percent": 17.84,
+          "throughput_reduction_percent": 15.14,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "io_heavy",
+      "repeats": 3,
+      "baseline_time_s": 0.3617,
+      "aegis_time_s": 0.393,
+      "overhead_percent": 8.87,
+      "throughput_reduction_percent": 8.14,
+      "baseline_ops": 1000,
+      "aegis_ops": 1000,
+      "baseline_throughput": 2765.1,
+      "aegis_throughput": 2544.7,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3617,
+          "aegis_time_s": 0.393,
+          "baseline_throughput": 2765.1,
+          "aegis_throughput": 2544.7,
+          "overhead_percent": 8.66,
+          "throughput_reduction_percent": 7.97,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.3519,
+          "aegis_time_s": 0.3831,
+          "baseline_throughput": 2841.7,
+          "aegis_throughput": 2610.3,
+          "overhead_percent": 8.87,
+          "throughput_reduction_percent": 8.14,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3691,
+          "aegis_time_s": 0.4033,
+          "baseline_throughput": 2709.3,
+          "aegis_throughput": 2479.5,
+          "overhead_percent": 9.27,
+          "throughput_reduction_percent": 8.48,
+          "executed_ops": 1000,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "network_heavy",
+      "repeats": 3,
+      "baseline_time_s": 0.3443,
+      "aegis_time_s": 0.3575,
+      "overhead_percent": 3.81,
+      "throughput_reduction_percent": 3.67,
+      "baseline_ops": 400,
+      "aegis_ops": 400,
+      "baseline_throughput": 1161.6,
+      "aegis_throughput": 1118.9,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3382,
+          "aegis_time_s": 0.3514,
+          "baseline_throughput": 1182.7,
+          "aegis_throughput": 1138.3,
+          "overhead_percent": 3.9,
+          "throughput_reduction_percent": 3.76,
+          "executed_ops": 400,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.3515,
+          "aegis_time_s": 0.3647,
+          "baseline_throughput": 1138.1,
+          "aegis_throughput": 1096.8,
+          "overhead_percent": 3.76,
+          "throughput_reduction_percent": 3.63,
+          "executed_ops": 400,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3443,
+          "aegis_time_s": 0.3575,
+          "baseline_throughput": 1161.6,
+          "aegis_throughput": 1118.9,
+          "overhead_percent": 3.81,
+          "throughput_reduction_percent": 3.67,
+          "executed_ops": 400,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "compute_heavy",
+      "repeats": 3,
+      "baseline_time_s": 0.5607,
+      "aegis_time_s": 0.5642,
+      "overhead_percent": 0.63,
+      "throughput_reduction_percent": 0.62,
+      "baseline_ops": 140,
+      "aegis_ops": 140,
+      "baseline_throughput": 249.7,
+      "aegis_throughput": 248.2,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.5607,
+          "aegis_time_s": 0.5642,
+          "baseline_throughput": 249.7,
+          "aegis_throughput": 248.2,
+          "overhead_percent": 0.63,
+          "throughput_reduction_percent": 0.62,
+          "executed_ops": 140,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.5294,
+          "aegis_time_s": 0.5328,
+          "baseline_throughput": 264.4,
+          "aegis_throughput": 262.7,
+          "overhead_percent": 0.65,
+          "throughput_reduction_percent": 0.64,
+          "executed_ops": 140,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.5611,
+          "aegis_time_s": 0.5645,
+          "baseline_throughput": 249.5,
+          "aegis_throughput": 248.0,
+          "overhead_percent": 0.62,
+          "throughput_reduction_percent": 0.61,
+          "executed_ops": 140,
+          "attestation_cycles": 1
+        }
+      ]
+    },
+    {
+      "attestation_interval": 1.0,
+      "agent_count": 10,
+      "workload_type": "mixed",
+      "repeats": 3,
+      "baseline_time_s": 0.3855,
+      "aegis_time_s": 0.3927,
+      "overhead_percent": 1.86,
+      "throughput_reduction_percent": 1.83,
+      "baseline_ops": 250,
+      "aegis_ops": 250,
+      "baseline_throughput": 648.4,
+      "aegis_throughput": 636.6,
+      "median_attestation_cycles": 1,
+      "trial_details": [
+        {
+          "trial": 1,
+          "baseline_time_s": 0.3968,
+          "aegis_time_s": 0.4041,
+          "baseline_throughput": 630.0,
+          "aegis_throughput": 618.7,
+          "overhead_percent": 1.84,
+          "throughput_reduction_percent": 1.8,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 2,
+          "baseline_time_s": 0.2772,
+          "aegis_time_s": 0.2852,
+          "baseline_throughput": 901.9,
+          "aegis_throughput": 876.7,
+          "overhead_percent": 2.88,
+          "throughput_reduction_percent": 2.8,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        },
+        {
+          "trial": 3,
+          "baseline_time_s": 0.3855,
+          "aegis_time_s": 0.3927,
+          "baseline_throughput": 648.4,
+          "aegis_throughput": 636.6,
+          "overhead_percent": 1.86,
+          "throughput_reduction_percent": 1.83,
+          "executed_ops": 250,
+          "attestation_cycles": 1
+        }
+      ]
+    }
+  ],
+  "low_overhead_count": 11,
+  "total_configurations": 16
+}

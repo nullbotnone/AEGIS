@@ -3,11 +3,14 @@
 import unittest
 
 from src.framework.constraints import (
+    ConstraintManager,
     ConstraintProfile,
     DataAccessConstraints,
     DataFlowConstraints,
+    DerivationMode,
     ExecutionConstraints,
     NetworkConstraints,
+    PolicyTemplate,
     ToolConstraints,
 )
 
@@ -208,6 +211,57 @@ tools:
         yaml_str = profile.to_yaml()
         self.assertIn("agent_id: agent1", yaml_str)
         self.assertIn("project_id: genomics", yaml_str)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+class TestConstraintManager(unittest.TestCase):
+    """Test profile derivation, compilation, and signing."""
+
+    def setUp(self):
+        self.manager = ConstraintManager(signing_key="manager-key")
+
+    def test_sign_profile_and_verify_binding(self):
+        profile = ConstraintProfile(
+            agent_id="agent1",
+            user_id="user1",
+            project_id="proj1",
+            session_id="sess1",
+            slurm_job_id="job_001",
+        )
+        self.manager.sign_profile(profile)
+        self.assertTrue(profile.verify_signature("manager-key"))
+        self.assertTrue(profile.verify_binding("job_001"))
+        self.assertIn("binding", profile.compiled_policy)
+
+    def test_from_template(self):
+        profile = self.manager.from_template(
+            PolicyTemplate.SIMULATION_STEERING,
+            agent_id="agent1",
+            user_id="user1",
+            project_id="proj1",
+            session_id="sess1",
+            slurm_job_id="job_001",
+        )
+        self.assertEqual(profile.derivation_mode, DerivationMode.TEMPLATE)
+        self.assertEqual(profile.template_name, PolicyTemplate.SIMULATION_STEERING.value)
+        self.assertIn("sbatch", profile.tools.allowed_tools)
+        self.assertTrue(profile.verify_signature("manager-key"))
+
+    def test_infer_from_task(self):
+        profile = self.manager.infer_from_task(
+            agent_id="agent1",
+            user_id="user1",
+            project_id="proj1",
+            session_id="sess1",
+            slurm_job_id="job_001",
+            task_description="Train a GPU model and write checkpoints",
+        )
+        self.assertEqual(profile.derivation_mode, DerivationMode.TASK_INFERENCE)
+        self.assertEqual(profile.template_name, PolicyTemplate.ML_TRAINING.value)
+        self.assertGreater(len(profile.inferred_rationale), 0)
+
 
 
 if __name__ == "__main__":

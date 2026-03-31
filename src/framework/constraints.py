@@ -1,17 +1,20 @@
 """Constraint specification and management for AEGIS.
 
-Defines constraint profiles that specify allowed behaviors for AI agents,
-including data access, network, tool, execution, and data flow constraints.
+Defines behavioral constraint profiles, derivation modes, and a constraint
+manager that compiles signed profiles into the internal representation used by
+verification and containment.
 """
 
 from __future__ import annotations
 
 import fnmatch
+import hashlib
+import hmac
 import json
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 try:
     import yaml  # type: ignore[import-not-found]
@@ -40,7 +43,7 @@ def _parse_yaml_scalar(value: str) -> Any:
 
 
 def _parse_yaml_block(lines: List[str], start: int, indent: int) -> tuple[Any, int]:
-    """Parse a simple indentation-based YAML mapping or list."""
+    """Parse a constrained indentation-based YAML mapping or list."""
     index = start
     while index < len(lines) and not lines[index].strip():
         index += 1
@@ -151,58 +154,94 @@ def _yaml_dump_lines(value: Any, indent: int = 0) -> List[str]:
 
 
 class ConstraintType(Enum):
-    """Types of constraints that can be enforced."""
+    """Types of constraints enforced by behavioral attestation."""
+
     DATA_ACCESS = "data_access"
     NETWORK = "network"
     TOOL_INVOCATION = "tool_invocation"
     EXECUTION = "execution"
     DATA_FLOW = "data_flow"
+    SIGNATURE = "signature"
+    SYSTEM = "system"
+
+
+class DerivationMode(Enum):
+    """How a behavioral constraint profile was derived."""
+
+    EXPLICIT = "explicit"
+    TASK_INFERENCE = "task_inference"
+    TEMPLATE = "template"
+
+
+class PolicyTemplate(Enum):
+    """Pre-built policy templates for common HPC agent patterns."""
+
+    DATA_ANALYSIS = "data_analysis"
+    SIMULATION_STEERING = "simulation_steering"
+    ML_TRAINING = "ml_training"
+
+
+@dataclass
+class SignatureRule:
+    """Optional signature rule used to augment constraint-based verification."""
+
+    rule_id: str
+    match_substrings: List[str] = field(default_factory=list)
+    action_types: Set[str] = field(default_factory=set)
+    severity: str = "violation_critical"
+    description: str = "Known malicious pattern detected"
+
+    def matches(self, action_type: str, payload: str) -> bool:
+        if self.action_types and action_type not in self.action_types:
+            return False
+        if not self.match_substrings:
+            return False
+        lowered_payload = payload.lower()
+        return any(fragment.lower() in lowered_payload for fragment in self.match_substrings)
+
+    def to_dict(self) -> dict:
+        return {
+            "rule_id": self.rule_id,
+            "match_substrings": list(self.match_substrings),
+            "action_types": sorted(self.action_types),
+            "severity": self.severity,
+            "description": self.description,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> SignatureRule:
+        return cls(
+            rule_id=data["rule_id"],
+            match_substrings=list(data.get("match_substrings", [])),
+            action_types=set(data.get("action_types", [])),
+            severity=data.get("severity", "violation_critical"),
+            description=data.get("description", "Known malicious pattern detected"),
+        )
 
 
 @dataclass
 class DataAccessConstraints:
-    """Constraints on filesystem access for an agent.
+    """Filesystem access constraints for an agent."""
 
-    Attributes:
-        allowed_paths: Glob patterns for paths the agent may access.
-            If empty, all paths are allowed (unless denied).
-        denied_paths: Glob patterns for paths the agent must not access.
-            Takes precedence over allowed_paths.
-        read_only_paths: Glob patterns for paths that are read-only.
-        max_read_volume_mb: Maximum total read volume in MB (per window).
-        max_write_volume_mb: Maximum total write volume in MB (per window).
-    """
     allowed_paths: Set[str] = field(default_factory=set)
     denied_paths: Set[str] = field(default_factory=set)
     read_only_paths: Set[str] = field(default_factory=set)
-    max_read_volume_mb: Optional[int] = None
-    max_write_volume_mb: Optional[int] = None
+    max_read_volume_mb: Optional[float] = None
+    max_write_volume_mb: Optional[float] = None
 
     def check_access(self, path: str, operation: str) -> tuple[bool, str]:
-        """Check if a file access is allowed.
-
-        Args:
-            path: The filesystem path being accessed.
-            operation: The operation type ("read" or "write").
-
-        Returns:
-            A tuple of (allowed, reason).
-        """
-        # Denied paths take precedence
         for denied in self.denied_paths:
             if fnmatch.fnmatch(path, denied):
                 return False, f"Path {path} matches denied pattern {denied}"
 
-        # If allowed_paths specified, must match one
+        if operation == "write":
+            for read_only in self.read_only_paths:
+                if fnmatch.fnmatch(path, read_only):
+                    return False, f"Path {path} is read-only"
+
         if self.allowed_paths:
-            for allowed in self.allowed_paths:
-                if fnmatch.fnmatch(path, allowed):
-                    # Check read-only restriction
-                    if operation == "write":
-                        for ro in self.read_only_paths:
-                            if fnmatch.fnmatch(path, ro):
-                                return False, f"Path {path} is read-only"
-                    return True, "Access allowed"
+            if any(fnmatch.fnmatch(path, allowed) for allowed in self.allowed_paths):
+                return True, "Access allowed"
             return False, f"Path {path} not in allowed paths"
 
         return True, "Access allowed (no path restrictions)"
@@ -229,39 +268,22 @@ class DataAccessConstraints:
 
 @dataclass
 class NetworkConstraints:
-    """Constraints on network access for an agent.
+    """Network access constraints for an agent."""
 
-    Attributes:
-        allowed_endpoints: Glob patterns for allowed endpoints.
-        denied_endpoints: Glob patterns for denied endpoints.
-            Use "*" to deny all, with allowed_endpoints as exceptions.
-        max_egress_mb_per_hour: Maximum egress bandwidth in MB/hour.
-    """
     allowed_endpoints: Set[str] = field(default_factory=set)
     denied_endpoints: Set[str] = field(default_factory=set)
-    max_egress_mb_per_hour: Optional[int] = None
+    max_egress_mb_per_hour: Optional[float] = None
 
     def check_connection(self, endpoint: str, data_size_mb: float = 0) -> tuple[bool, str]:
-        """Check if a network connection is allowed.
-
-        Args:
-            endpoint: The target endpoint (hostname or IP).
-            data_size_mb: Size of data being sent in MB.
-
-        Returns:
-            A tuple of (allowed, reason).
-        """
         for denied in self.denied_endpoints:
             if denied == "*" or fnmatch.fnmatch(endpoint, denied):
-                # Explicit allow overrides blanket deny
-                if endpoint in self.allowed_endpoints:
-                    continue
+                if any(fnmatch.fnmatch(endpoint, allowed) for allowed in self.allowed_endpoints):
+                    break
                 return False, f"Endpoint {endpoint} is denied"
 
         if self.allowed_endpoints:
-            for allowed in self.allowed_endpoints:
-                if fnmatch.fnmatch(endpoint, allowed):
-                    return True, "Connection allowed"
+            if any(fnmatch.fnmatch(endpoint, allowed) for allowed in self.allowed_endpoints):
+                return True, "Connection allowed"
             return False, f"Endpoint {endpoint} not in allowed endpoints"
 
         return True, "Connection allowed (no endpoint restrictions)"
@@ -284,25 +306,12 @@ class NetworkConstraints:
 
 @dataclass
 class ToolConstraints:
-    """Constraints on tool invocations for an agent.
+    """Tool invocation constraints for an agent."""
 
-    Attributes:
-        allowed_tools: Set of tool names the agent may invoke.
-            If empty, all tools are allowed (unless denied).
-        denied_tools: Set of tool names the agent must not invoke.
-    """
     allowed_tools: Set[str] = field(default_factory=set)
     denied_tools: Set[str] = field(default_factory=set)
 
     def check_invocation(self, tool_name: str) -> tuple[bool, str]:
-        """Check if a tool invocation is allowed.
-
-        Args:
-            tool_name: The name of the tool being invoked.
-
-        Returns:
-            A tuple of (allowed, reason).
-        """
         if tool_name in self.denied_tools:
             return False, f"Tool {tool_name} is denied"
         if self.allowed_tools and tool_name not in self.allowed_tools:
@@ -325,13 +334,8 @@ class ToolConstraints:
 
 @dataclass
 class ExecutionConstraints:
-    """Constraints on agent execution.
+    """Execution and placement constraints for an agent."""
 
-    Attributes:
-        max_runtime_seconds: Maximum allowed runtime in seconds.
-        max_memory_mb: Maximum memory usage in MB.
-        allowed_nodes: Set of node hostnames the agent may run on.
-    """
     max_runtime_seconds: Optional[int] = None
     max_memory_mb: Optional[int] = None
     allowed_nodes: Set[str] = field(default_factory=set)
@@ -354,22 +358,27 @@ class ExecutionConstraints:
 
 @dataclass
 class DataFlowConstraints:
-    """Constraints on data flow and exfiltration.
+    """Data-flow and cross-agent isolation constraints."""
 
-    Attributes:
-        project_boundary_strict: If True, no cross-project data access.
-        cross_project_transfer: If True, cross-project transfers allowed.
-        max_exfil_budget_mb_per_hour: Maximum data exfiltration rate in MB/hour.
-    """
     project_boundary_strict: bool = False
     cross_project_transfer: bool = False
     max_exfil_budget_mb_per_hour: Optional[float] = None
+    allow_agent_data_sharing: bool = False
+    allow_co_located_agent_reads: bool = False
+    allow_inter_agent_communication: bool = False
+    correlation_window_seconds: int = 30
+    correlation_threshold: int = 1
 
     def to_dict(self) -> dict:
         return {
             "project_boundary_strict": self.project_boundary_strict,
             "cross_project_transfer": self.cross_project_transfer,
             "max_exfil_budget_mb_per_hour": self.max_exfil_budget_mb_per_hour,
+            "allow_agent_data_sharing": self.allow_agent_data_sharing,
+            "allow_co_located_agent_reads": self.allow_co_located_agent_reads,
+            "allow_inter_agent_communication": self.allow_inter_agent_communication,
+            "correlation_window_seconds": self.correlation_window_seconds,
+            "correlation_threshold": self.correlation_threshold,
         }
 
     @classmethod
@@ -378,96 +387,315 @@ class DataFlowConstraints:
             project_boundary_strict=data.get("project_boundary_strict", False),
             cross_project_transfer=data.get("cross_project_transfer", False),
             max_exfil_budget_mb_per_hour=data.get("max_exfil_budget_mb_per_hour"),
+            allow_agent_data_sharing=data.get("allow_agent_data_sharing", False),
+            allow_co_located_agent_reads=data.get("allow_co_located_agent_reads", False),
+            allow_inter_agent_communication=data.get("allow_inter_agent_communication", False),
+            correlation_window_seconds=data.get("correlation_window_seconds", 30),
+            correlation_threshold=data.get("correlation_threshold", 1),
         )
 
 
 @dataclass
 class ConstraintProfile:
-    """Complete constraint profile for an agent.
+    """Complete behavioral constraint profile for an agent session."""
 
-    This is the primary configuration object that defines all behavioral
-    constraints for an agent. It is signed and transmitted to compute nodes.
-
-    Attributes:
-        agent_id: Unique identifier for the agent.
-        user_id: The user who owns this agent.
-        project_id: The HPC project this agent belongs to.
-        session_id: The current session identifier.
-        data_access: Filesystem access constraints.
-        network: Network access constraints.
-        tools: Tool invocation constraints.
-        execution: Runtime execution constraints.
-        data_flow: Data flow and exfiltration constraints.
-        created_at: Unix timestamp when profile was created.
-        expires_at: Unix timestamp when profile expires (None = no expiry).
-        signature: Cryptographic signature for tamper detection.
-    """
     agent_id: str
     user_id: str
     project_id: str
     session_id: str
+    slurm_job_id: str = ""
+    derivation_mode: DerivationMode = DerivationMode.EXPLICIT
+    template_name: Optional[str] = None
+    task_description: Optional[str] = None
+    inferred_rationale: List[str] = field(default_factory=list)
 
     data_access: DataAccessConstraints = field(default_factory=DataAccessConstraints)
     network: NetworkConstraints = field(default_factory=NetworkConstraints)
     tools: ToolConstraints = field(default_factory=ToolConstraints)
     execution: ExecutionConstraints = field(default_factory=ExecutionConstraints)
     data_flow: DataFlowConstraints = field(default_factory=DataFlowConstraints)
+    signature_rules: List[SignatureRule] = field(default_factory=list)
 
-    # Metadata
     created_at: float = 0
     expires_at: Optional[float] = None
+    compiled_policy: Dict[str, Any] = field(default_factory=dict)
     signature: Optional[str] = None
 
-    def to_dict(self) -> dict:
-        """Serialize to dictionary for signing/transmission."""
-        return {
+    def canonical_payload(self) -> dict:
+        payload = {
             "agent_id": self.agent_id,
             "user_id": self.user_id,
             "project_id": self.project_id,
             "session_id": self.session_id,
+            "slurm_job_id": self.slurm_job_id,
+            "derivation_mode": self.derivation_mode.value,
+            "template_name": self.template_name,
+            "task_description": self.task_description,
+            "inferred_rationale": list(self.inferred_rationale),
             "data_access": self.data_access.to_dict(),
             "network": self.network.to_dict(),
             "tools": self.tools.to_dict(),
             "execution": self.execution.to_dict(),
             "data_flow": self.data_flow.to_dict(),
+            "signature_rules": [rule.to_dict() for rule in self.signature_rules],
             "created_at": self.created_at,
             "expires_at": self.expires_at,
-            "signature": self.signature,
+            "compiled_policy": self.compiled_policy,
         }
+        return payload
+
+    def compile_policy(self) -> Dict[str, Any]:
+        self.compiled_policy = {
+            "binding": {
+                "agent_id": self.agent_id,
+                "session_id": self.session_id,
+                "slurm_job_id": self.slurm_job_id,
+                "project_id": self.project_id,
+            },
+            "derivation_mode": self.derivation_mode.value,
+            "template_name": self.template_name,
+            "data_access": {
+                "allow": sorted(self.data_access.allowed_paths),
+                "deny": sorted(self.data_access.denied_paths),
+                "read_only": sorted(self.data_access.read_only_paths),
+                "budgets": {
+                    "read_mb": self.data_access.max_read_volume_mb,
+                    "write_mb": self.data_access.max_write_volume_mb,
+                },
+            },
+            "network": {
+                "allow": sorted(self.network.allowed_endpoints),
+                "deny": sorted(self.network.denied_endpoints),
+                "egress_budget_mb_per_hour": self.network.max_egress_mb_per_hour,
+            },
+            "tools": {
+                "allow": sorted(self.tools.allowed_tools),
+                "deny": sorted(self.tools.denied_tools),
+            },
+            "execution": self.execution.to_dict(),
+            "data_flow": self.data_flow.to_dict(),
+            "signature_rules": [rule.to_dict() for rule in self.signature_rules],
+        }
+        return self.compiled_policy
+
+    def bind_to_job(self, slurm_job_id: str) -> None:
+        self.slurm_job_id = slurm_job_id
+        self.compile_policy()
+
+    def profile_hash(self) -> str:
+        payload = json.dumps(self.canonical_payload(), sort_keys=True)
+        return hashlib.sha256(payload.encode()).hexdigest()
+
+    def sign(self, signing_key: str) -> str:
+        payload = json.dumps(self.canonical_payload(), sort_keys=True)
+        self.signature = hmac.new(
+            signing_key.encode(),
+            payload.encode(),
+            hashlib.sha256,
+        ).hexdigest()
+        return self.signature
+
+    def verify_signature(self, signing_key: str) -> bool:
+        if not self.signature:
+            return False
+        payload = json.dumps(self.canonical_payload(), sort_keys=True)
+        expected = hmac.new(
+            signing_key.encode(),
+            payload.encode(),
+            hashlib.sha256,
+        ).hexdigest()
+        return hmac.compare_digest(expected, self.signature)
+
+    def verify_binding(self, slurm_job_id: str) -> bool:
+        return bool(self.slurm_job_id) and self.slurm_job_id == slurm_job_id
+
+    def to_dict(self) -> dict:
+        data = self.canonical_payload()
+        data["signature"] = self.signature
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> ConstraintProfile:
-        """Deserialize from dictionary."""
+        derivation_mode = data.get("derivation_mode", DerivationMode.EXPLICIT.value)
         return cls(
             agent_id=data["agent_id"],
             user_id=data["user_id"],
             project_id=data["project_id"],
             session_id=data["session_id"],
+            slurm_job_id=data.get("slurm_job_id", ""),
+            derivation_mode=DerivationMode(derivation_mode),
+            template_name=data.get("template_name"),
+            task_description=data.get("task_description"),
+            inferred_rationale=list(data.get("inferred_rationale", [])),
             data_access=DataAccessConstraints.from_dict(data.get("data_access", {})),
             network=NetworkConstraints.from_dict(data.get("network", {})),
             tools=ToolConstraints.from_dict(data.get("tools", {})),
             execution=ExecutionConstraints.from_dict(data.get("execution", {})),
             data_flow=DataFlowConstraints.from_dict(data.get("data_flow", {})),
+            signature_rules=[
+                SignatureRule.from_dict(rule)
+                for rule in data.get("signature_rules", [])
+            ],
             created_at=data.get("created_at", 0),
             expires_at=data.get("expires_at"),
+            compiled_policy=dict(data.get("compiled_policy", {})),
             signature=data.get("signature"),
         )
 
     @classmethod
     def from_yaml(cls, yaml_content: str) -> ConstraintProfile:
-        """Parse constraint profile from YAML.
-
-        Args:
-            yaml_content: YAML-formatted constraint profile string.
-
-        Returns:
-            A ConstraintProfile instance.
-        """
-        data = _yaml_safe_load(yaml_content)
-        return cls.from_dict(data)
+        return cls.from_dict(_yaml_safe_load(yaml_content))
 
     def to_yaml(self) -> str:
-        """Serialize to YAML string."""
         if yaml is not None:
             return yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=False)
         return "\n".join(_yaml_dump_lines(self.to_dict())) + "\n"
+
+
+class ConstraintManager:
+    """Parses, derives, compiles, and signs behavioral constraint profiles."""
+
+    def __init__(self, signing_key: str = "constraint-manager"):
+        self.signing_key = signing_key
+
+    def compile_profile(self, profile: ConstraintProfile) -> ConstraintProfile:
+        if not profile.created_at:
+            profile.created_at = time.time()
+        profile.compile_policy()
+        return profile
+
+    def sign_profile(self, profile: ConstraintProfile) -> ConstraintProfile:
+        self.compile_profile(profile)
+        profile.sign(self.signing_key)
+        return profile
+
+    def from_yaml(self, yaml_content: str, sign: bool = True) -> ConstraintProfile:
+        profile = ConstraintProfile.from_yaml(yaml_content)
+        self.compile_profile(profile)
+        if sign:
+            self.sign_profile(profile)
+        return profile
+
+    def from_template(
+        self,
+        template: Union[PolicyTemplate, str],
+        *,
+        agent_id: str,
+        user_id: str,
+        project_id: str,
+        session_id: str,
+        slurm_job_id: str,
+        task_description: Optional[str] = None,
+    ) -> ConstraintProfile:
+        template_enum = template if isinstance(template, PolicyTemplate) else PolicyTemplate(template)
+        project_root = f"/projects/{project_id}/*"
+        scratch_root = f"/scratch/{user_id}/*"
+
+        if template_enum == PolicyTemplate.DATA_ANALYSIS:
+            profile = ConstraintProfile(
+                agent_id=agent_id,
+                user_id=user_id,
+                project_id=project_id,
+                session_id=session_id,
+                slurm_job_id=slurm_job_id,
+                derivation_mode=DerivationMode.TEMPLATE,
+                template_name=template_enum.value,
+                task_description=task_description,
+                data_access=DataAccessConstraints(
+                    allowed_paths={project_root, scratch_root},
+                    read_only_paths={project_root},
+                ),
+                network=NetworkConstraints(allowed_endpoints={"api.openai.com"}),
+                tools=ToolConstraints(allowed_tools={"python", "jupyter", "hdf5_reader"}),
+                data_flow=DataFlowConstraints(project_boundary_strict=True),
+            )
+        elif template_enum == PolicyTemplate.SIMULATION_STEERING:
+            profile = ConstraintProfile(
+                agent_id=agent_id,
+                user_id=user_id,
+                project_id=project_id,
+                session_id=session_id,
+                slurm_job_id=slurm_job_id,
+                derivation_mode=DerivationMode.TEMPLATE,
+                template_name=template_enum.value,
+                task_description=task_description,
+                data_access=DataAccessConstraints(
+                    allowed_paths={project_root, scratch_root, "/opt/simulations/*"},
+                    read_only_paths={"/opt/simulations/*"},
+                ),
+                network=NetworkConstraints(allowed_endpoints={"slurmrestd.cluster.local"}),
+                tools=ToolConstraints(allowed_tools={"sbatch", "squeue", "scancel", "python"}),
+                data_flow=DataFlowConstraints(project_boundary_strict=True),
+            )
+        else:
+            profile = ConstraintProfile(
+                agent_id=agent_id,
+                user_id=user_id,
+                project_id=project_id,
+                session_id=session_id,
+                slurm_job_id=slurm_job_id,
+                derivation_mode=DerivationMode.TEMPLATE,
+                template_name=template_enum.value,
+                task_description=task_description,
+                data_access=DataAccessConstraints(
+                    allowed_paths={project_root, scratch_root, f"/checkpoints/{project_id}/*"},
+                ),
+                network=NetworkConstraints(allowed_endpoints={"artifact-cache.cluster.local"}),
+                tools=ToolConstraints(allowed_tools={"python", "torchrun", "nvidia-smi"}),
+                data_flow=DataFlowConstraints(project_boundary_strict=True),
+            )
+
+        return self.sign_profile(profile)
+
+    def infer_from_task(
+        self,
+        *,
+        agent_id: str,
+        user_id: str,
+        project_id: str,
+        session_id: str,
+        slurm_job_id: str,
+        task_description: str,
+        llm_infer: Optional[Callable[[str], Dict[str, Any]]] = None,
+    ) -> ConstraintProfile:
+        if llm_infer is not None:
+            inferred = llm_infer(task_description)
+            profile = ConstraintProfile.from_dict({
+                "agent_id": agent_id,
+                "user_id": user_id,
+                "project_id": project_id,
+                "session_id": session_id,
+                "slurm_job_id": slurm_job_id,
+                "derivation_mode": DerivationMode.TASK_INFERENCE.value,
+                "task_description": task_description,
+                **inferred,
+            })
+            profile.derivation_mode = DerivationMode.TASK_INFERENCE
+            return self.sign_profile(profile)
+
+        description = task_description.lower()
+        rationale: List[str] = []
+        if any(keyword in description for keyword in ["train", "checkpoint", "gpu", "fine-tune"]):
+            template = PolicyTemplate.ML_TRAINING
+            rationale.append("Detected model training language, so the ML training template was selected.")
+        elif any(keyword in description for keyword in ["simulate", "slurm", "queue", "mesh", "solver"]):
+            template = PolicyTemplate.SIMULATION_STEERING
+            rationale.append("Detected scheduler or simulation terms, so the simulation steering template was selected.")
+        else:
+            template = PolicyTemplate.DATA_ANALYSIS
+            rationale.append("Defaulted to the data analysis template for read-heavy project workflows.")
+
+        profile = self.from_template(
+            template,
+            agent_id=agent_id,
+            user_id=user_id,
+            project_id=project_id,
+            session_id=session_id,
+            slurm_job_id=slurm_job_id,
+            task_description=task_description,
+        )
+        profile.derivation_mode = DerivationMode.TASK_INFERENCE
+        profile.inferred_rationale = rationale
+        self.compile_profile(profile)
+        profile.sign(self.signing_key)
+        return profile

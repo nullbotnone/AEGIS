@@ -5,12 +5,16 @@ Measures AEGIS overhead with varying attestation intervals, agent counts,
 and workload types. This benchmark is simulation-based, but it now uses
 paired workloads so baseline and AEGIS runs execute the same operations.
 """
+import argparse
+import json
 import os
 import statistics
 import sys
 import time
 import random
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -326,7 +330,7 @@ def measure_overhead(
     }
 
 
-def run_experiment() -> Dict[str, Any]:
+def run_experiment(output: Optional[str] = None) -> Dict[str, Any]:
     """Run the performance overhead experiment."""
     print("=" * 80)
     print("EXPERIMENT: PERFORMANCE OVERHEAD")
@@ -398,7 +402,9 @@ def run_experiment() -> Dict[str, Any]:
                 f"{r['workload_type']:<15} {r['overhead_percent']:>9.2f}%"
             )
 
-    return {
+    payload = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "experiment": "simulated_performance",
         "interval_sweep": interval_results,
         "agent_count_sweep": agent_count_results,
         "workload_type_sweep": workload_results,
@@ -407,6 +413,22 @@ def run_experiment() -> Dict[str, Any]:
         "total_configurations": len(all_results),
     }
 
+    output_path = Path(output) if output else (
+        Path("results") / f"simulated_performance_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(f"Results: {output_path}")
+
+    return payload
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run the AEGIS performance-overhead study")
+    parser.add_argument("--output", default=None, help="Optional JSON output path")
+    args = parser.parse_args()
+    run_experiment(args.output)
+
 
 if __name__ == "__main__":
-    run_experiment()
+    main()

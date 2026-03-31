@@ -1,0 +1,21 @@
+[Unit]
+Description=AEGIS verifier daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=aegis
+Group=aegis
+WorkingDirectory=/opt/aegis
+ExecStart=/usr/bin/python3 -m src.services.verifierd --config /etc/aegis/verifier.json serve
+Restart=on-failure
+RestartSec=2
+RuntimeDirectory=aegis
+RuntimeDirectoryMode=0770
+StateDirectory=aegis
+LogsDirectory=aegis
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

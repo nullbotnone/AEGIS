@@ -11,12 +11,15 @@ are REAL measurements using time.perf_counter().
 This replaces the previous version that used time.sleep(random.uniform())
 to fake detection times — that was unacceptable for peer review.
 """
+import argparse
 import sys
 import os
 import time
 import re
 import math
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Dict, Any, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -588,7 +591,7 @@ def run_attack4():
 
 N_TRIALS = 10  # Statistical significance
 
-def run_experiment():
+def run_experiment(output: Optional[str] = None):
     """Run the baseline comparison experiment with proper measurements."""
     print("=" * 80)
     print("EXPERIMENT: BASELINE COMPARISON (Proper Implementation)")
@@ -843,17 +846,23 @@ def run_experiment():
         "",
     ])
 
-    report_path = os.path.join(
-        os.path.dirname(__file__), "..", "..", "experiments", "baseline_results.md"
+    output_path = Path(output) if output else (
+        Path("results") / f"baseline_comparison_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.md"
     )
-    os.makedirs(os.path.dirname(report_path), exist_ok=True)
-    with open(report_path, "w") as f:
-        f.write("\n".join(md_lines))
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("\n".join(md_lines), encoding="utf-8")
 
-    print(f"\nReport saved to: {report_path}")
+    print(f"\nReport saved to: {output_path}")
 
     return results
 
 
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run the AEGIS baseline-comparison study")
+    parser.add_argument("--output", default=None, help="Optional markdown output path")
+    args = parser.parse_args()
+    run_experiment(args.output)
+
+
 if __name__ == "__main__":
-    results = run_experiment()
+    main()

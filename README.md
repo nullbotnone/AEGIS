@@ -1,51 +1,74 @@
 # AEGIS
 
-**A**ttestation-based **E**nvironment for **G**uarding **I**njection-vulnerable **S**ystems
+AEGIS is a behavioral-attestation prototype for HPC AI agents. This repository is organized for two concrete goals:
+- deploy AEGIS on a real Slurm cluster
+- reproduce the SC26 evaluation with structured artifacts under `results/`
 
-> Toward a Zero-Trust Architecture for HPC AI Agents
+## Start Here
 
-## Paper
+If you are operating a cluster:
+- read [deploy/README.md](deploy/README.md)
+- then follow [docs/REAL_CLUSTER_DEPLOYMENT.md](docs/REAL_CLUSTER_DEPLOYMENT.md)
 
-**"Attestation is All You Need: Toward a Zero-Trust Architecture for HPC AI Agents"**
-Target: **SC26** — International Conference for High Performance Computing, Networking, Storage and Analysis
+If you are running the evaluation:
+- read [experiments/README.md](experiments/README.md)
+- store artifacts as described in [results/README.md](results/README.md)
+- use [docs/EPYC_TESTING_GUIDE.md](docs/EPYC_TESTING_GUIDE.md) for the EPYC measurement path
+- use [docs/SC26_EVALUATION.md](docs/SC26_EVALUATION.md) for the concrete evaluation matrix and reproduction runbook
 
-## Overview
+## Active Architecture
 
-AEGIS investigates zero-trust security architectures tailored for AI agents operating in high-performance computing (HPC) environments. As AI agents gain autonomy in HPC workflows — scheduling jobs, accessing data, orchestrating simulations — the attack surface expands dramatically. Traditional perimeter-based security models are insufficient.
+The current deployable path is:
+- [bpf_collector.py](src/attestation/bpf_collector.py) on each compute node
+- [verifierd.py](src/services/verifierd.py) on the verifier host
+- [slurm_integration.py](src/defense/slurm_integration.py) for enforcement
+- [verifier.py](src/framework/verifier.py) as the policy core, including the audit ledger and cross-agent correlation
 
-This project explores how **behavioral attestation** — continuous, constraint-based verification of agent actions — can contain the effects of injection attacks on AI agents in HPC environments. Even when agents are hijacked through filesystem injection, co-location attacks, or supply chain compromise, attestation detects and prevents constraint violations before data exfiltration occurs.
+The simulation and experiment layers are still kept for reproducibility, but they are not required to deploy AEGIS on a cluster.
 
-## Research Questions
+## Repository Map
 
-1. **Behavioral Attestation** — How can we provably verify that an AI agent operates within its authorized constraints at runtime?
-2. **Constraint Specification** — What are the right constraint dimensions (data access, network, tools, execution, data flow) for HPC agents?
-3. **HPC-Specific Injection Surfaces** — What unique attack vectors do shared filesystems, multi-tenant nodes, and agent skill ecosystems create?
-4. **Containment Mechanisms** — How should violations be contained (rate-limit, isolate, suspend, terminate) without disrupting legitimate workflows?
-5. **Performance Trade-offs** — What is the overhead of continuous attestation on HPC-scale workloads?
+- [src/README.md](src/README.md): source tree map
+- [deploy/README.md](deploy/README.md): install the verifier, collector, and Slurm hooks
+- [experiments/README.md](experiments/README.md): run the paper experiments
+- [results/README.md](results/README.md): result naming and collection policy
+- [docs/README.md](docs/README.md): engineering guides and measurement notes
+- [docs/SC26_EVALUATION.md](docs/SC26_EVALUATION.md): SC26 evaluation matrix and reproduction guide
+- [figures/README.md](figures/README.md): paper figures and plot regeneration
 
-## Project Structure
+## Quick Commands
 
+Build the probe and microbenchmark:
+
+```bash
+make bpfall
+make bench
 ```
-AEGIS/
-├── README.md           ← This file
-├── PROPOSAL.md         ← Research proposal / paper outline
-├── notes.md            ← Ad-hoc research notes
-├── literature.md       ← Literature survey & annotated bibliography
-├── src/                ← Code / prototypes / experiments
-├── docs/               ← Internal documentation
-├── experiments/        ← Experiment configs, results, analysis
-├── references/         ← Papers, articles, specs (PDFs, links)
-├── figures/            └─ Diagrams, architecture sketches
-└── LICENSE
+
+Run the verifier daemon:
+
+```bash
+python3 -m src.services.verifierd --config /etc/aegis/verifier.json serve
 ```
 
-## Key Concepts
+Run the node collector:
 
-- **Behavioral Attestation**: Continuous, constraint-based verification that an agent's actions conform to its authorized task — provable guarantees, not probabilistic detection
-- **HPC AI Agents**: Autonomous or semi-autonomous software agents operating within HPC job schedulers (Slurm, PBS, etc.)
-- **Injection-Vulnerable Systems**: Systems where agents process untrusted input (shared filesystems, co-located nodes, third-party tools) creating hijacking attack surfaces
-- **Constraint-Based Security**: Whitelist-based policies defining what is allowed (not signatures of what is malicious) — evasion-resistant by construction
+```bash
+sudo python3 -m src.attestation.bpf_collector --bpf /usr/share/aegis/aegis_probe.bpf.o --interval 1.0
+```
 
-## License
+Collect measured latency for one attack:
 
-TBD
+```bash
+python3 -m src.experiments.real.run_real_latency_capture --attack filesystem --interval 1.0 --repeats 3
+```
+
+Run the documented SC26 wrapper:
+
+```bash
+bash scripts/run_sc26_eval.sh
+```
+
+## Scope Note
+
+`src/framework/` models the behavioral-attestation semantics and is heavily unit tested. Real deployment uses that core through the service and collector wrappers rather than by importing the framework alone.

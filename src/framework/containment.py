@@ -1,7 +1,8 @@
 """Containment enforcer for AEGIS.
 
-Translates verification verdicts into enforcement actions ranging from
-rate-limiting to full termination. In production, interfaces with Slurm REST API.
+Maps verifier verdicts to Slurm-oriented containment actions such as cgroup
+throttling, ACL revocation, job suspension, and termination with credential
+revocation.
 """
 
 from __future__ import annotations
@@ -16,212 +17,160 @@ logger = logging.getLogger(__name__)
 
 
 class ContainmentAction(Enum):
-    """Enforcement actions that can be applied to a violating agent."""
+    """Enforcement actions available through the containment layer."""
+
     NONE = "none"
-    RATE_LIMIT = "rate_limit"
-    ISOLATE = "isolate"
-    SUSPEND = "suspend"
-    TERMINATE = "terminate"
+    CGROUP_THROTTLE = "cgroup_throttle"
+    ACL_REVOKE = "acl_revoke"
+    JOB_SUSPEND = "job_suspend"
+    JOB_TERMINATE = "job_terminate"
+
+    RATE_LIMIT = "cgroup_throttle"
+    ISOLATE = "acl_revoke"
+    SUSPEND = "job_suspend"
+    TERMINATE = "job_terminate"
 
 
 @dataclass
 class ContainmentDecision:
-    """A containment decision based on a verification result.
+    """Containment decision derived from a verification result."""
 
-    Attributes:
-        agent_id: The agent being contained.
-        action: The containment action to apply.
-        reason: Human-readable reason for the containment.
-        timestamp: When the decision was made.
-        details: Additional details (verdict, violation descriptions).
-    """
     agent_id: str
     action: ContainmentAction
     reason: str
     timestamp: float
     details: dict
+    slurm_job_id: str = ""
 
 
 class ContainmentEnforcer:
-    """Translates verification verdicts into enforcement actions.
-
-    Maps violation severity to containment responses:
-    - COMPLIANT → NONE
-    - VIOLATION_MINOR → RATE_LIMIT (cgroup bandwidth throttling)
-    - VIOLATION_MODERATE → ISOLATE (revoke ACLs, redirect to sandbox)
-    - VIOLATION_SEVERE → Suspend (pause job, require human review)
-    - VIOLATION_CRITICAL → TERMINATE (kill session, revoke creds, alert security)
-
-    In production, enforcement actions interface with the Slurm REST API.
-    This simulation applies in-process state changes and logging.
-    """
+    """Translate verifier verdicts into Slurm-backed containment actions."""
 
     def __init__(self):
-        """Initialize the containment enforcer."""
-        # Enforcement handlers
-        self.handlers: Dict[ContainmentAction, Callable] = {
-            ContainmentAction.RATE_LIMIT: self._rate_limit,
-            ContainmentAction.ISOLATE: self._isolate,
-            ContainmentAction.SUSPEND: self._suspend,
-            ContainmentAction.TERMINATE: self._terminate,
+        self.handlers: Dict[ContainmentAction, Callable[[ContainmentDecision], None]] = {
+            ContainmentAction.CGROUP_THROTTLE: self._cgroup_throttle,
+            ContainmentAction.ACL_REVOKE: self._acl_revoke,
+            ContainmentAction.JOB_SUSPEND: self._job_suspend,
+            ContainmentAction.JOB_TERMINATE: self._job_terminate,
         }
-
-        # Agent state tracking: agent_id -> state string
         self.agent_states: Dict[str, str] = {}
         self.containment_history: List[ContainmentDecision] = []
-
-        # Callbacks for external systems
+        self.slurm_operations: List[dict] = []
         self.on_containment: Optional[Callable[[ContainmentDecision], None]] = None
 
     def enforce(self, result: VerificationResult) -> ContainmentDecision:
-        """Enforce a verification result by applying containment.
-
-        Args:
-            result: The VerificationResult from the policy verifier.
-
-        Returns:
-            The ContainmentDecision that was applied.
-        """
-        from .verifier import Verdict
-
-        # Map verdict to containment action
         action = self._verdict_to_action(result.verdict)
-
-        # Create decision
         decision = ContainmentDecision(
             agent_id=result.agent_id,
+            slurm_job_id=result.slurm_job_id,
             action=action,
             reason=self._format_reason(result),
             timestamp=time.time(),
             details={
                 "verdict": result.verdict.value,
-                "violations": [v.description for v in result.violations],
+                "violations": [violation.description for violation in result.violations],
+                "challenge_id": result.challenge_id,
+                "challenge_satisfied": result.challenge_satisfied,
             },
         )
 
-        # Execute enforcement (skip if NONE)
-        if action in self.handlers:
-            self.handlers[action](decision)
+        handler = self.handlers.get(action)
+        if handler is not None:
+            handler(decision)
 
-        # Record decision
         self.containment_history.append(decision)
-
-        # Notify external systems
         if self.on_containment:
             try:
                 self.on_containment(decision)
-            except Exception as e:
-                logger.error(f"Containment callback failed: {e}")
-
+            except Exception as exc:
+                logger.error("Containment callback failed: %s", exc)
         return decision
 
     def _verdict_to_action(self, verdict) -> ContainmentAction:
-        """Map a verification verdict to a containment action.
-
-        Args:
-            verdict: The Verdict enum value.
-
-        Returns:
-            The corresponding ContainmentAction.
-        """
         from .verifier import Verdict
 
         mapping = {
             Verdict.COMPLIANT: ContainmentAction.NONE,
-            Verdict.VIOLATION_MINOR: ContainmentAction.RATE_LIMIT,
-            Verdict.VIOLATION_MODERATE: ContainmentAction.ISOLATE,
-            Verdict.VIOLATION_SEVERE: ContainmentAction.SUSPEND,
-            Verdict.VIOLATION_CRITICAL: ContainmentAction.TERMINATE,
+            Verdict.VIOLATION_MINOR: ContainmentAction.CGROUP_THROTTLE,
+            Verdict.VIOLATION_MODERATE: ContainmentAction.ACL_REVOKE,
+            Verdict.VIOLATION_SEVERE: ContainmentAction.JOB_SUSPEND,
+            Verdict.VIOLATION_CRITICAL: ContainmentAction.JOB_TERMINATE,
         }
-        return mapping.get(verdict, ContainmentAction.TERMINATE)
+        return mapping.get(verdict, ContainmentAction.JOB_TERMINATE)
 
     def _format_reason(self, result: VerificationResult) -> str:
-        """Format a human-readable reason for the containment decision.
-
-        Args:
-            result: The VerificationResult.
-
-        Returns:
-            A formatted reason string.
-        """
         if not result.violations:
             return f"Verdict: {result.verdict.value}"
-        violation_descs = [v.description for v in result.violations[:3]]
-        reason = f"Verdict: {result.verdict.value}; " + "; ".join(violation_descs)
+        preview = "; ".join(violation.description for violation in result.violations[:3])
         if len(result.violations) > 3:
-            reason += f" (+{len(result.violations) - 3} more)"
-        return reason
+            preview += f" (+{len(result.violations) - 3} more)"
+        return f"Verdict: {result.verdict.value}; {preview}"
 
-    def _rate_limit(self, decision: ContainmentDecision) -> None:
-        """Rate-limit an agent's resource access (cgroup throttling).
+    def _record_slurm_operation(self, decision: ContainmentDecision, operation: str, **details: object) -> None:
+        payload = {
+            "agent_id": decision.agent_id,
+            "slurm_job_id": decision.slurm_job_id,
+            "operation": operation,
+            "timestamp": time.time(),
+            **details,
+        }
+        self.slurm_operations.append(payload)
+        decision.details.setdefault("slurm_operations", []).append(payload)
 
-        In production: cgroup bandwidth throttling via Slurm REST API.
-        """
-        self.agent_states[decision.agent_id] = "rate_limited"
-        logger.warning(
-            f"[CONTAINMENT] Rate-limiting agent {decision.agent_id}: {decision.reason}"
+    def _cgroup_throttle(self, decision: ContainmentDecision) -> None:
+        self.agent_states[decision.agent_id] = "throttled"
+        decision.details["containment_summary"] = "Applied cgroup CPU and memory throttling"
+        decision.details["credential_revoked"] = False
+        self._record_slurm_operation(
+            decision,
+            "PATCH /slurm/v0.0.39/job/{job_id}/cgroup",
+            cpu_quota="50%",
+            memory_quota="50%",
         )
+        logger.warning("[CONTAINMENT] Throttled agent %s: %s", decision.agent_id, decision.reason)
 
-    def _isolate(self, decision: ContainmentDecision) -> None:
-        """Isolate an agent (revoke filesystem ACLs, redirect to sandbox).
-
-        In production: revoke ACLs via Slurm REST API, redirect network to honeypot.
-        """
-        self.agent_states[decision.agent_id] = "isolated"
-        logger.warning(
-            f"[CONTAINMENT] Isolating agent {decision.agent_id}: {decision.reason}"
+    def _acl_revoke(self, decision: ContainmentDecision) -> None:
+        self.agent_states[decision.agent_id] = "acl_revoked"
+        decision.details["containment_summary"] = "Revoked shared filesystem ACLs"
+        decision.details["credential_revoked"] = False
+        self._record_slurm_operation(
+            decision,
+            "POST /slurm/v0.0.39/job/{job_id}/acl-revoke",
+            scope="shared-storage",
         )
+        logger.warning("[CONTAINMENT] Revoked ACLs for agent %s: %s", decision.agent_id, decision.reason)
 
-    def _suspend(self, decision: ContainmentDecision) -> None:
-        """Suspend an agent's execution (pause job, require human intervention).
-
-        In production: scancel --suspend via Slurm.
-        """
+    def _job_suspend(self, decision: ContainmentDecision) -> None:
         self.agent_states[decision.agent_id] = "suspended"
-        logger.warning(
-            f"[CONTAINMENT] Suspending agent {decision.agent_id}: {decision.reason}"
+        decision.details["containment_summary"] = "Suspended the Slurm job pending investigation"
+        decision.details["credential_revoked"] = False
+        self._record_slurm_operation(
+            decision,
+            "POST /slurm/v0.0.39/job/{job_id}/suspend",
         )
+        logger.warning("[CONTAINMENT] Suspended agent %s: %s", decision.agent_id, decision.reason)
 
-    def _terminate(self, decision: ContainmentDecision) -> None:
-        """Terminate an agent (kill session, revoke credentials, alert security).
-
-        In production: scancel + kdestroy + security alert to SIEM.
-        """
+    def _job_terminate(self, decision: ContainmentDecision) -> None:
         self.agent_states[decision.agent_id] = "terminated"
-        logger.critical(
-            f"[CONTAINMENT] Terminating agent {decision.agent_id}: {decision.reason}"
+        decision.details["containment_summary"] = "Terminated the Slurm job and revoked credentials"
+        decision.details["credential_revoked"] = True
+        self._record_slurm_operation(
+            decision,
+            "DELETE /slurm/v0.0.39/job/{job_id}",
+            revoke_credentials=True,
         )
+        logger.critical("[CONTAINMENT] Terminated agent %s: %s", decision.agent_id, decision.reason)
 
     def get_agent_state(self, agent_id: str) -> str:
-        """Get the current containment state of an agent.
-
-        Args:
-            agent_id: The agent to check.
-
-        Returns:
-            The agent's state string (or "active" if not contained).
-        """
         return self.agent_states.get(agent_id, "active")
 
     def is_contained(self, agent_id: str) -> bool:
-        """Check if an agent is currently under containment.
-
-        Args:
-            agent_id: The agent to check.
-
-        Returns:
-            True if the agent is not in "active" state.
-        """
-        return self.agent_states.get(agent_id, "active") != "active"
+        return self.get_agent_state(agent_id) != "active"
 
     def release(self, agent_id: str) -> None:
-        """Release an agent from containment (manual override).
-
-        Args:
-            agent_id: The agent to release.
-        """
         old_state = self.agent_states.pop(agent_id, None)
         if old_state:
-            logger.info(
-                f"[CONTAINMENT] Released agent {agent_id} from {old_state}"
-            )
+            logger.info("[CONTAINMENT] Released agent %s from %s", agent_id, old_state)
+
+
+from .verifier import VerificationResult

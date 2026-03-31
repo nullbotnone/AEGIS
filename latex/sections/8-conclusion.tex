@@ -1,9 +1,36 @@
 \section{Conclusion}
 
-AI agents are entering high-performance computing, bringing with them a threat category that HPC security was never designed to address: the hijacked authorized agent. Through prompt injection attacks exploiting shared filesystems, co-located compute nodes, compromised agent tools, and coordinated multi-agent exfiltration, an adversary can subvert an agent that already holds valid credentials and legitimate permissions. The hijacked agent exfiltrates data through encrypted, whitelisted LLM API channels, precisely the channels that every legitimate agent must use, making the attack invisible to traditional monitoring and data loss prevention. No existing defense mechanism, including authentication, authorization, intrusion detection, DLP, or user behavior analytics, addresses this threat.
+This paper argues that the main security problem introduced by AI agents in HPC
+is not unauthorized access by an outsider, but misuse of legitimate authority by
+a hijacked authorized agent. Once an agent is trusted with project data, shared
+storage, tools, and network access, conventional authentication and access
+control no longer answer the critical question: whether the agent's runtime
+behavior still matches its authorized task.
 
-We propose behavioral attestation as the foundation for securing AI agents in HPC. The core insight is pragmatic: we cannot prevent all injection attacks because the attack surface is too large and diverse. However, we can detect and contain their effects by attesting to behavioral constraints. Behavioral attestation provides provable guarantees rather than probabilistic detection, uses constraint-based policies rather than evasion-prone signatures, and enforces containment at runtime rather than post-hoc alerting. Even if an agent is hijacked, the attestation mechanism detects constraint violations and enforces containment before data exfiltration completes.
+We introduced behavioral attestation as a practical security primitive for this
+setting and presented \projectname, a system that compiles behavioral constraints,
+monitors agent actions with \textit{ebpf}-based syscall interception, verifies evidence
+against constraint profiles, correlates behavior across agents, and translates
+verdicts into scheduler-level containment actions. The central design choice is
+to treat agent security as a runtime verification problem over declared
+behavioral boundaries rather than as a purely identity-based or
+signature-matching problem.
 
-This paper formalizes four HPC-specific injection attack vectors that have not been studied in prior work, designs and implements AEGIS as a complete zero-trust architecture, and empirically demonstrates its effectiveness. Across all four attack scenarios, AEGIS achieves 100\% detection with sub-second latency, compared to 0-75\% for traditional defenses. The system operates with less than 3\% overhead on AMD EPYC processors, scales to hundreds of agents per node, and produces zero false positives on legitimate HPC workflows. All components are implemented and available as open source.
+Our evaluation shows that this approach is effective and practical. On the real
+attestation path, \projectname~detects all four implemented attack classes with
+sub-second median latency at the default 1\,s interval and low measured verifier
+overhead. In the controlled studies, \projectname~achieves full coverage over the
+four-attack suite, outperforms representative baselines, preserves zero
+observed false positives on the evaluated benign workflows, and shows clear
+ablation evidence that the full system derives its coverage from multiple
+complementary mechanisms rather than from a single rule.
 
-As AI agents become more autonomous and more deeply integrated into scientific computing infrastructure, the need for provable, runtime behavioral verification will only grow. Behavioral attestation provides the foundation for this verification, a new security primitive for a new class of threats.
+The broader implication is that securing AI agents requires a shift from
+verifying who the agent is to verifying what the agent is doing. For shared HPC
+infrastructure, that shift is especially important because the attack surface is
+large, the data is valuable, and legitimate workflows already require broad
+access to files, tools, and external services. Behavioral attestation does not
+eliminate prompt injection or tool compromise, but it does provide a concrete
+way to detect and contain their effects before they become cluster-scale data
+exfiltration events. We believe this is a necessary systems foundation for the
+next generation of AI-enabled scientific computing.

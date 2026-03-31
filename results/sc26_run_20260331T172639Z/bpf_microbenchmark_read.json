@@ -1,0 +1,479 @@
+{
+  "created_at": "2026-03-31T17:27:05.519199+00:00",
+  "config": {
+    "mode": "read",
+    "iters": 200000,
+    "size": 4096,
+    "path": "/tmp/aegis-microbench.dat",
+    "host": "127.0.0.1",
+    "port": 9,
+    "cpu": 2,
+    "repeats": 9,
+    "events": [
+      "task-clock",
+      "cycles",
+      "instructions",
+      "branches",
+      "branch-misses",
+      "cache-misses",
+      "context-switches",
+      "cpu-migrations"
+    ],
+    "bpf": null,
+    "sample_rate": 1,
+    "monitor_uid": 0,
+    "probe_scope": "file",
+    "attach_warmup": 0.25
+  },
+  "baseline": {
+    "summary": {
+      "median_task_clock": 249.27,
+      "median_ops_per_sec": 804536.07,
+      "median_elapsed_seconds": 0.24859,
+      "median_perf_events": {
+        "branch-misses": 11072153.0,
+        "branches": 89942901.0,
+        "cache-misses": 50014.0,
+        "context-switches": 5.0,
+        "cpu-migrations": 0.0,
+        "cycles": 560770265.0,
+        "instructions": 363950009.0,
+        "task-clock": 249.27
+      }
+    },
+    "trials": [
+      {
+        "label": "baseline",
+        "iteration": 1,
+        "returncode": 0,
+        "workload_seconds": 0.248603,
+        "ops_per_sec": 804496.39,
+        "perf_events": {
+          "task-clock": 249.27,
+          "cycles": 560770265.0,
+          "instructions": 363950009.0,
+          "branches": 89942901.0,
+          "branch-misses": 11072368.0,
+          "cache-misses": 49476.0,
+          "context-switches": 6.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.248603 ops_per_sec=804496.39\n",
+        "stderr": "249.27;msec;task-clock;249274157;100.00;0.997;CPUs utilized\n560770265;;cycles;249274157;100.00;2.250;GHz\n363950009;;instructions;249274157;100.00;0.65;insn per cycle\n89942901;;branches;249274157;100.00;360.819;M/sec\n11072368;;branch-misses;249274157;100.00;12.31;of all branches\n49476;;cache-misses;249274157;100.00;;\n6;;context-switches;249274157;100.00;24.070;/sec\n0;;cpu-migrations;249274157;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 2,
+        "returncode": 0,
+        "workload_seconds": 0.248481,
+        "ops_per_sec": 804890.39,
+        "perf_events": {
+          "task-clock": 249.18,
+          "cycles": 560548995.0,
+          "instructions": 363956673.0,
+          "branches": 89943432.0,
+          "branch-misses": 11072153.0,
+          "cache-misses": 50339.0,
+          "context-switches": 7.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.248481 ops_per_sec=804890.39\n",
+        "stderr": "249.18;msec;task-clock;249181665;100.00;0.997;CPUs utilized\n560548995;;cycles;249181665;100.00;2.250;GHz\n363956673;;instructions;249181665;100.00;0.65;insn per cycle\n89943432;;branches;249181665;100.00;360.955;M/sec\n11072153;;branch-misses;249181665;100.00;12.31;of all branches\n50339;;cache-misses;249181665;100.00;;\n7;;context-switches;249181665;100.00;28.092;/sec\n0;;cpu-migrations;249181665;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 3,
+        "returncode": 0,
+        "workload_seconds": 0.248063,
+        "ops_per_sec": 806247.3,
+        "perf_events": {
+          "task-clock": 248.88,
+          "cycles": 559932288.0,
+          "instructions": 363789927.0,
+          "branches": 89904996.0,
+          "branch-misses": 11067238.0,
+          "cache-misses": 46907.0,
+          "context-switches": 3.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.248063 ops_per_sec=806247.30\n",
+        "stderr": "248.88;msec;task-clock;248883907;100.00;0.997;CPUs utilized\n559932288;;cycles;248883907;100.00;2.250;GHz\n363789927;;instructions;248883907;100.00;0.65;insn per cycle\n89904996;;branches;248883907;100.00;361.233;M/sec\n11067238;;branch-misses;248883907;100.00;12.31;of all branches\n46907;;cache-misses;248883907;100.00;;\n3;;context-switches;248883907;100.00;12.054;/sec\n0;;cpu-migrations;248883907;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 4,
+        "returncode": 0,
+        "workload_seconds": 0.248385,
+        "ops_per_sec": 805203.19,
+        "perf_events": {
+          "task-clock": 249.21,
+          "cycles": 560645424.0,
+          "instructions": 363954023.0,
+          "branches": 89943855.0,
+          "branch-misses": 11072770.0,
+          "cache-misses": 50393.0,
+          "context-switches": 5.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.248385 ops_per_sec=805203.19\n",
+        "stderr": "249.21;msec;task-clock;249214275;100.00;0.997;CPUs utilized\n560645424;;cycles;249214275;100.00;2.250;GHz\n363954023;;instructions;249214275;100.00;0.65;insn per cycle\n89943855;;branches;249214275;100.00;360.910;M/sec\n11072770;;branch-misses;249214275;100.00;12.31;of all branches\n50393;;cache-misses;249214275;100.00;;\n5;;context-switches;249214275;100.00;20.063;/sec\n0;;cpu-migrations;249214275;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 5,
+        "returncode": 0,
+        "workload_seconds": 0.24859,
+        "ops_per_sec": 804536.07,
+        "perf_events": {
+          "task-clock": 249.28,
+          "cycles": 560800071.0,
+          "instructions": 363910022.0,
+          "branches": 89931903.0,
+          "branch-misses": 11070520.0,
+          "cache-misses": 48490.0,
+          "context-switches": 5.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.248590 ops_per_sec=804536.07\n",
+        "stderr": "249.28;msec;task-clock;249280923;100.00;0.997;CPUs utilized\n560800071;;cycles;249280923;100.00;2.250;GHz\n363910022;;instructions;249280923;100.00;0.65;insn per cycle\n89931903;;branches;249280923;100.00;360.765;M/sec\n11070520;;branch-misses;249280923;100.00;12.31;of all branches\n48490;;cache-misses;249280923;100.00;;\n5;;context-switches;249280923;100.00;20.058;/sec\n0;;cpu-migrations;249280923;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 6,
+        "returncode": 0,
+        "workload_seconds": 0.248033,
+        "ops_per_sec": 806343.97,
+        "perf_events": {
+          "task-clock": 248.85,
+          "cycles": 559847568.0,
+          "instructions": 363824774.0,
+          "branches": 89913053.0,
+          "branch-misses": 11068080.0,
+          "cache-misses": 48209.0,
+          "context-switches": 3.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.248033 ops_per_sec=806343.97\n",
+        "stderr": "248.85;msec;task-clock;248849897;100.00;0.997;CPUs utilized\n559847568;;cycles;248849897;100.00;2.250;GHz\n363824774;;instructions;248849897;100.00;0.65;insn per cycle\n89913053;;branches;248849897;100.00;361.314;M/sec\n11068080;;branch-misses;248849897;100.00;12.31;of all branches\n48209;;cache-misses;248849897;100.00;;\n3;;context-switches;248849897;100.00;12.055;/sec\n0;;cpu-migrations;248849897;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 7,
+        "returncode": 0,
+        "workload_seconds": 0.249355,
+        "ops_per_sec": 802069.76,
+        "perf_events": {
+          "task-clock": 250.08,
+          "cycles": 562597425.0,
+          "instructions": 364000660.0,
+          "branches": 89954095.0,
+          "branch-misses": 11073384.0,
+          "cache-misses": 50014.0,
+          "context-switches": 5.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.249355 ops_per_sec=802069.76\n",
+        "stderr": "250.08;msec;task-clock;250079746;100.00;0.997;CPUs utilized\n562597425;;cycles;250079746;100.00;2.250;GHz\n364000660;;instructions;250079746;100.00;0.65;insn per cycle\n89954095;;branches;250079746;100.00;359.702;M/sec\n11073384;;branch-misses;250079746;100.00;12.31;of all branches\n50014;;cache-misses;250079746;100.00;;\n5;;context-switches;250079746;100.00;19.994;/sec\n0;;cpu-migrations;250079746;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 8,
+        "returncode": 0,
+        "workload_seconds": 0.249419,
+        "ops_per_sec": 801864.05,
+        "perf_events": {
+          "task-clock": 250.12,
+          "cycles": 562689459.0,
+          "instructions": 363973863.0,
+          "branches": 89948338.0,
+          "branch-misses": 11072654.0,
+          "cache-misses": 50544.0,
+          "context-switches": 4.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.249419 ops_per_sec=801864.05\n",
+        "stderr": "250.12;msec;task-clock;250119548;100.00;0.997;CPUs utilized\n562689459;;cycles;250119548;100.00;2.250;GHz\n363973863;;instructions;250119548;100.00;0.65;insn per cycle\n89948338;;branches;250119548;100.00;359.621;M/sec\n11072654;;branch-misses;250119548;100.00;12.31;of all branches\n50544;;cache-misses;250119548;100.00;;\n4;;context-switches;250119548;100.00;15.992;/sec\n0;;cpu-migrations;250119548;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "baseline",
+        "iteration": 9,
+        "returncode": 0,
+        "workload_seconds": 0.249619,
+        "ops_per_sec": 801220.19,
+        "perf_events": {
+          "task-clock": 250.27,
+          "cycles": 563009025.0,
+          "instructions": 363934380.0,
+          "branches": 89937431.0,
+          "branch-misses": 11071831.0,
+          "cache-misses": 50586.0,
+          "context-switches": 6.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.249619 ops_per_sec=801220.19\n",
+        "stderr": "250.27;msec;task-clock;250273585;100.00;0.997;CPUs utilized\n563009025;;cycles;250273585;100.00;2.250;GHz\n363934380;;instructions;250273585;100.00;0.65;insn per cycle\n89937431;;branches;250273585;100.00;359.356;M/sec\n11071831;;branch-misses;250273585;100.00;12.31;of all branches\n50586;;cache-misses;250273585;100.00;;\n6;;context-switches;250273585;100.00;23.974;/sec\n0;;cpu-migrations;250273585;100.00;0.000;/sec\n"
+      }
+    ]
+  },
+  "attached": {
+    "summary": {
+      "median_task_clock": 319.42,
+      "median_ops_per_sec": 627490.32,
+      "median_elapsed_seconds": 0.31873,
+      "median_perf_events": {
+        "branch-misses": 15881115.0,
+        "branches": 134210494.0,
+        "cache-misses": 54132.0,
+        "context-switches": 6.0,
+        "cpu-migrations": 0.0,
+        "cycles": 718567779.0,
+        "instructions": 547251978.0,
+        "task-clock": 319.42
+      }
+    },
+    "trials": [
+      {
+        "label": "attached",
+        "iteration": 1,
+        "returncode": 0,
+        "workload_seconds": 0.31873,
+        "ops_per_sec": 627490.32,
+        "perf_events": {
+          "task-clock": 319.42,
+          "cycles": 718567779.0,
+          "instructions": 547248015.0,
+          "branches": 134208577.0,
+          "branch-misses": 15880846.0,
+          "cache-misses": 55182.0,
+          "context-switches": 7.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.318730 ops_per_sec=627490.32\n",
+        "stderr": "319.42;msec;task-clock;319415470;100.00;0.998;CPUs utilized\n718567779;;cycles;319415470;100.00;2.250;GHz\n547248015;;instructions;319415470;100.00;0.76;insn per cycle\n134208577;;branches;319415470;100.00;420.169;M/sec\n15880846;;branch-misses;319415470;100.00;11.83;of all branches\n55182;;cache-misses;319415470;100.00;;\n7;;context-switches;319415470;100.00;21.915;/sec\n0;;cpu-migrations;319415470;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 2,
+        "returncode": 0,
+        "workload_seconds": 0.31904,
+        "ops_per_sec": 626881.03,
+        "perf_events": {
+          "task-clock": 319.73,
+          "cycles": 719295119.0,
+          "instructions": 547270913.0,
+          "branches": 134214253.0,
+          "branch-misses": 15881285.0,
+          "cache-misses": 54559.0,
+          "context-switches": 6.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.319040 ops_per_sec=626881.03\n",
+        "stderr": "319.73;msec;task-clock;319730396;100.00;0.998;CPUs utilized\n719295119;;cycles;319730396;100.00;2.250;GHz\n547270913;;instructions;319730396;100.00;0.76;insn per cycle\n134214253;;branches;319730396;100.00;419.773;M/sec\n15881285;;branch-misses;319730396;100.00;11.83;of all branches\n54559;;cache-misses;319730396;100.00;;\n6;;context-switches;319730396;100.00;18.766;/sec\n0;;cpu-migrations;319730396;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 3,
+        "returncode": 0,
+        "workload_seconds": 0.318682,
+        "ops_per_sec": 627585.11,
+        "perf_events": {
+          "task-clock": 319.15,
+          "cycles": 717948521.0,
+          "instructions": 547251978.0,
+          "branches": 134210494.0,
+          "branch-misses": 15881115.0,
+          "cache-misses": 53278.0,
+          "context-switches": 8.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.318682 ops_per_sec=627585.11\n",
+        "stderr": "319.15;msec;task-clock;319146715;100.00;0.997;CPUs utilized\n717948521;;cycles;319146715;100.00;2.250;GHz\n547251978;;instructions;319146715;100.00;0.76;insn per cycle\n134210494;;branches;319146715;100.00;420.529;M/sec\n15881115;;branch-misses;319146715;100.00;11.83;of all branches\n53278;;cache-misses;319146715;100.00;;\n8;;context-switches;319146715;100.00;25.067;/sec\n0;;cpu-migrations;319146715;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 4,
+        "returncode": 0,
+        "workload_seconds": 0.318069,
+        "ops_per_sec": 628794.12,
+        "perf_events": {
+          "task-clock": 318.88,
+          "cycles": 717394611.0,
+          "instructions": 547118947.0,
+          "branches": 134181621.0,
+          "branch-misses": 15877804.0,
+          "cache-misses": 54435.0,
+          "context-switches": 4.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.318069 ops_per_sec=628794.12\n",
+        "stderr": "318.88;msec;task-clock;318875834;100.00;0.998;CPUs utilized\n717394611;;cycles;318875834;100.00;2.250;GHz\n547118947;;instructions;318875834;100.00;0.76;insn per cycle\n134181621;;branches;318875834;100.00;420.796;M/sec\n15877804;;branch-misses;318875834;100.00;11.83;of all branches\n54435;;cache-misses;318875834;100.00;;\n4;;context-switches;318875834;100.00;12.544;/sec\n0;;cpu-migrations;318875834;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 5,
+        "returncode": 0,
+        "workload_seconds": 0.318601,
+        "ops_per_sec": 627744.47,
+        "perf_events": {
+          "task-clock": 319.32,
+          "cycles": 718355316.0,
+          "instructions": 547306948.0,
+          "branches": 134223657.0,
+          "branch-misses": 15882744.0,
+          "cache-misses": 54132.0,
+          "context-switches": 7.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.318601 ops_per_sec=627744.47\n",
+        "stderr": "319.32;msec;task-clock;319320761;100.00;0.998;CPUs utilized\n718355316;;cycles;319320761;100.00;2.250;GHz\n547306948;;instructions;319320761;100.00;0.76;insn per cycle\n134223657;;branches;319320761;100.00;420.341;M/sec\n15882744;;branch-misses;319320761;100.00;11.83;of all branches\n54132;;cache-misses;319320761;100.00;;\n7;;context-switches;319320761;100.00;21.922;/sec\n0;;cpu-migrations;319320761;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 6,
+        "returncode": 0,
+        "workload_seconds": 0.319482,
+        "ops_per_sec": 626012.74,
+        "perf_events": {
+          "task-clock": 320.41,
+          "cycles": 720815927.0,
+          "instructions": 547654832.0,
+          "branches": 134316361.0,
+          "branch-misses": 15887372.0,
+          "cache-misses": 61102.0,
+          "context-switches": 6.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.319482 ops_per_sec=626012.74\n",
+        "stderr": "320.41;msec;task-clock;320409052;100.00;0.994;CPUs utilized\n720815927;;cycles;320409052;100.00;2.250;GHz\n547654832;;instructions;320409052;100.00;0.76;insn per cycle\n134316361;;branches;320409052;100.00;419.203;M/sec\n15887372;;branch-misses;320409052;100.00;11.83;of all branches\n61102;;cache-misses;320409052;100.00;;\n6;;context-switches;320409052;100.00;18.726;/sec\n0;;cpu-migrations;320409052;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 7,
+        "returncode": 0,
+        "workload_seconds": 0.319159,
+        "ops_per_sec": 626647.53,
+        "perf_events": {
+          "task-clock": 320.03,
+          "cycles": 719976200.0,
+          "instructions": 547178384.0,
+          "branches": 134195822.0,
+          "branch-misses": 15879871.0,
+          "cache-misses": 52369.0,
+          "context-switches": 4.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.319159 ops_per_sec=626647.53\n",
+        "stderr": "320.03;msec;task-clock;320025855;100.00;0.998;CPUs utilized\n719976200;;cycles;320025855;100.00;2.250;GHz\n547178384;;instructions;320025855;100.00;0.76;insn per cycle\n134195822;;branches;320025855;100.00;419.328;M/sec\n15879871;;branch-misses;320025855;100.00;11.83;of all branches\n52369;;cache-misses;320025855;100.00;;\n4;;context-switches;320025855;100.00;12.499;/sec\n0;;cpu-migrations;320025855;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 8,
+        "returncode": 0,
+        "workload_seconds": 0.317197,
+        "ops_per_sec": 630523.32,
+        "perf_events": {
+          "task-clock": 317.91,
+          "cycles": 715198516.0,
+          "instructions": 547234002.0,
+          "branches": 134205273.0,
+          "branch-misses": 15880799.0,
+          "cache-misses": 53852.0,
+          "context-switches": 6.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.317197 ops_per_sec=630523.32\n",
+        "stderr": "317.91;msec;task-clock;317907665;100.00;0.998;CPUs utilized\n715198516;;cycles;317907665;100.00;2.250;GHz\n547234002;;instructions;317907665;100.00;0.77;insn per cycle\n134205273;;branches;317907665;100.00;422.152;M/sec\n15880799;;branch-misses;317907665;100.00;11.83;of all branches\n53852;;cache-misses;317907665;100.00;;\n6;;context-switches;317907665;100.00;18.873;/sec\n0;;cpu-migrations;317907665;100.00;0.000;/sec\n"
+      },
+      {
+        "label": "attached",
+        "iteration": 9,
+        "returncode": 0,
+        "workload_seconds": 0.321668,
+        "ops_per_sec": 621758.86,
+        "perf_events": {
+          "task-clock": 322.39,
+          "cycles": 725276454.0,
+          "instructions": 547307905.0,
+          "branches": 134224151.0,
+          "branch-misses": 15883775.0,
+          "cache-misses": 52093.0,
+          "context-switches": 6.0,
+          "cpu-migrations": 0.0
+        },
+        "stdout": "mode=read iters=200000 elapsed=0.321668 ops_per_sec=621758.86\n",
+        "stderr": "322.39;msec;task-clock;322391726;100.00;0.998;CPUs utilized\n725276454;;cycles;322391726;100.00;2.250;GHz\n547307905;;instructions;322391726;100.00;0.75;insn per cycle\n134224151;;branches;322391726;100.00;416.339;M/sec\n15883775;;branch-misses;322391726;100.00;11.83;of all branches\n52093;;cache-misses;322391726;100.00;;\n6;;context-switches;322391726;100.00;18.611;/sec\n0;;cpu-migrations;322391726;100.00;0.000;/sec\n"
+      }
+    ],
+    "attach_logs": [
+      {
+        "iteration": 1,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 2,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 3,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 4,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 5,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 6,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 7,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 8,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      },
+      {
+        "iteration": 9,
+        "stdout": "",
+        "stderr": "INFO:aegis.bpf_attach:AEGIS probe attached without userspace event polling\nINFO:aegis.bpf_attach:Press Ctrl+C to detach\nINFO:aegis.bpf_attach:Detaching probe\n",
+        "returncode": 0
+      }
+    ]
+  },
+  "overhead": {
+    "task_clock_pct": 28.142175151442213,
+    "elapsed_pct": 28.21513335210588,
+    "ops_per_sec_pct": -22.00594312695017,
+    "perf_events_pct": {
+      "branch-misses": 43.432943890858446,
+      "branches": 49.21743962872623,
+      "cache-misses": 8.233694565521654,
+      "context-switches": 20.0,
+      "cpu-migrations": 0.0,
+      "cycles": 28.139422478115883,
+      "instructions": 50.36460076032036,
+      "task-clock": 28.142175151442213
+    }
+  }
+}

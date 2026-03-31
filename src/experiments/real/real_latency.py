@@ -209,6 +209,7 @@ def _framework_profile(agent: Agent) -> ConstraintProfile:
         user_id=agent.user_id,
         project_id=agent.project_id,
         session_id=f"session-{agent.user_id}-{int(time.time() * 1000)}",
+        slurm_job_id=f"job_{agent.user_id}",
         data_access=DataAccessConstraints(
             allowed_paths={
                 f"/projects/{agent.project_id}/*",
