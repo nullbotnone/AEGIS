@@ -6,7 +6,7 @@ Section~\ref{aegis}. We use \emph{real-path} experiments to measure the implemen
 \textit{ebpf}-based attestation pipeline on EPYC hardware, and we use
 \emph{simulation-based controlled studies} to evaluate broader attack coverage,
 component ablation, baseline comparison, and benign-workflow behavior. The
-real-path experiments use the deployed AEGIS probe, collector, verifier, and
+real-path experiments use the deployed \projectname~probe, collector, verifier, and
 policy logic; the controlled studies reuse the same policy semantics and attack
 families but execute them in a deterministic harness that exposes larger attack
 and workload matrices.
@@ -17,7 +17,7 @@ We evaluate performance on AMD EPYC 7713 64-core processors (2.0\,GHz,
 256\,MB L3 cache) with 1536\,GB DDR5 RAM, running Rocky Linux 9.6 with Linux
 kernel 5.14.0. This represents realistic HPC compute-node specifications. The
 \textit{ebpf}-based attestation engine is compiled with \texttt{clang} and runs with
-kernel-side syscall interception, while the verifier executes the full AEGIS
+kernel-side syscall interception, while the verifier executes the full \projectname
 policy pipeline including behavioral-constraint checking, cross-agent
 correlation, and containment decision generation.
 
@@ -40,7 +40,7 @@ collaboration, budget-edge LLM reporting, and tool-heavy post-processing.
 
 \subsection{Real-Path Detection Results}
 
-Figure~\ref{fig:attack-results} summarizes the real-path detection results. AEGIS detects all four implemented attack classes in all real-path trials. At
+Figure~\ref{fig:attack-results} summarizes the real-path detection results. \projectname~detects all four implemented attack classes in all real-path trials. At
 the default 1\,s attestation interval, the median detection latency is
 500.37\,ms for filesystem-mediated injection, 500.14\,ms for co-location
 injection, 500.31\,ms for supply-chain injection, and 500.25\,ms for
@@ -54,7 +54,7 @@ cases.
   \centering
   \includegraphics[width=\linewidth]{figures/attack_results.png}
   \caption{Measured outcomes on the real attestation path at a 1\,s interval.
-  Across three trials per attack, AEGIS detects all four attacks with median
+  Across three trials per attack, \projectname~detects all four attacks with median
   detection latency between 500.14\,ms and 500.37\,ms. Median data emitted
   before containment is 68\,B for filesystem injection, 50\,B for co-location
   injection, 519\,B for supply-chain injection, and 503\,B for coordinated
@@ -63,7 +63,7 @@ cases.
   \label{fig:attack-results}
 \end{figure}
 
-The real-path results also show that AEGIS detects attacks through the intended
+The real-path results also show that \projectname~detects attacks through the intended
 policy dimensions rather than through a single catch-all rule. Filesystem
 injection triggers denied-path and unauthorized-endpoint violations,
 co-location injection is detected through network policy, supply-chain
@@ -76,7 +76,7 @@ cross-agent covert-channel rule.
 To complement the real-path measurements, we run the full four-attack suite in
 the controlled harness. Table~\ref{tab:controlled-coverage} summarizes these
 results. In this setting, all four attacks succeed in hijacking the target
-agent and exfiltrating data, and AEGIS detects all four, yielding a 100\%
+agent and exfiltrating data, and \projectname~detects all four, yielding a 100\%
 detection rate over 4/4 completed attacks. The controlled suite produces 16
 total findings and 1158\,B of exfiltrated payload across the four attacks.
 The simpler filesystem and co-location attacks each trigger one detection,
@@ -110,12 +110,12 @@ harness with the same policy semantics.
 
 \subsection{Baseline Comparison}
 
-Figure~\ref{fig:baseline-comparison} compares AEGIS against four representative
+Figure~\ref{fig:baseline-comparison} compares \projectname~against four representative
 alternatives using identical attack traces. Network DLP, filesystem auditing,
 and strict sandboxing each detect two of the four attacks (50\%), while
-per-agent analytics misses all four. AEGIS is the only defense that detects
+per-agent analytics misses all four. \projectname~is the only defense that detects
 every attack class. The richer analysis does incur higher processing cost than
-the simpler baselines, but the absolute cost remains small: AEGIS averages
+the simpler baselines, but the absolute cost remains small: \projectname~averages
 0.081\,ms of analysis time per trace, compared with 0.005--0.010\,ms for the
 baselines.
 
@@ -125,19 +125,19 @@ baselines.
   \caption{Detection outcomes and mean analysis time for five defenses
   evaluated on the same attack traces. Network DLP, filesystem auditing, and
   strict sandboxing each detect only two of four attacks (50\%), while
-  per-agent analytics misses all four. AEGIS is the only mechanism that
+  per-agent analytics misses all four. \projectname~is the only mechanism that
   detects all attack classes (100\%) and still completes its analysis in
   0.081\,ms on average, compared with 0.005--0.010\,ms for the simpler
   baselines.}
   \label{fig:baseline-comparison}
 \end{figure}
 
-These results highlight why AEGIS needs all four policy dimensions. DLP sees
+These results highlight why \projectname~needs all four policy dimensions. DLP sees
 egress but cannot reason about encrypted traffic sent to whitelisted services.
 Filesystem auditing sees sensitive paths but misses network-only violations.
 Strict sandboxing blocks only the attacks that cross a hard isolation
 boundary, and per-agent analytics misses coordinated behavior entirely because
-the individual agents remain locally plausible. In contrast, AEGIS combines
+the individual agents remain locally plausible. In contrast, \projectname~combines
 constraint checking, signature augmentation, and cross-agent correlation in a
 single verifier.
 
@@ -157,7 +157,7 @@ dimensions rather than a single critical check.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/ablation_heatmap.png}
-  \caption{Real-path ablation at a 1\,s attestation interval. Full AEGIS
+  \caption{Real-path ablation at a 1\,s attestation interval. Full \projectname
   detects all four attacks in all three trials. Removing network policy causes
   the co-location attack to evade detection completely (0/3), while a
   permissive profile misses filesystem, co-location, and supply-chain attacks
@@ -168,7 +168,7 @@ dimensions rather than a single critical check.
 \end{figure}
 
 Figure~\ref{fig:simulated-ablation} sharpens this observation by isolating the specialized
-detection mechanisms. In the simulation harness, full AEGIS detects all four
+detection mechanisms. In the simulation harness, full \projectname~detects all four
 controlled attacks, and removing any one of the four specialized mechanisms
 drops detection from 100\% to 75\% by allowing exactly its matching attack
 class to pass. A minimal path-only policy detects none of the attacks. Taken
@@ -181,7 +181,7 @@ orthogonal coverage.
   \centering
   \includegraphics[width=\linewidth]{figures/simulated_ablation_breakdown.png}
   \caption{Controlled simulated ablation isolating the four specialized
-  detection mechanisms. Full AEGIS detects all four attack classes, and
+  detection mechanisms. Full \projectname~detects all four attack classes, and
   removing any one mechanism drops overall detection to 75\% by allowing
   exactly the matching attack class to evade detection: no volume limits misses
   the volume attack, no sensitive-file detection misses the sensitive-file
@@ -203,7 +203,7 @@ deliberately pessimistic and should be interpreted as upper bounds on probe
 cost rather than application-level slowdown.
 
 Second, the real end-to-end latency sweep shows that the operational overhead
-of AEGIS on the full verifier path is substantially lower. All four attacks
+of \projectname~on the full verifier path is substantially lower. All four attacks
 remain detectable across the entire tested range from 100\,ms to 10\,s.
 Detection latency tracks the attestation interval, rising from 50.3\,ms at a
 100\,ms interval to 500.2\,ms at 1\,s and 5.00\,s at 10\,s. Over the same
@@ -252,7 +252,7 @@ measurement.
 \subsection{Benign Workloads}
 
 Figure~\ref{fig:false-positive-summary} summarizes the benign-workflow study. The expanded benign-workflow suite produces no observed false positives. Across
-six workflows and 42 benign actions, AEGIS reports zero alerts. The suite is
+six workflows and 42 benign actions, \projectname~reports zero alerts. The suite is
 not limited to trivially clean traces: it includes standard single-agent HPC
 pipelines, authorized multi-agent collaboration, budget-edge LLM reporting,
 and tool-heavy post-processing, covering both workflow size and the absence of
@@ -265,7 +265,7 @@ alerts.
   left panel reports workflow coverage in terms of executed actions and logged
   events across six benign workflows, including authorized multi-agent
   collaboration, budget-edge LLM reporting, and tool-heavy postprocessing. The
-  right panel shows that AEGIS raises no false positives in any workflow,
+  right panel shows that \projectname~raises no false positives in any workflow,
   yielding 0 detections across 42 benign actions.}
   \label{fig:false-positive-summary}
 \end{figure}
