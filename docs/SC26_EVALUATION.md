@@ -54,11 +54,21 @@ make bpfall
 make bench
 ```
 
+## Campaign Tiers
+
+Use one of these campaign tiers instead of treating every run as the same size:
+
+| Tier | Purpose | Wrapper Mode | Artifacts |
+|---|---|---|---|
+| Smoke | Confirm that the EPYC node, probe attach path, and paper harness all work before a long run | `bash scripts/run_sc26_eval.sh --mode smoke` | `smoke_bpf_microbenchmark_openat.json`, `smoke_real_latency_filesystem.json`, `smoke_simulated_all_attacks.json`, `smoke_simulated_false_positive.json` |
+| Core | Generate the main-paper artifact set | `bash scripts/run_sc26_eval.sh --mode core` | all real artifacts, `simulated_all_attacks`, `simulated_ablation`, `simulated_false_positive`, `baseline_comparison` |
+| All | Generate the core set plus appendix-style scaling artifacts | `bash scripts/run_sc26_eval.sh --mode all` | core artifacts plus `simulated_performance` |
+
 ## Recommended Run Order
 
-1. Run the real microbenchmarks.
-2. Run the real verifier-path latency studies.
-3. Run the simulated coverage, ablation, false-positive, and baseline studies.
+1. Run the smoke campaign on the target machine.
+2. Run the core campaign for the main paper.
+3. Run the full `all` campaign if you need appendix or secondary scaling artifacts.
 4. Archive all artifacts under `results/sc26_bundle/` or a campaign-specific directory.
 
 ## Wrapper Script
@@ -72,9 +82,11 @@ bash scripts/run_sc26_eval.sh
 Useful variants:
 
 ```bash
+bash scripts/run_sc26_eval.sh --mode smoke
+bash scripts/run_sc26_eval.sh --mode core
 bash scripts/run_sc26_eval.sh --mode real
 bash scripts/run_sc26_eval.sh --mode simulated
-bash scripts/run_sc26_eval.sh --output-dir results/sc26_camera_ready --collect-configs --collect-logs
+bash scripts/run_sc26_eval.sh --mode all --output-dir results/sc26_camera_ready --collect-configs --collect-logs
 ```
 
 ## Manual Reproduction Commands

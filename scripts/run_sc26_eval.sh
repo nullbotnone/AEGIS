@@ -9,16 +9,20 @@ Run the documented SC26 evaluation workflow and write all artifacts into one
 campaign directory under results/.
 
 Options:
-  --mode <all|real|simulated>   Which stages to run. Default: all
-  --output-dir <path>           Campaign output directory. Default: results/sc26_run_<timestamp>
-  --skip-build                  Skip make bpfall and make bench
-  --with-exec                   Include the optional execve microbenchmark
-  --collect-logs                Collect journalctl logs for aegis services when available
-  --collect-configs             Copy /etc/aegis configs when available
-  --help                        Show this help text
+  --mode <smoke|core|all|real|simulated>
+                               Which campaign tier to run. Default: all
+                               smoke: quick environment validation
+                               core: main-paper artifact set
+                               all: core + appendix/extended studies
+  --output-dir <path>          Campaign output directory. Default: results/sc26_run_<timestamp>
+  --skip-build                 Skip make bpfall and make bench
+  --with-exec                  Include the optional execve microbenchmark in real-mode runs
+  --collect-logs               Collect journalctl logs for aegis services when available
+  --collect-configs            Copy /etc/aegis configs when available
+  --help                       Show this help text
 
 Environment:
-  SUDO=<command>                Override sudo command when not running as root
+  SUDO=<command>               Override sudo command when not running as root
 EOF
 }
 
@@ -68,7 +72,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$MODE" in
-  all|real|simulated) ;;
+  smoke|core|all|real|simulated) ;;
   *)
     echo "Invalid mode: $MODE" >&2
     exit 1
@@ -97,15 +101,29 @@ run_cmd() {
   "$@"
 }
 
-run_real() {
-  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark     --mode openat     --iters 200000     --repeats 9     --output "$OUTPUT_DIR/bpf_microbenchmark_openat.json"
+run_microbenchmark() {
+  local mode="$1"
+  local iters="$2"
+  local repeats="$3"
+  local output="$4"
+  shift 4
 
-  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark     --mode read     --iters 200000     --size 4096     --probe-scope file     --output "$OUTPUT_DIR/bpf_microbenchmark_read.json"
+  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark     --mode "$mode"     --iters "$iters"     --repeats "$repeats"     --skip-build     "$@"     --output "$output"
+}
 
-  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark     --mode connect     --iters 100000     --probe-scope network     --output "$OUTPUT_DIR/bpf_microbenchmark_connect.json"
+run_real_smoke() {
+  run_microbenchmark openat 50000 3 "$OUTPUT_DIR/smoke_bpf_microbenchmark_openat.json"
+
+  run_cmd python3 -m src.paper.experiments.real.run_real_latency_capture     --attack filesystem     --interval 1.0     --repeats 1     --output "$OUTPUT_DIR/smoke_real_latency_filesystem.json"
+}
+
+run_real_core() {
+  run_microbenchmark openat 200000 9 "$OUTPUT_DIR/bpf_microbenchmark_openat.json"
+  run_microbenchmark read 200000 9 "$OUTPUT_DIR/bpf_microbenchmark_read.json" --size 4096 --probe-scope file
+  run_microbenchmark connect 100000 9 "$OUTPUT_DIR/bpf_microbenchmark_connect.json" --probe-scope network
 
   if [[ $WITH_EXEC -eq 1 ]]; then
-    run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark       --mode execve       --iters 100000       --probe-scope exec       --output "$OUTPUT_DIR/bpf_microbenchmark_execve.json"
+    run_microbenchmark execve 100000 9 "$OUTPUT_DIR/bpf_microbenchmark_execve.json" --probe-scope exec
   fi
 
   run_cmd python3 -m src.paper.experiments.real.run_latency_sweep     --repeats 3     --max-interval 10.0     --output "$OUTPUT_DIR/real_latency_sweep.json"
@@ -117,16 +135,24 @@ run_real() {
   run_cmd python3 -m src.paper.experiments.real.run_ablation     --interval 1.0     --repeats 3     --output "$OUTPUT_DIR/real_ablation.json"
 }
 
-run_simulated() {
+run_simulated_smoke() {
+  run_cmd python3 -m src.paper.experiments.simulated.run_all     --output "$OUTPUT_DIR/smoke_simulated_all_attacks.json"
+
+  run_cmd python3 -m src.paper.experiments.simulated.run_false_positive     --output "$OUTPUT_DIR/smoke_simulated_false_positive.json"
+}
+
+run_simulated_core() {
   run_cmd python3 -m src.paper.experiments.simulated.run_all     --output "$OUTPUT_DIR/simulated_all_attacks.json"
 
   run_cmd python3 -m src.paper.experiments.simulated.run_ablation     --output "$OUTPUT_DIR/simulated_ablation.json"
 
   run_cmd python3 -m src.paper.experiments.simulated.run_false_positive     --output "$OUTPUT_DIR/simulated_false_positive.json"
 
-  run_cmd python3 -m src.paper.experiments.simulated.run_performance     --output "$OUTPUT_DIR/simulated_performance.json"
-
   run_cmd python3 -m src.paper.experiments.simulated.run_baseline_comparison     --output "$OUTPUT_DIR/baseline_comparison.md"
+}
+
+run_simulated_extended() {
+  run_cmd python3 -m src.paper.experiments.simulated.run_performance     --output "$OUTPUT_DIR/simulated_performance.json"
 }
 
 if [[ $SKIP_BUILD -eq 0 ]]; then
@@ -135,15 +161,25 @@ if [[ $SKIP_BUILD -eq 0 ]]; then
 fi
 
 case "$MODE" in
+  smoke)
+    run_real_smoke
+    run_simulated_smoke
+    ;;
+  core)
+    run_real_core
+    run_simulated_core
+    ;;
   all)
-    run_real
-    run_simulated
+    run_real_core
+    run_simulated_core
+    run_simulated_extended
     ;;
   real)
-    run_real
+    run_real_core
     ;;
   simulated)
-    run_simulated
+    run_simulated_core
+    run_simulated_extended
     ;;
 esac
 

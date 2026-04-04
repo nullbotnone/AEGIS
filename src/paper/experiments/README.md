@@ -18,3 +18,9 @@ These scripts are for evaluation. To operate AEGIS on a cluster, use:
 - `src/deployment/collector/bpf_collector.py`
 - `deploy/systemd/`
 - `deploy/slurm/`
+
+## Recommended Campaigns
+
+- `bash scripts/run_sc26_eval.sh --mode smoke`: quick preflight for a new machine or cluster node
+- `bash scripts/run_sc26_eval.sh --mode core`: main-paper artifact set
+- `bash scripts/run_sc26_eval.sh --mode all`: core set plus the simulation-based scaling appendix

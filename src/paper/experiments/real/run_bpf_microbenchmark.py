@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, List
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_EVENTS = [
     "task-clock",
     "cycles",
@@ -144,7 +144,7 @@ def attach_flags(mode: str, scope: str) -> List[str]:
 
 def workload_cmd(args: argparse.Namespace) -> List[str]:
     cmd = [
-        str(REPO_ROOT / "src" / "bpf" / "syscall_microbench"),
+        str(REPO_ROOT / "src" / "deployment" / "bpf" / "syscall_microbench"),
         "--mode",
         args.mode,
         "--iters",

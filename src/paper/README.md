@@ -12,6 +12,9 @@
 
 ## Primary Entry Points
 
+- `bash scripts/run_sc26_eval.sh --mode smoke`: fast validation before a full campaign
+- `bash scripts/run_sc26_eval.sh --mode core`: main-paper artifact set
+- `bash scripts/run_sc26_eval.sh --mode all`: core set plus appendix-style scaling study
 - `python3 -m src.paper.experiments.real.run_bpf_microbenchmark`
 - `python3 -m src.paper.experiments.real.run_real_latency_capture`
 - `python3 -m src.paper.experiments.simulated.run_all`
