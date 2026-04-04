@@ -183,10 +183,13 @@ case "$MODE" in
     ;;
 esac
 
-run_cmd git rev-parse HEAD
-GIT_HEAD="$(git rev-parse HEAD)"
-printf '%s
+if GIT_HEAD="$(git rev-parse HEAD 2>/dev/null)"; then
+  printf '%s
 ' "$GIT_HEAD" > "$OUTPUT_DIR/commit.txt"
+else
+  printf '%s
+' "unavailable" > "$OUTPUT_DIR/commit.txt"
+fi
 
 if [[ $COLLECT_CONFIGS -eq 1 ]]; then
   cp /etc/aegis/verifier.json "$OUTPUT_DIR/" 2>/dev/null || true

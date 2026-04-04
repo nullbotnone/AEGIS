@@ -307,6 +307,10 @@ def main() -> None:
             set(baseline_summary["median_perf_events"]) | set(attached_summary["median_perf_events"])
         )
     }
+    throughput_delta_pct = overhead_pct(
+        baseline_summary["median_ops_per_sec"],
+        attached_summary["median_ops_per_sec"],
+    )
     results = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "config": {
@@ -343,10 +347,9 @@ def main() -> None:
                 baseline_summary["median_elapsed_seconds"],
                 attached_summary["median_elapsed_seconds"],
             ),
-            "ops_per_sec_pct": overhead_pct(
-                baseline_summary["median_ops_per_sec"],
-                attached_summary["median_ops_per_sec"],
-            ),
+            "ops_per_sec_pct": throughput_delta_pct,
+            "throughput_delta_pct": throughput_delta_pct,
+            "throughput_loss_pct": max(0.0, -throughput_delta_pct),
             "perf_events_pct": event_overhead,
         },
     }
@@ -374,7 +377,9 @@ def main() -> None:
     print("Overhead:")
     print(f"  task-clock: {results['overhead']['task_clock_pct']:.2f}%")
     print(f"  elapsed:    {results['overhead']['elapsed_pct']:.2f}%")
-    print(f"  ops/sec:    {results['overhead']['ops_per_sec_pct']:.2f}%")
+    print("Throughput:")
+    print(f"  delta:      {results['overhead']['throughput_delta_pct']:.2f}%")
+    print(f"  loss:       {results['overhead']['throughput_loss_pct']:.2f}%")
 
 
 if __name__ == "__main__":

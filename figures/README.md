@@ -15,7 +15,9 @@ The notebook reads:
 - `simulated_all_attacks.json`
 - `simulated_ablation.json`
 - `simulated_false_positive.json`
-- `simulated_performance.json`
+- `simulated_performance.json` when present in the same result bundle
+
+If `simulated_performance.json` is stored separately, set `AEGIS_PERF_ARTIFACT` to its path before executing the notebook.
 
 The false-positive artifact reflects the expanded benign suite used for the paper: standard single-agent workflows, authorized multi-agent collaboration, budget-edge LLM reporting, and tool-heavy benign postprocessing.
 
@@ -27,11 +29,8 @@ The notebook regenerates the SC26 paper figure set:
 - `baseline_comparison.png`
 - `attack_results.png`
 - `ablation_heatmap.png`
-- `latency_tradeoff.png`
-- `microbenchmark_breakdown.png`
 - `simulated_ablation_breakdown.png`
 - `scaling_sweep.png`
-- `false_positive_summary.png`: benign-suite coverage with explicit no-false-positive outcome
 - `performance_overhead.png`
 
 ## Regeneration
@@ -46,5 +45,13 @@ For a specific campaign:
 
 ```bash
 AEGIS_RESULTS_DIR=../results/sc26_run_20260331T165053Z \
+  jupyter nbconvert --to notebook --execute paper_figures.ipynb --output paper_figures.ipynb
+```
+
+When the scaling appendix artifact is stored elsewhere:
+
+```bash
+AEGIS_RESULTS_DIR=../results/sc26_run_20260331T165053Z \
+AEGIS_PERF_ARTIFACT=/path/to/simulated_performance.json \
   jupyter nbconvert --to notebook --execute paper_figures.ipynb --output paper_figures.ipynb
 ```

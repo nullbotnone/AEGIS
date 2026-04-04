@@ -1,0 +1,190 @@
+{
+  "created_at": "2026-04-04T20:51:00.275833+00:00",
+  "summary": {
+    "attack": "colocation",
+    "attack_name": "Co-Location Injection",
+    "interval_s": 1.0,
+    "repeats": 3,
+    "detected_trials": 3,
+    "median_detection_latency_ms": 500.1261234283447,
+    "median_exfiltrated_bytes": 50.0,
+    "median_cpu_overhead_percent": 0.03517655963713806,
+    "median_attestation_cycles": 1.0
+  },
+  "trials": [
+    {
+      "attack_key": "colocation",
+      "attack_name": "Co-Location Injection",
+      "ablation_key": "full",
+      "ablation_name": "Full AEGIS",
+      "interval_s": 1.0,
+      "detected": true,
+      "detection_latency_ms": 500.6380081176758,
+      "data_exfiltrated_bytes": 50,
+      "cpu_overhead_percent": 0.10714517063207792,
+      "attestation_cycles": 1,
+      "attack_start_time": 1775335857.7734787,
+      "detection_time": 1775335858.2741168,
+      "attack_end_time": 1775335857.7735786,
+      "verification_violations": [
+        "Unauthorized connection: Endpoint https://data-exfil.malicious.io/collect not in allowed endpoints"
+      ],
+      "cycle_records": [
+        {
+          "cycle_index": 1,
+          "cycle_time_s": 1.0000584125518799,
+          "cycle_duration_ms": 1.0726451873779297,
+          "violation_count": 1,
+          "verdicts": {
+            "victim": "violation_severe"
+          },
+          "violation_descriptions": [
+            "Unauthorized connection: Endpoint https://data-exfil.malicious.io/collect not in allowed endpoints"
+          ]
+        }
+      ],
+      "final_exfiltrated_bytes": 50,
+      "attack_result": {
+        "attack_name": "Multi-User Co-Location Injection",
+        "co_location": {
+          "node_id": "node-42",
+          "co_location_detected": true,
+          "jobs_on_node": [
+            "job_attacker_001",
+            "job_victim_001"
+          ]
+        },
+        "injection_succeeded": true,
+        "data_exfiltrated": true,
+        "exfiltrated_bytes": 50,
+        "attack_duration_ms": 0.09989738464355469,
+        "attacker_details": {
+          "attacker_action": "wrote injection to /tmp/shared_analysis.log"
+        },
+        "victim_details": {
+          "attack_name": "Multi-User Co-Location Injection",
+          "injection_succeeded": true,
+          "data_exfiltrated": true,
+          "exfiltrated_bytes": 50
+        }
+      },
+      "attach_offset_s": 0.5
+    },
+    {
+      "attack_key": "colocation",
+      "attack_name": "Co-Location Injection",
+      "ablation_key": "full",
+      "ablation_name": "Full AEGIS",
+      "interval_s": 1.0,
+      "detected": true,
+      "detection_latency_ms": 500.1261234283447,
+      "data_exfiltrated_bytes": 50,
+      "cpu_overhead_percent": 0.03460473975305276,
+      "attestation_cycles": 1,
+      "attack_start_time": 1775335858.7745852,
+      "detection_time": 1775335859.2747114,
+      "attack_end_time": 1775335858.7747617,
+      "verification_violations": [
+        "Unauthorized connection: Endpoint https://data-exfil.malicious.io/collect not in allowed endpoints"
+      ],
+      "cycle_records": [
+        {
+          "cycle_index": 1,
+          "cycle_time_s": 1.0000593662261963,
+          "cycle_duration_ms": 0.34618377685546875,
+          "violation_count": 1,
+          "verdicts": {
+            "victim": "violation_severe"
+          },
+          "violation_descriptions": [
+            "Unauthorized connection: Endpoint https://data-exfil.malicious.io/collect not in allowed endpoints"
+          ]
+        }
+      ],
+      "final_exfiltrated_bytes": 50,
+      "attack_result": {
+        "attack_name": "Multi-User Co-Location Injection",
+        "co_location": {
+          "node_id": "node-42",
+          "co_location_detected": true,
+          "jobs_on_node": [
+            "job_attacker_001",
+            "job_victim_001"
+          ]
+        },
+        "injection_succeeded": true,
+        "data_exfiltrated": true,
+        "exfiltrated_bytes": 50,
+        "attack_duration_ms": 0.17642974853515625,
+        "attacker_details": {
+          "attacker_action": "wrote injection to /tmp/shared_analysis.log"
+        },
+        "victim_details": {
+          "attack_name": "Multi-User Co-Location Injection",
+          "injection_succeeded": true,
+          "data_exfiltrated": true,
+          "exfiltrated_bytes": 50
+        }
+      },
+      "attach_offset_s": 0.5
+    },
+    {
+      "attack_key": "colocation",
+      "attack_name": "Co-Location Injection",
+      "ablation_key": "full",
+      "ablation_name": "Full AEGIS",
+      "interval_s": 1.0,
+      "detected": true,
+      "detection_latency_ms": 500.028133392334,
+      "data_exfiltrated_bytes": 50,
+      "cpu_overhead_percent": 0.03517655963713806,
+      "attestation_cycles": 1,
+      "attack_start_time": 1775335859.7752469,
+      "detection_time": 1775335860.275275,
+      "attack_end_time": 1775335859.7753243,
+      "verification_violations": [
+        "Unauthorized connection: Endpoint https://data-exfil.malicious.io/collect not in allowed endpoints"
+      ],
+      "cycle_records": [
+        {
+          "cycle_index": 1,
+          "cycle_time_s": 1.0000593662261963,
+          "cycle_duration_ms": 0.35190582275390625,
+          "violation_count": 1,
+          "verdicts": {
+            "victim": "violation_severe"
+          },
+          "violation_descriptions": [
+            "Unauthorized connection: Endpoint https://data-exfil.malicious.io/collect not in allowed endpoints"
+          ]
+        }
+      ],
+      "final_exfiltrated_bytes": 50,
+      "attack_result": {
+        "attack_name": "Multi-User Co-Location Injection",
+        "co_location": {
+          "node_id": "node-42",
+          "co_location_detected": true,
+          "jobs_on_node": [
+            "job_attacker_001",
+            "job_victim_001"
+          ]
+        },
+        "injection_succeeded": true,
+        "data_exfiltrated": true,
+        "exfiltrated_bytes": 50,
+        "attack_duration_ms": 0.07748603820800781,
+        "attacker_details": {
+          "attacker_action": "wrote injection to /tmp/shared_analysis.log"
+        },
+        "victim_details": {
+          "attack_name": "Multi-User Co-Location Injection",
+          "injection_succeeded": true,
+          "data_exfiltrated": true,
+          "exfiltrated_bytes": 50
+        }
+      },
+      "attach_offset_s": 0.5
+    }
+  ]
+}
