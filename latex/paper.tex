@@ -17,11 +17,13 @@
 
 % Define commands
 \newcommand{\aegis}{AEGIS}
+\newcommand{\projectname}{\textsc{AEGIS}}
 \newcommand{\epyc}{AMD EPYC}
 \newcommand{\hpc}{HPC}
 \newcommand{\dlp}{DLP}
 \newcommand{\ebpf}{eBPF}
 \newcommand{\slurm}{Slurm}
+\newcommand{\circled}[1]{\textcircled{\scriptsize #1}}
 
 % Title and author
 \title{Attestation is All You Need: Toward a Zero-Trust Architecture for HPC AI Agents}
@@ -34,11 +36,7 @@
 
 % Abstract
 \begin{abstract}
-The integration of AI agents into high-performance computing environments introduces a fundamentally new attack surface that existing HPC security mechanisms were never designed to address: the hijacked authorized agent. Through prompt injection attacks leveraging shared filesystems, co-located compute nodes, or compromised tools, an adversary can subvert an agent that operates with valid user credentials. The compromised agent then exfiltrates sensitive data through encrypted, whitelisted LLM API channels, precisely the channels that every legitimate agent must use, rendering traditional monitoring mechanisms ineffective.
-
-We propose behavioral attestation as the foundation for securing AI agents in HPC. Unlike probabilistic detection systems that rely on pattern matching or machine learning classifiers, behavioral attestation provides provable, constraint-based guarantees that an agent operates within its authorized behavioral boundaries, with runtime containment enforced before data exfiltration can occur.
-
-This paper makes four contributions. First, we formalize four HPC-specific injection attack vectors that exploit unique characteristics of HPC infrastructure: shared filesystems, multi-tenant node allocation, agent skill ecosystems, and coordinated multi-agent workflows. Second, we introduce behavioral attestation as a provable, constraint-based, runtime security primitive that differs fundamentally from prior approaches in its assurance model, policy structure, and timing. Third, we design and implement AEGIS (Attestation-based Environment for Guarding Injection-vulnerable Systems), a complete zero-trust architecture encompassing constraint specification, eBPF-based attestation, policy verification, and automated containment through Slurm integration. Fourth, we present empirical evaluation demonstrating that AEGIS achieves 100\% attack detection across all four vectors, compared to 0-50\% for traditional defenses including network data loss prevention (DLP), filesystem auditing, per-agent analytics, and strict sandboxing, while introducing less than 3\% overhead on AMD EPYC hardware.
+AI agents are beginning to automate data analysis, orchestration, and simulation steering in HPC environments, but they introduce a security problem that existing cluster defenses do not address: the hijacked authorized agent. An adversary can subvert an agent through prompt injection, poisoned shared data, compromised tools, or multi-agent coordination, then exfiltrate sensitive data through legitimate encrypted LLM API traffic. We propose behavioral attestation as a runtime defense for this setting. Our system, AEGIS, compiles task-derived behavioral constraints, monitors agent actions with \ebpf-based syscall interception, verifies evidence against constraint profiles, correlates behavior across agents, and triggers \slurm{}-level containment. On the real attestation path, AEGIS detects all four implemented attack classes with sub-second median latency at a 1\,s interval and low measured verifier overhead. Controlled experiments show full attack-suite coverage, stronger detection than representative baselines, and no observed false positives on the evaluated benign workflows.
 \end{abstract}
 
 % Keywords

@@ -98,35 +98,35 @@ run_cmd() {
 }
 
 run_real() {
-  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.experiments.real.run_bpf_microbenchmark     --mode openat     --iters 200000     --repeats 9     --output "$OUTPUT_DIR/bpf_microbenchmark_openat.json"
+  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark     --mode openat     --iters 200000     --repeats 9     --output "$OUTPUT_DIR/bpf_microbenchmark_openat.json"
 
-  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.experiments.real.run_bpf_microbenchmark     --mode read     --iters 200000     --size 4096     --probe-scope file     --output "$OUTPUT_DIR/bpf_microbenchmark_read.json"
+  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark     --mode read     --iters 200000     --size 4096     --probe-scope file     --output "$OUTPUT_DIR/bpf_microbenchmark_read.json"
 
-  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.experiments.real.run_bpf_microbenchmark     --mode connect     --iters 100000     --probe-scope network     --output "$OUTPUT_DIR/bpf_microbenchmark_connect.json"
+  run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark     --mode connect     --iters 100000     --probe-scope network     --output "$OUTPUT_DIR/bpf_microbenchmark_connect.json"
 
   if [[ $WITH_EXEC -eq 1 ]]; then
-    run_cmd "${SUDO_PREFIX[@]}" python3 -m src.experiments.real.run_bpf_microbenchmark       --mode execve       --iters 100000       --probe-scope exec       --output "$OUTPUT_DIR/bpf_microbenchmark_execve.json"
+    run_cmd "${SUDO_PREFIX[@]}" python3 -m src.paper.experiments.real.run_bpf_microbenchmark       --mode execve       --iters 100000       --probe-scope exec       --output "$OUTPUT_DIR/bpf_microbenchmark_execve.json"
   fi
 
-  run_cmd python3 -m src.experiments.real.run_latency_sweep     --repeats 3     --max-interval 10.0     --output "$OUTPUT_DIR/real_latency_sweep.json"
+  run_cmd python3 -m src.paper.experiments.real.run_latency_sweep     --repeats 3     --max-interval 10.0     --output "$OUTPUT_DIR/real_latency_sweep.json"
 
   for attack in filesystem colocation supply_chain coordinated; do
-    run_cmd python3 -m src.experiments.real.run_real_latency_capture       --attack "$attack"       --interval 1.0       --repeats 3       --output "$OUTPUT_DIR/real_latency_${attack}.json"
+    run_cmd python3 -m src.paper.experiments.real.run_real_latency_capture       --attack "$attack"       --interval 1.0       --repeats 3       --output "$OUTPUT_DIR/real_latency_${attack}.json"
   done
 
-  run_cmd python3 -m src.experiments.real.run_ablation     --interval 1.0     --repeats 3     --output "$OUTPUT_DIR/real_ablation.json"
+  run_cmd python3 -m src.paper.experiments.real.run_ablation     --interval 1.0     --repeats 3     --output "$OUTPUT_DIR/real_ablation.json"
 }
 
 run_simulated() {
-  run_cmd python3 -m src.experiments.simulated.run_all     --output "$OUTPUT_DIR/simulated_all_attacks.json"
+  run_cmd python3 -m src.paper.experiments.simulated.run_all     --output "$OUTPUT_DIR/simulated_all_attacks.json"
 
-  run_cmd python3 -m src.experiments.simulated.run_ablation     --output "$OUTPUT_DIR/simulated_ablation.json"
+  run_cmd python3 -m src.paper.experiments.simulated.run_ablation     --output "$OUTPUT_DIR/simulated_ablation.json"
 
-  run_cmd python3 -m src.experiments.simulated.run_false_positive     --output "$OUTPUT_DIR/simulated_false_positive.json"
+  run_cmd python3 -m src.paper.experiments.simulated.run_false_positive     --output "$OUTPUT_DIR/simulated_false_positive.json"
 
-  run_cmd python3 -m src.experiments.simulated.run_performance     --output "$OUTPUT_DIR/simulated_performance.json"
+  run_cmd python3 -m src.paper.experiments.simulated.run_performance     --output "$OUTPUT_DIR/simulated_performance.json"
 
-  run_cmd python3 -m src.experiments.simulated.run_baseline_comparison     --output "$OUTPUT_DIR/baseline_comparison.md"
+  run_cmd python3 -m src.paper.experiments.simulated.run_baseline_comparison     --output "$OUTPUT_DIR/baseline_comparison.md"
 }
 
 if [[ $SKIP_BUILD -eq 0 ]]; then

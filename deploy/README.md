@@ -10,6 +10,7 @@
 - `slurm/epilog/10-aegis-cleanup.sh`: job-cleanup hook
 - `config/verifier.example.json`: verifier configuration template
 - `config/collector.example.env`: collector environment template
+- `config/constraint_profile.example.yaml`: starter YAML constraint profile template
 
 ## Install Order
 
@@ -17,20 +18,20 @@
 2. Install the verifier host service and config.
 3. Install the collector service and probe object on every compute node.
 4. Install the Slurm Prolog and Epilog hooks.
-5. Register constraint profiles on the shared filesystem that both Slurm hooks and the verifier can read.
+5. Register constraint profiles on the shared filesystem that both Slurm hooks and the verifier can read. Start from `deploy/config/constraint_profile.example.yaml`.
 
 ## Main Commands
 
 Verifier host:
 
 ```bash
-python3 -m src.services.verifierd --config /etc/aegis/verifier.json serve
+python3 -m src.deployment.control_plane.verifierd --config /etc/aegis/verifier.json serve
 ```
 
 Collector node:
 
 ```bash
-sudo python3 -m src.attestation.bpf_collector --bpf /usr/share/aegis/aegis_probe.bpf.o --interval 1.0
+sudo python3 -m src.deployment.collector.bpf_collector --bpf /usr/share/aegis/aegis_probe.bpf.o --interval 1.0
 ```
 
 Use [docs/REAL_CLUSTER_DEPLOYMENT.md](../docs/REAL_CLUSTER_DEPLOYMENT.md) for the full rollout procedure.

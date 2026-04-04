@@ -1,0 +1,62 @@
+agent_id: agent-genomics-trainer
+user_id: alice
+project_id: genomics
+session_id: sess-20260404-demo
+slurm_job_id: job_123456
+
+derivation_mode: explicit
+template_name: null
+task_description: Train a genomics model using approved project data and approved LLM endpoints.
+inferred_rationale:
+
+created_at: 0
+expires_at: null
+
+data_access:
+  allowed_paths:
+    - /projects/genomics/*
+    - /scratch/alice/*
+  denied_paths:
+    - /projects/finance/*
+    - /home/alice/.ssh/*
+    - /etc/*
+  read_only_paths:
+    - /projects/genomics/*
+  max_read_volume_mb: 20480
+  max_write_volume_mb: 4096
+
+network:
+  allowed_endpoints:
+    - api.openai.com
+    - login.cluster.example
+  denied_endpoints:
+    - '*'
+  max_egress_mb_per_hour: 256
+
+tools:
+  allowed_tools:
+    - python
+    - python3
+    - hdf5_reader
+    - csv_parser
+  denied_tools:
+    - ssh
+    - scp
+    - curl
+
+execution:
+  max_runtime_seconds: 43200
+  max_memory_mb: 65536
+  allowed_nodes:
+    - gpu-a100-01
+    - gpu-a100-02
+
+data_flow:
+  project_boundary_strict: true
+  cross_project_transfer: false
+  max_exfil_budget_mb_per_hour: 64
+  allow_agent_data_sharing: false
+  allow_co_located_agent_reads: false
+  allow_inter_agent_communication: false
+  correlation_window_seconds: 30
+  correlation_threshold: 1

@@ -1,63 +1,16 @@
 \section{Related Work}
 
-\paragraph{Zero trust and identity-centric access control.}
-Zero trust architectures replace coarse network perimeters with explicit
-authentication, authorization, and continuous policy evaluation over users,
-services, and resources. NIST SP 800-207 established this model at the system
-architecture level~\cite{rose2020zero}, and NIST SP 800-207A extended it to
-cloud-native deployments with stronger emphasis on workload identity,
-application-level telemetry, and fine-grained enforcement in distributed
-services~\cite{duckworth2023spiffe}. \projectname~follows the same continuous-trust
-intuition, but shifts the enforcement target from user or service identity to
-agent behavior. In our setting, a valid identity is not sufficient: the
-relevant question is whether a running agent remains within the behavioral
-constraints implied by its authorized HPC task.
+\paragraph{Zero trust, workload identity, and HPC control planes.}
+Zero trust shifts security policy away from implicit network trust and toward explicit authentication, authorization, and continuous policy evaluation~\cite{kindervag2010zero,rose2020zta,chandramouli2023zta}. In parallel, HPC control planes are built around scheduler-mediated resource ownership, federated identity, and shared storage semantics~\cite{neuman1994kerberos,basney2014cilogon,yoo2003slurm,lustre2025intro,ibm2024spectrumscale}. \projectname~inherits the zero-trust intuition that trust must be continuously re-established, but applies it to a different object: not only whether a user or workload has a valid identity, but whether an autonomous agent's \emph{runtime behavior} remains inside the boundary implied by its authorized task.
 
-\paragraph{LLM-agent security and prompt injection.}
-Recent work has shown that LLM-integrated applications and tool-using agents
-are vulnerable to indirect prompt injection, tool abuse, and other forms of
-instruction-channel confusion. Greshake et al. demonstrated that untrusted
-content can steer real LLM-integrated applications by exploiting the mismatch
-between data and instructions~\cite{greshake2023not}. Liu et al.
-formalized prompt-injection attacks and evaluated attack and defense strategies
-across models and tasks~\cite{liu2024formalizing}. ToolEmu and AgentDojo then
-provided structured environments for stress-testing tool-using agents and
-surfacing safety failures under adversarial conditions~\cite{ruan2023identifying, debenedetti2024agentdojo}.
-These efforts are important for characterizing the threat model, but they are
-primarily benchmark- and application-oriented. \projectname~addresses a different
-problem: how to constrain and verify the behavior of deployed agents at runtime
-on a shared cluster, including filesystem, network, and cross-agent effects
-that emerge only in multi-tenant execution.
+\paragraph{AI agents, tool use, and prompt injection.}
+Recent agent research has focused on language-model-driven planning and tool use~\cite{schick2023toolformer,yao2023react,wang2023voyager,mialon2023augmented,xi2023agentsurvey,masterman2024agentsurvey}. At the same time, a growing security literature has shown that LLM-integrated applications are vulnerable to prompt injection, prompt leakage, and related control-transfer attacks~\cite{perez2022ignore,greshake2023indirect,liu2023houyi,liu2024prompt,zou2023universal,weidinger2022taxonomy,owasp2025llm}. More recent work has explored prompt-level mitigations such as Spotlighting and StruQ~\cite{hines2024spotlighting,chen2024struq}, while ToolEmu and AgentDojo provide structured environments for evaluating safety failures in tool-using agents~\cite{ruan2023toolemu,debenedetti2024agentdojo}. These works establish the threat and improve evaluation methodology, but they are primarily application- and benchmark-oriented. \projectname~instead focuses on runtime enforcement and verification for deployed agents in a shared cluster.
 
 \paragraph{Remote attestation and runtime integrity.}
-Remote attestation has traditionally focused on establishing trust in platform
-state. Sailer et al. linked attestation to access-control policy
-enforcement~\cite{sailer2004attestation}; Haldar et al. proposed semantic
-remote attestation for higher-level properties beyond simple code
-measurement~\cite{haldar2004semantic}; and PRIMA extended integrity
-measurement toward policy-relevant information-flow properties~\cite{jaeger2006prima}.
-Kil et al. argued that practical attestation must reason about dynamic runtime
-properties rather than only boot-time state~\cite{kil2009remote}, while more
-recent work such as ARI targets mission-execution integrity in cyber-physical
-and real-time environments~\cite{wang2023ari}. \projectname~is complementary to this
-line of work but changes the attested object. Rather than attesting only code
-identity, platform state, or timing properties, \projectname~attests whether an AI
-agent's observed actions satisfy behavioral constraints derived from its
-authorized job, and it extends that reasoning to cluster-wide correlations
-across co-located agents.
+Remote attestation has long studied how to establish trust in remote software state. Sailer et al. connected attestation to access-control policy enforcement~\cite{sailer2004attestation}; Haldar et al. proposed semantic remote attestation for higher-level properties~\cite{haldar2004semantic}; PRIMA extended integrity measurement toward policy-relevant information-flow reasoning~\cite{jaeger2006prima}; and Kil et al. argued that practical attestation must reason about dynamic system properties, not just boot-time measurements~\cite{kil2009redas}. Software-based attestation such as SWATT~\cite{seshadri2004swatt} and operational systems such as Keylime and TRIGLAV illustrate the continuing move toward runtime evidence and deployable trust-management systems~\cite{schear2016keylime,ozga2021triglav}. ARI further demonstrates attestation for mission-execution integrity in real-time systems~\cite{wang2023ari}. \projectname~is complementary to this line of work, but changes the attested object: instead of only code identity or platform integrity, it attests whether an AI agent's observable actions satisfy behavioral constraints derived from its job.
+
+\paragraph{Anomaly detection, sandboxing, and runtime monitoring.}
+A long line of intrusion-detection work studies anomaly detection over audit streams, system calls, and behavior models~\cite{denning1987ids,forrest1996self,warrender1999syscalls,axelsson2000idssurvey}. Mandatory access-control and sandboxing systems such as SELinux and TrustedBSD provide stronger confinement primitives than discretionary access control alone~\cite{loscocco2001selinux,watson2003trustedbsd}. Modern runtime-security platforms such as Falco, Tetragon, and Tracee show how kernel telemetry and \ebpf can be used operationally to detect suspicious activity~\cite{falco2025docs,tetragon2025docs,tracee2025docs}. These systems are highly relevant operationally, but they are not designed to verify whether a tool-using AI agent is staying within a task-specific behavioral contract, nor do they directly reason about cross-agent covert channels in shared HPC storage.
 
 \paragraph{Data leakage prevention.}
-Data leakage prevention systems have been widely studied for data at rest, in
-use, and in transit. Shabtai et al. surveyed leakage-detection and prevention
-techniques across enterprise channels~\cite{shabtai2012survey}, and Alneyadi et
-al. categorized modern DLP systems by their content- and context-analysis
-strategies~\cite{alneyadi2016survey}. These systems are effective when leakage can
-be recognized from content signatures, protocol context, or policy violations
-at a single endpoint or network boundary. However, they are not designed for
-the hijacked-agent setting studied here, where the exfiltration channel may be
-a legitimate encrypted API and the key violation is behavioral rather than
-content-based. In \projectname, the crucial question is not whether a payload matches
-a known sensitive pattern, but whether the agent should have performed the
-underlying read, write, or network action at all. \projectname~therefore complements
-traditional DLP with behavioral attestation and runtime containment rather than
-content inspection alone.
+Data leakage prevention systems have been widely studied for data at rest, in use, and in transit. Shabtai et al. surveyed leakage-detection and prevention techniques across enterprise channels~\cite{shabtai2012dlp}, and Alneyadi et al. categorized modern DLP systems by their content- and context-analysis strategies~\cite{alneyadi2016dlp}. These systems are effective when leakage can be recognized from content signatures, protocol context, or boundary policy violations. However, they are poorly matched to the hijacked-agent setting considered here: the exfiltration channel may be a legitimate encrypted API, and the critical violation lies in the mismatch between authorized task behavior and observed action sequences. \projectname~therefore complements DLP with behavioral attestation and runtime containment rather than content inspection alone.

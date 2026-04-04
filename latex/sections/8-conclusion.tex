@@ -8,8 +8,8 @@ control no longer answer the critical question: whether the agent's runtime
 behavior still matches its authorized task.
 
 We introduced behavioral attestation as a practical security primitive for this
-setting and presented \projectname, a system that compiles behavioral constraints,
-monitors agent actions with \textit{ebpf}-based syscall interception, verifies evidence
+setting and presented \projectname~, a system that compiles behavioral constraints,
+monitors agent actions with \ebpf-based syscall interception, verifies evidence
 against constraint profiles, correlates behavior across agents, and translates
 verdicts into scheduler-level containment actions. The central design choice is
 to treat agent security as a runtime verification problem over declared
@@ -20,8 +20,7 @@ Our evaluation shows that this approach is effective and practical. On the real
 attestation path, \projectname~detects all four implemented attack classes with
 sub-second median latency at the default 1\,s interval and low measured verifier
 overhead. In the controlled studies, \projectname~achieves full coverage over the
-four-attack suite, outperforms representative baselines, preserves zero
-observed false positives on the evaluated benign workflows, and shows clear
+four-attack suite, outperforms representative baselines, shows no observed false positives on the evaluated benign workflows, and shows clear
 ablation evidence that the full system derives its coverage from multiple
 complementary mechanisms rather than from a single rule.
 

@@ -1,11 +1,11 @@
 # AEGIS eBPF Build System
 
 # Paths
-BPF_SRC := src/bpf/aegis_probe.c
-BPF_OBJ := src/bpf/aegis_probe.bpf.o
-USER_SRC := $(wildcard src/attestation/*.py)
-MICROBENCH_SRC := src/bpf/syscall_microbench.c
-MICROBENCH_BIN := src/bpf/syscall_microbench
+BPF_SRC := src/deployment/bpf/aegis_probe.c
+BPF_OBJ := src/deployment/bpf/aegis_probe.bpf.o
+USER_SRC := $(wildcard src/deployment/collector/*.py)
+MICROBENCH_SRC := src/deployment/bpf/syscall_microbench.c
+MICROBENCH_BIN := src/deployment/bpf/syscall_microbench
 
 # Compiler
 CLANG ?= $(firstword $(wildcard /usr/bin/clang /usr/bin/clang-18 /usr/bin/clang-17 /usr/bin/clang-16 /usr/bin/clang-15 /usr/local/bin/clang /usr/local/bin/clang-18 /usr/local/bin/clang-17 /usr/local/bin/clang-16 /usr/local/bin/clang-15))
@@ -66,23 +66,23 @@ $(MICROBENCH_BIN): $(MICROBENCH_SRC)
 install: bpfall bench
 	@echo "Installing AEGIS eBPF components..."
 	install -d $(SHAREDIR)
-	install -m 755 src/attestation/bpf_collector.py $(SHAREDIR)/
-	install -m 755 src/attestation/bpf_attach.py $(SHAREDIR)/
+	install -m 755 src/deployment/collector/bpf_collector.py $(SHAREDIR)/
+	install -m 755 src/deployment/collector/bpf_attach.py $(SHAREDIR)/
 	install -m 755 $(MICROBENCH_BIN) $(SHAREDIR)/
 	install -m 644 $(BPF_OBJ) $(SHAREDIR)/
-	install -m 644 src/bpf/aegis_probe.c $(SHAREDIR)/
+	install -m 644 src/deployment/bpf/aegis_probe.c $(SHAREDIR)/
 	install -m 644 $(MICROBENCH_SRC) $(SHAREDIR)/
 	@echo "Installed to $(SHAREDIR)"
 
 clean:
-	rm -f src/bpf/*.bpf.o
-	rm -f src/bpf/*.stripped
+	rm -f src/deployment/bpf/*.bpf.o
+	rm -f src/deployment/bpf/*.stripped
 	rm -f $(MICROBENCH_BIN)
 
 test: bpfall
 	@echo "=== Running eBPF sanity test ==="
 	@echo "(Requires root)"
 	@# Quick syntax check - don't actually load
-	@file src/bpf/aegis_probe.bpf.o | grep -q "ELF" && echo "✓ Valid ELF binary" || echo "✗ Invalid ELF"
+	@file src/deployment/bpf/aegis_probe.bpf.o | grep -q "ELF" && echo "✓ Valid ELF binary" || echo "✗ Invalid ELF"
 
 .PHONY: all check checksetup bpfall install clean test

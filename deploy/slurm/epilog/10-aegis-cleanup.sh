@@ -10,6 +10,6 @@ AGENT_ID="${AEGIS_AGENT_ID:-job-${JOB_ID}}"
 SESSION_ID="${AEGIS_SESSION_ID:-}"
 
 cd "${AEGIS_ROOT}"
-python3 -m src.attestation.job_registry unregister   --registry-dir "${AEGIS_REGISTRY_DIR}"   --job-id "${JOB_ID}"
+python3 -m src.deployment.collector.job_registry unregister   --registry-dir "${AEGIS_REGISTRY_DIR}"   --job-id "${JOB_ID}"
 
-ssh -o BatchMode=yes "${AEGIS_VERIFIER_HOST}"   "cd '${AEGIS_ROOT}' && python3 -m src.services.verifierd --config /etc/aegis/verifier.json close-session --socket '${AEGIS_VERIFIER_SOCKET}' --job-id '${JOB_ID}' ${AGENT_ID:+--agent-id '${AGENT_ID}'} ${SESSION_ID:+--session-id '${SESSION_ID}'}"
+ssh -o BatchMode=yes "${AEGIS_VERIFIER_HOST}"   "cd '${AEGIS_ROOT}' && python3 -m src.deployment.control_plane.verifierd --config /etc/aegis/verifier.json close-session --socket '${AEGIS_VERIFIER_SOCKET}' --job-id '${JOB_ID}' ${AGENT_ID:+--agent-id '${AGENT_ID}'} ${SESSION_ID:+--session-id '${SESSION_ID}'}"

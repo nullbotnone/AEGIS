@@ -3,7 +3,7 @@
 \subsection{Deployment Implications}
 
 Our evaluation suggests that behavioral attestation is practical for the class
-of HPC agent workloads targeted by \projectname, but its value depends on deployment
+of HPC agent workloads targeted by \projectname~, but its value depends on deployment
 discipline rather than on instrumentation alone. The most important lesson is
 that agent identity is not a sufficient security primitive for autonomous
 scientific workflows. Once an agent is granted legitimate filesystem, network,
@@ -13,7 +13,7 @@ sites that already operate with strong identity and scheduler control, but need
 a runtime mechanism for detecting abuse of legitimate authority.
 
 The real-path results in Section~\ref{results} show that this model can be realized with an
-\textit{ebpf}-based probe, a verifier-driven policy pipeline, and scheduler-mediated
+\ebpf-based probe, a verifier-driven policy pipeline, and scheduler-mediated
 containment without imposing large steady-state cost. The 1\,s configuration
 provides sub-second median detection latency with low measured verifier CPU
 overhead, which makes it a practical default for interactive and batch-oriented
@@ -48,7 +48,7 @@ shorter intervals or stronger inline enforcement for selected resources.
 
 A third limitation is the trust model. The current design assumes a trustworthy
 kernel, a trustworthy node-level collector, and an uncompromised scheduler
-control plane. \textit{ebpf}-based monitoring raises the bar relative to user-space
+control plane. \ebpf-based monitoring raises the bar relative to user-space
 instrumentation, but it does not solve the problem of a malicious kernel or a
 fully privileged attacker on the node. Similarly, the centralized verifier used
 in our prototype simplifies cluster-wide correlation, but it is not yet the

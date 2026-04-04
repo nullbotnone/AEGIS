@@ -1,32 +1,33 @@
 # AEGIS Source Tree
 
-`src/` contains both the deployable AEGIS path and the simulation code kept for evaluation reproducibility.
+`src/` is organized around two concrete code paths:
+- `deployment/`: code used to run AEGIS on real HPC clusters
+- `paper/`: code used to reproduce the research-paper experiments
 
-## Deployable Path
+## Deployment Path
 
-- `framework/`: constraint manager, evidence model, verifier, containment mapping, and verifier-owned audit ledger
-- `attestation/`: node-side collector and Slurm job registration
-- `bpf/`: kernel probe and syscall microbenchmark
-- `services/`: long-running verifier daemon wrapper
-- `defense/slurm_integration.py`: enforcement bridge for Slurm actions
+Start at [deployment/README.md](deployment/README.md).
 
-## Evaluation And Legacy Support
+Key packages:
+- `deployment/core/`: verifier, constraints, attestation model, containment, tests
+- `deployment/control_plane/`: long-running verifier daemon
+- `deployment/collector/`: node-side collector, job registry, attach helper
+- `deployment/enforcement/`: Slurm containment implementation
+- `deployment/bpf/`: eBPF probe source and syscall microbenchmark
 
-- `experiments/`: paper evaluation entry points
-- `attacks/`: synthetic attack workloads used by the experiments
-- `common/`: older simulation primitives still required by several experiment runners
-- `defense/attestation.py`: older experiment-only detection engine kept for reproducibility
-- `data/`: synthetic datasets for deterministic experiments
-
-## Important Distinction
-
-For a real cluster, the active entry points are:
-- `python3 -m src.services.verifierd`
-- `python3 -m src.attestation.bpf_collector`
+Primary commands:
+- `python3 -m src.deployment.control_plane.verifierd`
+- `python3 -m src.deployment.collector.bpf_collector`
 - `make bpfall`
+- `python3 -m unittest discover -s src/deployment/core/tests -v`
 
-For the paper evaluation, the active entry points are under `src/experiments/`.
+## Paper Evaluation Path
 
-## Local READMEs
+Start at [paper/README.md](paper/README.md).
 
-Use the local README in each major subdirectory for code-level orientation. The subdirectory docs call out whether a module is part of deployment, paper evaluation, or a legacy compatibility layer.
+Key packages:
+- `paper/experiments/real/`: measured experiments on real hardware
+- `paper/experiments/simulated/`: simulation-based experiments
+- `paper/attacks/`: attack workloads used by the paper
+- `paper/support/`: simulation support layer and experiment-only attestation logic
+- `paper/data/`: synthetic datasets and dataset-generation helpers

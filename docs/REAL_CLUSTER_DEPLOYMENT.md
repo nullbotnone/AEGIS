@@ -22,17 +22,17 @@ The centralized verifier owns:
 ## Required Files
 
 Verifier side:
-- `src/services/verifierd.py`
-- `src/framework/constraints.py`
-- `src/framework/verifier.py`
-- `src/defense/slurm_integration.py`
+- `src/deployment/control_plane/verifierd.py`
+- `src/deployment/core/constraints.py`
+- `src/deployment/core/verifier.py`
+- `src/deployment/enforcement/slurm_integration.py`
 - `deploy/systemd/aegis-verifier.service`
 - `deploy/config/verifier.example.json`
 
 Compute-node side:
-- `src/attestation/bpf_collector.py`
-- `src/attestation/job_registry.py`
-- `src/bpf/aegis_probe.c`
+- `src/deployment/collector/bpf_collector.py`
+- `src/deployment/collector/job_registry.py`
+- `src/deployment/bpf/aegis_probe.c`
 - compiled `aegis_probe.bpf.o`
 - `deploy/systemd/aegis-collector.service`
 - `deploy/config/collector.example.env`
@@ -109,7 +109,7 @@ Set the required environment or site defaults so the hooks can resolve:
 
 ## Constraint Profile Workflow
 
-Each job should have a YAML constraint profile visible at the shared `AEGIS_PROFILE_ROOT`. The Prolog script:
+Each job should have a YAML constraint profile visible at the shared `AEGIS_PROFILE_ROOT`. Start from `deploy/config/constraint_profile.example.yaml` and customize the job identity, paths, endpoints, tools, and budgets for your site. The Prolog script:
 - binds `SLURM_JOB_ID` to an agent/session registration for the collector
 - registers the same profile with the verifier
 
@@ -128,19 +128,19 @@ The Epilog script removes local registration state and closes the verifier-side 
 Verifier health:
 
 ```bash
-python3 -m src.services.verifierd --config /etc/aegis/verifier.json health
+python3 -m src.deployment.control_plane.verifierd --config /etc/aegis/verifier.json health
 ```
 
 Collector CLI:
 
 ```bash
-python3 -m src.attestation.bpf_collector --help
+python3 -m src.deployment.collector.bpf_collector --help
 ```
 
 Framework tests:
 
 ```bash
-python3 -m unittest discover -s src/framework/tests -v
+python3 -m unittest discover -s src/deployment/core/tests -v
 ```
 
 ## Transport Note

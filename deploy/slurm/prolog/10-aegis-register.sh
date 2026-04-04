@@ -17,8 +17,8 @@ NODE_NAME="$(hostname -s)"
 METADATA_JSON="$(printf '{"node":"%s","slurm_user":"%s"}' "${NODE_NAME}" "${JOB_USER}")"
 
 cd "${AEGIS_ROOT}"
-python3 -m src.attestation.job_registry register   --registry-dir "${AEGIS_REGISTRY_DIR}"   --job-id "${JOB_ID}"   --agent-id "${AGENT_ID}"   --session-id "${SESSION_ID}"   --uid "${JOB_UID}"   --cgroup-path "${CGROUP_PATH}"   --profile-path "${PROFILE_PATH}"   --metadata-json "${METADATA_JSON}"
+python3 -m src.deployment.collector.job_registry register   --registry-dir "${AEGIS_REGISTRY_DIR}"   --job-id "${JOB_ID}"   --agent-id "${AGENT_ID}"   --session-id "${SESSION_ID}"   --uid "${JOB_UID}"   --cgroup-path "${CGROUP_PATH}"   --profile-path "${PROFILE_PATH}"   --metadata-json "${METADATA_JSON}"
 
 if [[ -f "${PROFILE_PATH}" ]]; then
-  ssh -o BatchMode=yes "${AEGIS_VERIFIER_HOST}"     "cd '${AEGIS_ROOT}' && python3 -m src.services.verifierd --config /etc/aegis/verifier.json register-profile --socket '${AEGIS_VERIFIER_SOCKET}' --profile '${PROFILE_PATH}'"
+  ssh -o BatchMode=yes "${AEGIS_VERIFIER_HOST}"     "cd '${AEGIS_ROOT}' && python3 -m src.deployment.control_plane.verifierd --config /etc/aegis/verifier.json register-profile --socket '${AEGIS_VERIFIER_SOCKET}' --profile '${PROFILE_PATH}'"
 fi

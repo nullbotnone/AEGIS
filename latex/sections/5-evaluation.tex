@@ -3,7 +3,7 @@
 
 Our evaluation is organized around the two claim boundaries introduced in
 Section~\ref{aegis}. We use \emph{real-path} experiments to measure the implemented
-\textit{ebpf}-based attestation pipeline on EPYC hardware, and we use
+\ebpf-based attestation pipeline on EPYC hardware, and we use
 \emph{simulation-based controlled studies} to evaluate broader attack coverage,
 component ablation, baseline comparison, and benign-workflow behavior. The
 real-path experiments use the deployed \projectname~probe, collector, verifier, and
@@ -16,7 +16,7 @@ and workload matrices.
 We evaluate performance on AMD EPYC 7713 64-core processors (2.0\,GHz,
 256\,MB L3 cache) with 1536\,GB DDR5 RAM, running Rocky Linux 9.6 with Linux
 kernel 5.14.0. This represents realistic HPC compute-node specifications. The
-\textit{ebpf}-based attestation engine is compiled with \texttt{clang} and runs with
+\ebpf-based attestation engine is compiled with \texttt{clang} and runs with
 kernel-side syscall interception, while the verifier executes the full \projectname
 policy pipeline including behavioral-constraint checking, cross-agent
 correlation, and containment decision generation.
@@ -52,7 +52,7 @@ cases.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/attack_results.png}
+  \includegraphics[width=\linewidth]{../figures/attack_results.png}
   \caption{Measured outcomes on the real attestation path at a 1\,s interval.
   Across three trials per attack, \projectname~detects all four attacks with median
   detection latency between 500.14\,ms and 500.37\,ms. Median data emitted
@@ -121,7 +121,7 @@ baselines.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/baseline_comparison.png}
+  \includegraphics[width=\linewidth]{../figures/baseline_comparison.png}
   \caption{Detection outcomes and mean analysis time for five defenses
   evaluated on the same attack traces. Network DLP, filesystem auditing, and
   strict sandboxing each detect only two of four attacks (50\%), while
@@ -156,7 +156,7 @@ dimensions rather than a single critical check.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/ablation_heatmap.png}
+  \includegraphics[width=\linewidth]{../figures/ablation_heatmap.png}
   \caption{Real-path ablation at a 1\,s attestation interval. Full \projectname
   detects all four attacks in all three trials. Removing network policy causes
   the co-location attack to evade detection completely (0/3), while a
@@ -179,7 +179,7 @@ orthogonal coverage.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/simulated_ablation_breakdown.png}
+  \includegraphics[width=\linewidth]{../figures/simulated_ablation_breakdown.png}
   \caption{Controlled simulated ablation isolating the four specialized
   detection mechanisms. Full \projectname~detects all four attack classes, and
   removing any one mechanism drops overall detection to 75\% by allowing
@@ -214,7 +214,7 @@ overhead.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/performance_overhead.png}
+  \includegraphics[width=\linewidth]{../figures/performance_overhead.png}
   \caption{Combined performance summary from the real measurements. The left
   panel shows direct probe overhead in worst-case syscall microbenchmarks:
   elapsed-time overhead is 23.3\% for \texttt{openat}, 28.2\% for
@@ -238,8 +238,8 @@ measurement.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/scaling_sweep.png}
-  \caption{Simulation-based scaling study for the paper's appendix. Overhead
+  \includegraphics[width=\linewidth]{../figures/scaling_sweep.png}
+  \caption{Simulation-based scaling study across agent counts, attestation intervals, and workload mixes. Overhead
   remains below 5\% in 11 of 16 tested configurations. For the mixed workload,
   overhead drops from 3.61\% at a 100\,ms interval to 2.14\% at 1\,s; at a
   fixed 1\,s interval, overhead is 1.88\% for 10 agents, 3.67\% for 50
@@ -260,7 +260,7 @@ alerts.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/false_positive_summary.png}
+  \includegraphics[width=\linewidth]{../figures/false_positive_summary.png}
   \caption{Expanded benign-workflow suite used to assess false positives. The
   left panel reports workflow coverage in terms of executed actions and logged
   events across six benign workflows, including authorized multi-agent
