@@ -10,6 +10,10 @@
 \usepackage{xcolor}
 \usepackage{textcomp}
 \usepackage{geometry}
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{tabularx}
+\usepackage{dblfloatfix}
 
 % Set up bibliography
 \bibliographystyle{acmart-num}
@@ -24,6 +28,12 @@
 \newcommand{\ebpf}{eBPF}
 \newcommand{\slurm}{Slurm}
 \newcommand{\circled}[1]{\textcircled{\scriptsize #1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.08}
+\setlength{\textfloatsep}{10pt plus 2pt minus 4pt}
+\setlength{\dbltextfloatsep}{10pt plus 2pt minus 4pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
 
 % Title and author
 \title{Attestation is All You Need: Toward a Zero-Trust Architecture for HPC AI Agents}

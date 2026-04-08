@@ -1,6 +1,6 @@
 # AEGIS Figures
 
-`figures/` contains paper figures and the notebook used to regenerate them from SC26 evaluation artifacts.
+`figures/` contains paper figures, a script-backed generator, and a notebook wrapper used to regenerate them from SC26 evaluation artifacts.
 
 ## Inputs
 
@@ -25,17 +25,24 @@ By default, [paper_figures.ipynb](paper_figures.ipynb) auto-selects the newest `
 
 ## Outputs
 
-The notebook regenerates the SC26 paper figure set:
+`generate_paper_figures.py` regenerates the SC26 paper figure set and emits both PNG and PDF outputs for the plots. The notebook is a thin wrapper around that script.
 - `baseline_comparison.png`
 - `attack_results.png`
 - `ablation_heatmap.png`
 - `simulated_ablation_breakdown.png`
 - `scaling_sweep.png`
 - `performance_overhead.png`
+- `performance_summary.png`
 
 ## Regeneration
 
 From `figures/`:
+
+```bash
+python3 generate_paper_figures.py
+```
+
+Notebook wrapper:
 
 ```bash
 jupyter nbconvert --to notebook --execute paper_figures.ipynb --output paper_figures.ipynb

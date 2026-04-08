@@ -2,12 +2,12 @@
 
 \subsection{The Hijacked Agent Threat}
 
-\begin{figure}[!t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.95\columnwidth]{../figures/threat_model.png}
+    \includegraphics[width=0.94\textwidth]{../figures/threat_model.png}
     \caption{The hijacked authorized agent threat. An agent with valid credentials is subverted through injection attacks. The hijacked agent exfiltrates data through encrypted LLM API channels that are difficult for traditional DLP and perimeter monitoring to interpret.}
     \label{fig:threats}
-\end{figure}
+\end{figure*}
 
 We identify the most dangerous threat to HPC environments deploying AI agents: \textit{the hijacked authorized agent}, as illustrated in Figure~\ref{fig:threats}. Unlike malicious outsiders, which are addressed by existing authentication and authorization mechanisms, a hijacked agent operates under the full credentials and privileges of a legitimate user. It is not an intruder; it is a trusted principal that has been turned.
 
@@ -43,12 +43,12 @@ Taken together, these limitations motivate \textbf{behavioral attestation}: cont
 
 \subsection{Unique Properties of HPC Agent Injection Attacks}
 
-\begin{figure}[!t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.90\columnwidth]{../figures/injection_surfaces.png}
+    \includegraphics[width=0.94\textwidth]{../figures/injection_surfaces.png}
     \caption{Four HPC-specific injection attack surfaces. (1) Filesystem-mediated: poisoned data in shared parallel filesystems. (2) Co-location: shared \textit{/tmp} on multi-tenant compute nodes. (3) Supply chain: compromised tools or services in the agent control loop. (4) Coordinated: multi-agent covert exfiltration over shared resources.}
     \label{fig:injections}
-\end{figure}
+\end{figure*}
 
 Agent injection attacks in HPC exploit \textit{shared infrastructure} in ways that differ from the web-centric scenarios emphasized in most prior prompt-injection literature. These properties arise from the structure of the environment itself: shared filesystems, scheduler-driven co-location, rich tool connections, and multi-agent execution, as illustrated in Figure~\ref{fig:injections}.
 

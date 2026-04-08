@@ -54,39 +54,24 @@ injection, 500.13\,ms for co-location injection, 500.19\,ms for supply-chain
 injection, and 500.19\,ms for coordinated exfiltration. These latencies are
 approximately half of the attestation interval because the attacks are injected
 midway through a bundle window. Median data emitted before detection is 68\,B,
-50\,B, 519\,B, and 503\,B, respectively. Median verifier CPU overhead stays
-below 0.055\% in all cases.
+50\,B, 519\,B, and 503\,B, respectively. The first detecting attestation
+bundle contains a median of 3, 1, 2, and 4 verifier findings, respectively,
+which reflects how many policy dimensions each attack violates. Median verifier
+CPU overhead stays below 0.055\% in all cases.
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{../figures/attack_results.png}
+  \includegraphics[width=\textwidth]{../figures/attack_results}
   \caption{Real-path outcomes at a 1\,s attestation interval. \projectname
   detects all four attacks in 3/3 trials with median detection latency of
-  500.13--500.27\,ms and verifier CPU overhead below 0.055\%.}
+  500.13--500.27\,ms, 1--4 findings in the first detecting attestation
+  bundle, and verifier CPU overhead below 0.055\%.}
   \label{fig:attack-results}
-\end{figure}
+\end{figure*}
 
-Table~\ref{tab:real-path-summary} records the exact median values underlying
-Figure~\ref{fig:attack-results}. The narrow latency spread across the four
-real-path attacks indicates stable verifier behavior, while the emitted-byte
-differences reflect attack semantics rather than detector instability.
-
-\begin{table}[t]
-  \caption{Exact real-path median measurements for the four implemented attacks at a 1\,s attestation interval.}
-  \label{tab:real-path-summary}
-  \centering
-  \small
-  \begin{tabular}{p{3.7cm}cccc}
-    \toprule
-    Attack & Trials & Latency (ms) & Exfil. (B) & CPU (\%) \\
-    \midrule
-    Filesystem injection & 3/3 & 500.27 & 68 & 0.0478 \\
-    Co-location injection & 3/3 & 500.13 & 50 & 0.0352 \\
-    Supply-chain injection & 3/3 & 500.19 & 519 & 0.0451 \\
-    Coordinated exfiltration & 3/3 & 500.19 & 503 & 0.0542 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+The narrow latency spread across the four real-path attacks indicates
+stable verifier behavior, while the emitted-byte and finding-count differences
+reflect attack semantics rather than detector instability.
 
 The real-path results also show that \projectname~detects attacks through the
 intended policy dimensions rather than through a single catch-all rule.
@@ -110,22 +95,23 @@ they violate multiple policy dimensions simultaneously. The coordinated attack
 also raises an explicit covert-channel finding, confirming that the
 cluster-wide access graph is necessary for this class of multi-agent attack.
 
-\begin{table}[t]
-  \caption{Controlled Security Coverage Across the Four Attack Classes}
+\begin{table*}[t]
+  \caption{Controlled security coverage across the four attack classes.}
   \label{tab:controlled-coverage}
   \centering
   \small
-  \begin{tabular}{p{5.2cm}cccc}
+  \setlength{\tabcolsep}{8pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}L{0.46\textwidth}cccc@{}}
     \toprule
-    Attack & Detected & Findings & Time (ms) & Exfil. (B) \\
+    Attack & Detected & Findings & \makecell{Time\\(ms)} & \makecell{Exfil.\\(B)} \\
     \midrule
     Filesystem-mediated injection & Yes & 1 & 0.258 & 68 \\
     Multi-user co-location injection & Yes & 1 & 0.038 & 50 \\
     Supply-chain injection via skills & Yes & 7 & 0.089 & 519 \\
     Coordinated multi-agent exfiltration & Yes & 7 & 0.104 & 521 \\
     \bottomrule
-  \end{tabular}
-\end{table}
+  \end{tabular*}
+\end{table*}
 
 These controlled results matter for two reasons. First, they provide a fully
 reproducible security-coverage view that is not tied to one hardware
@@ -144,14 +130,14 @@ higher processing cost than the simpler baselines, but the absolute cost
 remains small: \projectname~averages 0.0614\,ms of analysis time per trace,
 compared with 0.0038--0.0074\,ms for the baselines.
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{../figures/baseline_comparison.png}
+  \includegraphics[width=\textwidth]{../figures/baseline_comparison}
   \caption{Baseline comparison on identical attack traces. \projectname~is the
   only defense that detects all four attacks; the simpler baselines detect at
   most two of four. Mean analysis time remains sub-0.1\,ms in all cases.}
   \label{fig:baseline-comparison}
-\end{figure}
+\end{figure*}
 
 These results highlight why \projectname~needs all four policy dimensions. DLP
 sees egress but cannot reason about encrypted traffic sent to whitelisted
@@ -164,124 +150,93 @@ cross-agent correlation in a single verifier.
 
 \subsection{Ablation}
 
-The real-path ablation in Figure~\ref{fig:real-ablation} shows that measured
-coverage comes from overlapping but non-identical mechanisms. Removing network
-policy causes co-location injection to evade detection entirely (0/3), because
-that attack is otherwise path-compliant. A permissive profile misses
-filesystem, co-location, and supply-chain attacks in all three trials, but it
-still detects coordinated exfiltration in all three trials because the
-cluster-wide covert-channel rule remains active. In contrast, removing only
-data-access controls, exfil-budget enforcement, or tool policy does not reduce
-detection on this four-attack set, because the remaining active dimensions are
-still sufficient. The real-path ablation therefore shows both redundancy and
-specificity: several dimensions overlap, but network policy and cross-agent
-correlation are indispensable for distinct attack classes.
+Table~\ref{tab:ablation-summary} reports the single ablation result that we
+use in the paper, because the controlled harness isolates the contribution of
+each mechanism more cleanly than the overlapping deployed-stack checks. In this
+setting, full \projectname~detects all four controlled attacks. Disabling
+volume limits, sensitive-file detection, covert-channel correlation, or
+injection signatures drops detection from 100\% to 75\% by allowing exactly
+the matching attack class to pass, while a minimal path-only policy detects
+none of the attacks. The controlled ablation therefore supports the intended
+interpretation: declarative constraints provide the main security boundary, and
+specialized checks add orthogonal coverage where generic path constraints are
+insufficient.
 
-\begin{figure}[t]
+This breakdown is also consistent with the real-path behavior discussed above.
+On the deployed stack, network policy is the mechanism that catches co-location
+injection, and cross-agent correlation is what preserves detection for
+coordinated exfiltration even when the local profile is otherwise permissive.
+The ablation evidence therefore shows both overlap and specificity: several
+checks reinforce one another, but distinct attack classes still depend on
+specific policy dimensions.
+
+\begin{table}[t]
+  \caption{Controlled ablation of specialized detection mechanisms. Each row removes one verifier component and reports whether the matching attack class remains detectable.}
+  \label{tab:ablation-summary}
   \centering
-  \includegraphics[width=\linewidth]{../figures/ablation_heatmap.png}
-  \caption{Real-path ablation at a 1\,s attestation interval. Network policy
-  is necessary for co-location injection, while the permissive profile misses
-  all but coordinated exfiltration. The right panel reports median bytes
-  emitted before containment.}
-  \label{fig:real-ablation}
-\end{figure}
-
-Figure~\ref{fig:simulated-ablation} sharpens this observation by isolating the
-specialized detection mechanisms more directly. In the simulation harness, full
-\projectname~detects all four controlled attacks. Disabling egress-budget
-enforcement, sensitive-file detection, covert-channel correlation, or injection
-signatures drops detection from 100\% to 75\% by allowing exactly the
-corresponding attack class to pass. A minimal path-only policy detects none of
-the attacks. Taken together, the real and simulated ablations support the
-intended interpretation: the constraint layer provides the primary security
-boundary, while specialized checks add orthogonal coverage where generic path
-constraints are insufficient.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{../figures/simulated_ablation_breakdown.png}
-  \caption{Controlled ablation of specialized detection mechanisms. Removing
-  any one mechanism drops detection from 100\% to 75\% by allowing its matching
-  attack class to pass; a minimal path-only policy detects none.}
-  \label{fig:simulated-ablation}
-\end{figure}
+  \scriptsize
+  \setlength{\tabcolsep}{2.6pt}
+  \begin{tabularx}{\columnwidth}{@{}L{0.34\columnwidth}ccccc@{}}
+    \toprule
+    Configuration & \makecell{Volume\\limit} & \makecell{Sensitive\\file} & \makecell{Covert\\channel} & \makecell{Injection\\signature} & \makecell{Detection\\rate} \\
+    \midrule
+    Full \projectname & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & 100\% \\
+    No volume limits & $\times$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & 75\% \\
+    No sensitive detection & $\checkmark$ & $\times$ & $\checkmark$ & $\checkmark$ & 75\% \\
+    No covert-channel correlation & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ & 75\% \\
+    No injection signatures & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$ & 75\% \\
+    Minimal path-only policy & $\times$ & $\times$ & $\times$ & $\times$ & 0\% \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
 \subsection{Performance}
 
-Figure~\ref{fig:performance-overhead} combines the two most important
-performance views. First, the direct probe microbenchmarks quantify worst-case
-overhead when a single syscall family is exercised continuously. File-centric
-syscalls are the most expensive: elapsed-time overhead is 24.0\% for
-\texttt{openat} and 28.3\% for \texttt{read}, while network connection
-monitoring adds 4.04\% for \texttt{connect}. These microbenchmarks are
-deliberately pessimistic and should be interpreted as upper bounds on probe
-cost rather than application-level slowdown. The same runs show throughput
-losses of 19.4\% for \texttt{openat}, 22.1\% for \texttt{read}, and 3.9\% for
-\texttt{connect}.
+Figure~\ref{fig:performance-summary} presents five complementary
+performance views in a single row. Subplot~(a) reports direct probe overhead by
+syscall family, subplot~(b) reports the deployed latency and verifier CPU
+tradeoff versus attestation interval, and subplots~(c)--(e) report the
+controlled scaling study across attestation interval, agent count, and
+workload mix.
 
-Second, the real end-to-end latency sweep shows that the operational overhead
-of \projectname~on the full verifier path is substantially lower. All four
-attacks remain detectable across the entire tested range from 100\,ms to
-10\,s. Detection latency tracks the attestation interval, rising from 50.2\,ms
-at a 100\,ms interval to 500.2\,ms at 1\,s and 5.00\,s at 10\,s. Over the
-same interval sweep, verifier CPU overhead drops from 0.439\% to 0.039\% and
-then to 0.0039\%. At the default 1\,s interval, which we use for the rest of
-the real-path evaluation, the system therefore achieves sub-second detection
-with approximately 0.04\% measured verifier CPU overhead.
+For the direct microbenchmarks in subplot~(a), file-centric syscalls are the
+most expensive: elapsed-time overhead is 24.0\% for \texttt{openat} and
+28.3\% for \texttt{read}, while network connection monitoring adds 4.04\%
+for \texttt{connect}. Because each run stresses a single syscall family
+continuously, these numbers should be interpreted as pessimistic upper bounds
+on probe cost rather than application-level slowdown. The same runs show
+throughput losses of 19.4\% for \texttt{openat}, 22.1\% for \texttt{read},
+and 3.9\% for \texttt{connect}.
 
-Table~\ref{tab:interval-operating-points} lists the exact operating points
-from this sweep and makes the deployment tradeoff explicit: the default 1\,s
-setting sits near a practical knee of the curve, because moving to 500\,ms
-roughly halves latency but nearly doubles verifier CPU cost, while relaxing to
-2\,s halves CPU again but doubles detection latency.
+Subplot~(b) shows that end-to-end verifier overhead is much lower on the full
+attestation path. All four attacks remain detectable across the tested interval
+range from 100\,ms to 10\,s. Detection latency follows the attestation
+interval, increasing from 50.2\,ms at 100\,ms to 500.2\,ms at 1\,s and
+5.00\,s at 10\,s, while verifier CPU overhead falls from 0.439\% to 0.039\%
+and then to 0.0039\%. This makes the deployment tradeoff explicit: the default
+1\,s setting sits near a practical knee of the curve, delivering sub-second
+detection at about 0.04\% measured verifier CPU overhead, while moving to
+500\,ms roughly halves latency at nearly twice the CPU cost and relaxing to
+2\,s halves CPU again but doubles latency.
 
-\begin{table}[t]
-  \caption{Real-path attestation-interval operating points from the latency sweep. All four attacks remain detectable at every tested interval.}
-  \label{tab:interval-operating-points}
+\begin{figure*}[t]
   \centering
-  \small
-  \begin{tabular}{cccc}
-    \toprule
-    Interval (s) & Avg. latency (ms) & CPU overhead (\%) & All detected \\
-    \midrule
-    0.1 & 50.17 & 0.4394 & Yes \\
-    0.5 & 250.16 & 0.0767 & Yes \\
-    \textbf{1.0 (default)} & \textbf{500.16} & \textbf{0.0392} & \textbf{Yes} \\
-    2.0 & 1000.15 & 0.0208 & Yes \\
-    5.0 & 2500.16 & 0.0080 & Yes \\
-    10.0 & 5000.14 & 0.0039 & Yes \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+  \includegraphics[width=\textwidth]{../figures/performance_summary}
+  \caption{Performance summary. From left to right: direct probe overhead by syscall family, deployed detection latency and verifier CPU overhead versus attestation interval, controlled overhead versus attestation interval, controlled overhead versus agent count, and controlled overhead by workload type. The deployed path stays below 0.44\% CPU and falls to 0.039\% at the default 1\,s interval, while 14 of 16 controlled configurations remain below 5\% overhead.}
+  \label{fig:performance-summary}
+\end{figure*}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{../figures/performance_overhead.png}
-  \caption{Performance summary from the real measurements. Worst-case probe
-  overhead is highest for file-centric syscalls, while end-to-end verifier cost
-  stays below 0.44\% and falls to 0.039\% at the default 1\,s interval.}
-  \label{fig:performance-overhead}
-\end{figure}
-
-We also ran a secondary simulation-based scaling study to explore regimes that
-are inconvenient to measure directly on the single-node EPYC setup. As shown
-in Figure~\ref{fig:scaling-sweep}, 14 of 16 tested configurations remain below
-5\% overhead. In the agent-count sweep at a fixed 1\,s interval, the mixed
-workload incurs 1.17\% overhead for 10 agents, 2.34\% for 50 agents, 2.12\%
-for 100 agents, and 3.11\% for 500 agents. In the separate workload-type sweep
-at 10 agents and 1\,s, overhead ranges from 0.30\% for compute-heavy jobs to
-3.94\% for I/O-heavy jobs. We report these numbers as controlled scaling
-trends rather than as deployment measurements.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\linewidth]{../figures/scaling_sweep.png}
-  \caption{Simulation-based scaling study across attestation intervals,
-  agent counts, and workload mixes. Overhead remains below 5\% in 14 of 16
-  tested configurations and is dominated by I/O-heavy workloads.}
-  \label{fig:scaling-sweep}
-\end{figure}
+Subplots~(c)--(e) show the controlled scaling trends that are inconvenient
+to measure directly on the single-node EPYC setup. In that study, 14 of 16
+tested configurations remain below 5\% overhead. In the controlled interval
+sweep at 10 agents and mixed workload, overhead stays between 0.91\% and
+1.60\% across the full 100\,ms to 60\,s range, with the default 1\,s point
+at 1.13\%. In the separate agent-count sweep at a fixed 1\,s interval, the
+mixed workload incurs 1.10\% overhead for 10 agents, 2.43\% for 50 agents,
+3.32\% for 100 agents, and 4.01\% for 500 agents. In the workload-type sweep
+at 10 agents and 1\,s, overhead ranges from 0.33\% for compute-heavy jobs to
+3.87\% for I/O-heavy jobs. We interpret these results as controlled scaling
+trends rather than deployment measurements.
 
 \subsection{Benign Workloads}
 
@@ -301,7 +256,8 @@ the intended policy boundary.
   \label{tab:false-positive-summary}
   \centering
   \small
-  \begin{tabular}{p{4.4cm}cccp{5.4cm}c}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabularx}{\textwidth}{@{}L{3.1cm}cccYc@{}}
     \toprule
     Workflow & Agents & Actions & Logged Events & Benign Stress Exercised & Alerts \\
     \midrule
@@ -312,7 +268,7 @@ the intended policy boundary.
     Budget-Edge LLM Reporting & 1 & 8 & 13 & Authorized egress near budget threshold; longer trace & 0 \\
     Tool-Heavy Climate Postprocessing & 1 & 7 & 11 & Tool chaining; longer trace & 0 \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table*}
 
 We emphasize the scope of this claim carefully: the result shows that no false
